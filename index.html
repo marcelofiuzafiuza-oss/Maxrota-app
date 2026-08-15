@@ -598,6 +598,24 @@
       align-items: center;
       margin-bottom: 4px;
     }
+
+    /* ==========================================================================
+       RESPONSIVIDADE — TABLET E TELAS MAIORES
+       O app foi desenhado no formato de celular; em telas maiores ele cresce
+       proporcionalmente em vez de ficar uma faixa estreita flutuando no meio
+       da tela. Fica no fim da folha de estilos de propósito, pra sempre
+       vencer as regras equivalentes definidas antes dela.
+       ========================================================================== */
+    @media (min-width: 640px) {
+      .app-container { max-width: 640px; }
+      body { padding: 28px 24px 90px 24px; }
+      .header-title { font-size: 26px; }
+    }
+    @media (min-width: 1000px) {
+      .app-container { max-width: 800px; }
+      body { padding: 40px 24px 100px 24px; }
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    }
   </style>
 </head>
 <body>
