@@ -644,7 +644,7 @@
         <button class="tab-item" onclick="switchTab('hoje', this)"><i data-lucide="layout-dashboard" size="15"></i> Hoje</button>
         <button class="tab-item" onclick="switchTab('analise', this)"><i data-lucide="line-chart" size="15"></i> Gráficos</button>
         <button class="tab-item" onclick="switchTab('historico', this)"><i data-lucide="history" size="15"></i> Análise</button>
-        <button class="tab-item" onclick="switchTab('despesas', this)"><i data-lucide="wallet" size="15"></i> Despesas</button>
+        <button class="tab-item" onclick="switchTab('despesas', this)"><i data-lucide="wallet" size="15"></i> Despesas Pessoais</button>
         <button class="tab-item" onclick="switchTab('reserva', this)"><i data-lucide="piggy-bank" size="15"></i> Reserva</button>
         <button class="tab-item" onclick="switchTab('servicos', this)"><i data-lucide="wrench" size="15"></i> Serv. Veículo</button>
         <button class="tab-item" onclick="switchTab('config-veiculo', this)"><i data-lucide="calculator" size="15"></i> Config. Veículo (Custo/KM)</button>
@@ -698,40 +698,104 @@
          ========================================================================== -->
     <div id="tab-metas" class="tab-content">
 
+      <div id="aviso-nova-semana-mes"></div>
+
+      <!-- META DIÁRIA -->
       <section class="card-standard">
-        <h2 class="section-title">Metas</h2>
-        <p class="section-sub">Defina suas metas e acompanhe o progresso</p>
+        <h2 class="section-title">Meta Diária</h2>
+        <p class="section-sub">Quanto você quer faturar por dia</p>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <div class="form-group">
-            <label class="form-label">Meta Diária (R$)</label>
-            <input type="text" inputmode="numeric" id="input-meta-diaria" class="input-field" placeholder="0,00" oninput="aplicarMascaraMoeda(this); salvarMetas()">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Meta Semanal (R$)</label>
-            <input type="text" inputmode="numeric" id="input-meta-semanal" class="input-field" placeholder="0,00" oninput="aplicarMascaraMoeda(this); salvarMetas()">
-          </div>
+        <div class="form-group">
+          <label class="form-label">Valor da Meta Diária (R$)</label>
+          <input type="text" inputmode="numeric" id="input-meta-diaria" class="input-field" placeholder="0,00" oninput="aplicarMascaraMoeda(this)">
         </div>
+        <button class="btn btn-primary" onclick="salvarMetas()">
+          <i data-lucide="save" size="16"></i> Salvar Meta Diária
+        </button>
 
-        <div style="margin-top: 6px;">
-          <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--texto-secundario); margin-bottom: 4px;">
+        <div style="margin-top: 16px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--texto-secundario); margin-bottom: 6px;">
             <span>Meta de hoje</span>
             <span id="texto-progresso-diario">R$ 0,00 / R$ 0,00</span>
           </div>
-          <div style="background: #E4E7EC; border-radius: var(--radius-pill); height: 10px; overflow: hidden;">
+          <div style="background: #E4E7EC; border-radius: var(--radius-pill); height: 18px; overflow: hidden;">
             <div id="barra-progresso-diario" style="background: var(--grad-principal); height: 100%; width: 0%; transition: width 0.4s ease;"></div>
           </div>
+          <p id="texto-status-diario" style="font-size: 12.5px; margin-top: 8px; font-weight: 700;"></p>
         </div>
+      </section>
 
-        <div style="margin-top: 10px;">
-          <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--texto-secundario); margin-bottom: 4px;">
+      <!-- META SEMANAL -->
+      <section class="card-standard">
+        <h2 class="section-title">Meta Semanal</h2>
+        <p class="section-sub">Quanto você quer faturar na semana (segunda a domingo)</p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label class="form-label">Valor da Meta Semanal (R$)</label>
+            <input type="text" inputmode="numeric" id="input-meta-semanal" class="input-field" placeholder="0,00" oninput="aplicarMascaraMoeda(this)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Dias trabalhados na semana</label>
+            <input type="number" id="input-dias-semana" class="input-field" placeholder="Ex: 6" min="1" max="7">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="salvarMetas()">
+          <i data-lucide="save" size="16"></i> Salvar Meta Semanal
+        </button>
+
+        <div style="margin-top: 16px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--texto-secundario); margin-bottom: 6px;">
             <span>Meta da semana</span>
             <span id="texto-progresso-semanal">R$ 0,00 / R$ 0,00</span>
           </div>
-          <div style="background: #E4E7EC; border-radius: var(--radius-pill); height: 10px; overflow: hidden;">
+          <div style="background: #E4E7EC; border-radius: var(--radius-pill); height: 18px; overflow: hidden;">
             <div id="barra-progresso-semanal" style="background: var(--grad-blue); height: 100%; width: 0%; transition: width 0.4s ease;"></div>
           </div>
+          <p id="texto-status-semanal" style="font-size: 12.5px; margin-top: 8px; font-weight: 700;"></p>
         </div>
+      </section>
+
+      <!-- META MENSAL -->
+      <section class="card-standard">
+        <h2 class="section-title">Meta Mensal</h2>
+        <p class="section-sub">Quanto você quer faturar no mês — vai acumulando a cada dia salvo na aba Hoje</p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label class="form-label">Valor da Meta Mensal (R$)</label>
+            <input type="text" inputmode="numeric" id="input-meta-mensal" class="input-field" placeholder="0,00" oninput="aplicarMascaraMoeda(this)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Dias trabalhados no mês</label>
+            <input type="number" id="input-dias-mes" class="input-field" placeholder="Ex: 24" min="1" max="31">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="salvarMetas()">
+          <i data-lucide="save" size="16"></i> Salvar Meta Mensal
+        </button>
+
+        <div style="margin-top: 16px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--texto-secundario); margin-bottom: 6px;">
+            <span>Meta do mês</span>
+            <span id="texto-progresso-mensal">R$ 0,00 / R$ 0,00</span>
+          </div>
+          <div style="background: #E4E7EC; border-radius: var(--radius-pill); height: 18px; overflow: hidden;">
+            <div id="barra-progresso-mensal" style="background: var(--grad-purple); height: 100%; width: 0%; transition: width 0.4s ease;"></div>
+          </div>
+          <p id="texto-status-mensal" style="font-size: 12.5px; margin-top: 8px; font-weight: 700;"></p>
+        </div>
+      </section>
+
+      <!-- CALENDÁRIO — CONSULTAR UM DIA PASSADO -->
+      <section class="card-standard">
+        <h2 class="section-title">Consultar um Dia Específico</h2>
+        <p class="section-sub">Veja como ficou sua meta de faturamento em qualquer dia anterior</p>
+        <div class="form-group">
+          <label class="form-label">Escolha a data</label>
+          <input type="date" id="input-calendario-metas" class="input-field" onchange="consultarMetaDoDia()">
+        </div>
+        <div id="resultado-calendario-metas"></div>
       </section>
 
     </div>
@@ -766,6 +830,17 @@
           </button>
         </div>
         <p style="font-size: 12px; color: var(--texto-secundario);">Horas registradas: <strong id="display-horas-hoje">0h</strong></p>
+
+        <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; margin-top: 10px;">
+          <div class="form-group">
+            <label class="form-label">KM Rodado Hoje</label>
+            <input type="number" id="input-km-hoje" class="input-field" placeholder="Ex: 180" step="1" min="0">
+          </div>
+          <button class="btn btn-primary" style="width: auto; padding: 0 18px;" onclick="salvarKmHoje()">
+            <i data-lucide="gauge" size="16"></i> Salvar
+          </button>
+        </div>
+        <p style="font-size: 12px; color: var(--texto-secundario);">KM registrado: <strong id="display-km-hoje">0 km</strong></p>
       </section>
 
       <!-- 1. SEÇÃO DE ENTRADAS (RECEITAS DO DIA) -->
@@ -790,7 +865,7 @@
             <button class="btn-custom btn-uber" onclick="registrarEntrada('Uber')">Uber</button>
             <button class="btn-custom btn-99" onclick="registrarEntrada('99')">99</button>
             <button class="btn-custom btn-indrive" onclick="registrarEntrada('inDriver')">inDriver</button>
-            <button class="btn-custom btn-particular" onclick="registrarEntrada('Particular')">Particular</button>
+            <button class="btn-custom btn-particular" onclick="registrarEntrada('Particular/CLT')">Particular/CLT</button>
             <button class="btn-custom btn-loja" onclick="registrarEntrada('Loja')">Loja</button>
             <button class="btn-custom btn-doacao" onclick="registrarEntrada('Doação')">Doação</button>
           </div>
@@ -874,9 +949,41 @@
             <span style="font-size: 22px; font-weight: 800; color: var(--max-blue);" id="resumo-saldo-liquido">R$ 0,00</span>
           </div>
 
+          <hr style="border: none; border-top: 1px dashed var(--linha);">
+
+          <!-- Custo estimado do carro pelos KMs rodados hoje (sem combustível) -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 12px; color: var(--texto-secundario); font-weight: 700;">Custo estimado do carro hoje:</span>
+              <span style="font-size: 15px; font-weight: 800; color: var(--max-orange);" id="resumo-custo-km-hoje">R$ 0,00</span>
+            </div>
+            <div style="font-size: 10.5px; color: var(--texto-secundario); margin-top: 2px;" id="resumo-custo-km-detalhe">
+              Baseado em 0 km — pneu, óleo, depreciação, parcela, seguro, documentação, internet e higienização (combustível não entra aqui, já é lançado separado como despesa)
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 2px;">
+            <span style="font-size: 13px; font-weight: 800; color: var(--texto-principal);">Saldo Líquido Real (após custo do carro):</span>
+            <span style="font-size: 18px; font-weight: 800; color: var(--max-cyan);" id="resumo-saldo-real">R$ 0,00</span>
+          </div>
+
+          <hr style="border: none; border-top: 1px dashed var(--linha);">
+
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 12px; color: var(--texto-secundario);">R$ por hora:</span>
+            <span style="font-size: 12px; color: var(--texto-secundario);">R$ por hora (bruto):</span>
+            <span style="font-size: 13px; font-weight: 700;" id="resumo-rs-hora-bruto">R$ 0,00/h</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 12px; color: var(--texto-secundario);">R$ por hora (líquido real):</span>
             <span style="font-size: 13px; font-weight: 700; color: var(--max-purple);" id="resumo-rs-hora">R$ 0,00/h</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 12px; color: var(--texto-secundario);">R$ por km (bruto):</span>
+            <span style="font-size: 13px; font-weight: 700;" id="resumo-rs-km-bruto">R$ 0,00/km</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 12px; color: var(--texto-secundario);">R$ por km (líquido real):</span>
+            <span style="font-size: 13px; font-weight: 700; color: var(--max-purple);" id="resumo-rs-km-liquido">R$ 0,00/km</span>
           </div>
         </div>
 
@@ -934,6 +1041,36 @@
           <span style="font-size: 18px; font-weight: 800;" id="stat-rs-hora-mes">R$ 0,00</span>
         </div>
       </div>
+
+      <section class="card-standard">
+        <h2 class="section-title">Passes Diários Pagos no Mês</h2>
+        <p class="section-sub">Quanto você já pagou de passe pra trabalhar, mês atual, por app</p>
+        <div id="analise-passes-por-app">
+          <!-- Renderizado dinamicamente -->
+        </div>
+      </section>
+
+      <section class="card-standard">
+        <h2 class="section-title">KM Rodado no Mês</h2>
+        <p class="section-sub">Total de quilômetros e o valor que está ficando por km</p>
+        <div class="stats-grid">
+          <div class="card-small">
+            <div class="icon-box blue"><i data-lucide="gauge" size="18"></i></div>
+            <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">KM Acumulado (mês)</span>
+            <span style="font-size: 18px; font-weight: 800;" id="stat-km-mes">0 km</span>
+          </div>
+          <div class="card-small">
+            <div class="icon-box purple"><i data-lucide="banknote" size="18"></i></div>
+            <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">R$ / KM Bruto</span>
+            <span style="font-size: 18px; font-weight: 800;" id="stat-rs-km-bruto-mes">R$ 0,00</span>
+          </div>
+          <div class="card-small">
+            <div class="icon-box green"><i data-lucide="banknote" size="18"></i></div>
+            <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">R$ / KM Líquido</span>
+            <span style="font-size: 18px; font-weight: 800;" id="stat-rs-km-liquido-mes">R$ 0,00</span>
+          </div>
+        </div>
+      </section>
 
       <section class="card-standard">
         <h2 class="section-title">Faturamento — Últimos 7 dias</h2>
@@ -1171,13 +1308,27 @@
         </div>
       </section>
 
-      <!-- RESERVA DE HOJE -->
+      <!-- RESERVA DO DIA (COM SELETOR DE DATA) -->
+      <section class="card-standard" style="padding: 14px 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <div>
+            <h2 class="section-title" style="font-size: 15px;">Data do Registro</h2>
+            <p class="section-sub" style="margin-top: 0;">Esqueceu de registrar num dia? Selecione a data aqui</p>
+          </div>
+          <input type="date" id="input-data-reserva" class="input-field" style="width: 155px; height: 40px; font-size: 13px;" onchange="aoMudarDataReserva()">
+        </div>
+        <button id="btn-voltar-hoje-reserva" class="btn" style="background: #E2E8F0; color: var(--texto-secundario); height: 38px; margin-top: 8px; display: none;" onclick="voltarParaHojeReserva()">
+          <i data-lucide="rotate-ccw" size="14"></i> Voltar para hoje
+        </button>
+      </section>
+
+      <!-- RESERVA DO DIA SELECIONADO -->
       <section class="card-hero">
         <h2 class="section-title" style="margin-bottom: 4px;" id="titulo-reserva-hoje">Reserva de Hoje</h2>
-        <p class="section-sub">10% calculado em cima do que você já lançou como entrada hoje</p>
+        <p class="section-sub" id="reserva-sub-dia">10% calculado em cima do que você já lançou como entrada hoje</p>
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-          <span style="font-size: 13px; font-weight: 700; color: var(--texto-secundario);">Ideal guardar hoje:</span>
+          <span style="font-size: 13px; font-weight: 700; color: var(--texto-secundario);">Ideal guardar nesse dia:</span>
           <span style="font-size: 22px; font-weight: 800; color: var(--max-green);" id="reserva-ideal-hoje">R$ 0,00</span>
         </div>
         <p style="font-size: 11px; color: var(--texto-secundario); margin-top: 2px;" id="reserva-base-calculo">Baseado em R$ 0,00 de entradas hoje</p>
@@ -1185,11 +1336,11 @@
         <hr style="border: none; border-top: 1px dashed var(--linha); margin: 14px 0;">
 
         <div class="form-group">
-          <label class="form-label">Quanto você guardou de fato hoje? (R$)</label>
+          <label class="form-label" id="label-reserva-guardado">Quanto você guardou de fato hoje? (R$)</label>
           <input type="text" inputmode="numeric" id="input-reserva-guardado" class="input-field" placeholder="0,00" oninput="aplicarMascaraMoeda(this)">
         </div>
         <button class="btn btn-primary" onclick="registrarReservaHoje()">
-          <i data-lucide="piggy-bank" size="16"></i> Salvar o que guardei hoje
+          <i data-lucide="piggy-bank" size="16"></i> Salvar o que guardei nesse dia
         </button>
         <p style="font-size: 12px; color: var(--max-green); text-align: center; height: 16px; margin-top: 8px; font-weight: 700;" id="texto-reserva-salva"></p>
       </section>
@@ -1599,12 +1750,14 @@
     let bancoContas = [];
     let servicos = [];           // {id, nome, km, valor, data}
     let horasPorDia = {};        // { 'YYYY-MM-DD': horasNumero }
+    let kmPorDia = {};           // { 'YYYY-MM-DD': kmNumero }
     let diasFinalizados = {};    // { 'YYYY-MM-DD': true }
-    let metas = { diaria: 0, semanal: 0 };
+    let metas = { diaria: 0, semanal: 0, mensal: 0, diasSemana: 0, diasMes: 0, semanaConfirmada: '', mesConfirmado: '' };
     let dataSelecionada = getDataHojeISO();
     let graficosDesatualizados = true; // controla se os gráficos da aba Análise precisam ser recalculados
     let reservaPorDia = {}; // { 'YYYY-MM-DD': valorGuardadoNumero }
     let reservaTaxaMensal = 0; // % ao mês, pra simulação de rendimento
+    let dataSelecionadaReserva = getDataHojeISO();
 
     const CANAIS_CORRIDA = ['Uber', '99', 'inDriver'];
 
@@ -1731,6 +1884,49 @@
       storageSet('horas', horasPorDia);
     }
 
+    async function salvarKmHoje() {
+      const input = document.getElementById('input-km-hoje');
+      const km = parseFloat(input.value);
+      if (isNaN(km) || km < 0) {
+        alert('Digite um KM válido.');
+        return;
+      }
+      input.value = '';
+      kmPorDia[dataSelecionada] = km;
+      atualizarPainelHoje();
+      graficosDesatualizados = true;
+      storageSet('km-por-dia', kmPorDia);
+    }
+
+    // Custo por KM baseado na Config. Veículo, SEM o combustível — porque o
+    // combustível já é lançado separadamente como despesa do dia.
+    function calcularCustoPorKmSemCombustivel() {
+      const pneuValor = moedaParaNumero(document.getElementById('input-pneu-valor').value);
+      const pneuKM = parseFloat(document.getElementById('input-pneu-km').value) || 1;
+      const oleoValor = moedaParaNumero(document.getElementById('input-oleo-valor').value);
+      const oleoKM = parseFloat(document.getElementById('input-oleo-km').value) || 1;
+      const kmMes = parseFloat(document.getElementById('input-km-mes').value) || 1;
+      const kmAno = kmMes * 12;
+      const depreValorCarro = moedaParaNumero(document.getElementById('input-depre-valor-carro').value);
+      const deprePercentual = parseFloat(document.getElementById('input-depre-percentual').value) || 0;
+      const parcelaMensal = moedaParaNumero(document.getElementById('input-parcela-mensal').value);
+      const seguroAnual = moedaParaNumero(document.getElementById('input-seguro-anual').value);
+      const documentacaoAnual = moedaParaNumero(document.getElementById('input-documentacao-anual').value);
+      const internetMensal = moedaParaNumero(document.getElementById('input-internet-mensal').value);
+      const higienMensal = moedaParaNumero(document.getElementById('input-higien-mensal').value);
+
+      const custoPneuKM = pneuValor / pneuKM;
+      const custoOleoKM = oleoValor / oleoKM;
+      const custoDepreKM = (depreValorCarro * (deprePercentual / 100)) / kmAno;
+      const custoParcelaKM = (parcelaMensal * 12) / kmAno;
+      const custoSeguroKM = seguroAnual / kmAno;
+      const custoDocKM = documentacaoAnual / kmAno;
+      const custoInternetKM = (internetMensal * 12) / kmAno;
+      const custoHigienKM = (higienMensal * 12) / kmAno;
+
+      return custoPneuKM + custoOleoKM + custoDepreKM + custoParcelaKM + custoSeguroKM + custoDocKM + custoInternetKM + custoHigienKM;
+    }
+
     async function alternarFinalizarDia() {
       diasFinalizados[dataSelecionada] = !diasFinalizados[dataSelecionada];
       await storageSet('dias-finalizados', diasFinalizados);
@@ -1808,8 +2004,37 @@
       const inputHoras = document.getElementById('input-horas-hoje');
       inputHoras.value = '';
       inputHoras.placeholder = horasHoje > 0 ? `Atual: ${horasHoje}h — digite p/ atualizar` : 'Ex: 8';
-      const rsHora = horasHoje > 0 ? saldoLiquido / horasHoje : 0;
-      document.getElementById('resumo-rs-hora').innerText = `${formatarMoeda(rsHora)}/h`;
+
+      // KM do dia selecionado
+      const kmHoje = kmPorDia[hoje] || 0;
+      document.getElementById('display-km-hoje').innerText = `${kmHoje} km`;
+      const inputKm = document.getElementById('input-km-hoje');
+      inputKm.value = '';
+      inputKm.placeholder = kmHoje > 0 ? `Atual: ${kmHoje} km — digite p/ atualizar` : 'Ex: 180';
+
+      // Custo estimado do carro pelos KMs rodados (sem combustível, já lançado à parte)
+      const custoPorKmSemComb = calcularCustoPorKmSemCombustivel();
+      const custoKmHoje = kmHoje * custoPorKmSemComb;
+      document.getElementById('resumo-custo-km-hoje').innerText = formatarMoeda(custoKmHoje);
+      document.getElementById('resumo-custo-km-detalhe').innerText =
+        `Baseado em ${kmHoje} km × ${formatarMoeda(custoPorKmSemComb)}/km — pneu, óleo, depreciação, parcela, seguro, documentação, internet e higienização (combustível não entra aqui, já é lançado separado como despesa)`;
+
+      const saldoReal = saldoLiquido - custoKmHoje;
+      const elSaldoReal = document.getElementById('resumo-saldo-real');
+      elSaldoReal.innerText = formatarMoeda(saldoReal);
+      elSaldoReal.style.color = saldoReal >= 0 ? 'var(--max-cyan)' : 'var(--max-red)';
+
+      // R$/hora bruto e líquido real
+      const rsHoraBruto = horasHoje > 0 ? totalEntradas / horasHoje : 0;
+      const rsHoraLiquido = horasHoje > 0 ? saldoReal / horasHoje : 0;
+      document.getElementById('resumo-rs-hora-bruto').innerText = `${formatarMoeda(rsHoraBruto)}/h`;
+      document.getElementById('resumo-rs-hora').innerText = `${formatarMoeda(rsHoraLiquido)}/h`;
+
+      // R$/km bruto e líquido real
+      const rsKmBruto = kmHoje > 0 ? totalEntradas / kmHoje : 0;
+      const rsKmLiquido = kmHoje > 0 ? saldoReal / kmHoje : 0;
+      document.getElementById('resumo-rs-km-bruto').innerText = `${formatarMoeda(rsKmBruto)}/km`;
+      document.getElementById('resumo-rs-km-liquido').innerText = `${formatarMoeda(rsKmLiquido)}/km`;
 
       // Tabela de lançamentos
       const tabelaBody = document.getElementById('tabela-lancamentos-hoje');
@@ -1962,33 +2187,136 @@
     // ==========================================================================
     // METAS (DIÁRIA E SEMANAL)
     // ==========================================================================
+    function getInicioSemanaDe(dataISO) {
+      const d = new Date(dataISO + 'T00:00:00');
+      const dow = d.getDay();
+      const offset = dow === 0 ? 6 : dow - 1;
+      d.setDate(d.getDate() - offset);
+      return d.toISOString().split('T')[0];
+    }
+
     async function salvarMetas() {
       metas.diaria = moedaParaNumero(document.getElementById('input-meta-diaria').value);
       metas.semanal = moedaParaNumero(document.getElementById('input-meta-semanal').value);
+      metas.mensal = moedaParaNumero(document.getElementById('input-meta-mensal').value);
+      metas.diasSemana = parseInt(document.getElementById('input-dias-semana').value) || 0;
+      metas.diasMes = parseInt(document.getElementById('input-dias-mes').value) || 0;
+      metas.semanaConfirmada = getInicioSemanaDe(getDataHojeISO());
+      metas.mesConfirmado = getMesAnoAtual();
       await storageSet('metas', metas);
       renderProgressoMetas();
+    }
+
+    function renderBarraMeta(opts) {
+      const { valorAtual, valorMeta, idTexto, idBarra, idStatus, rotuloRestante, diasRestantes, temDiasConfigurados } = opts;
+      const pct = valorMeta > 0 ? (valorAtual / valorMeta) * 100 : 0;
+      document.getElementById(idTexto).innerText = `${formatarMoeda(valorAtual)} / ${formatarMoeda(valorMeta)}`;
+      document.getElementById(idBarra).style.width = `${Math.min(100, pct)}%`;
+
+      const statusEl = document.getElementById(idStatus);
+      if (valorMeta <= 0) {
+        statusEl.innerText = 'Defina um valor de meta acima pra acompanhar o progresso.';
+        statusEl.style.color = 'var(--texto-secundario)';
+        return;
+      }
+      if (valorAtual >= valorMeta) {
+        const excedente = valorAtual - valorMeta;
+        const pctExcedente = (excedente / valorMeta) * 100;
+        statusEl.innerText = `🎉 Meta batida! ${formatarMoeda(excedente)} a mais (${pctExcedente.toFixed(0)}% acima da meta)`;
+        statusEl.style.color = 'var(--max-green)';
+      } else {
+        const falta = valorMeta - valorAtual;
+        let texto = `Falta ${formatarMoeda(falta)} ${rotuloRestante}`;
+        if (diasRestantes && temDiasConfigurados) {
+          const porDia = falta / diasRestantes;
+          texto += ` — ${formatarMoeda(porDia)}/dia nos ${diasRestantes} dia(s) que restam`;
+        }
+        statusEl.innerText = texto;
+        statusEl.style.color = 'var(--max-orange)';
+      }
+    }
+
+    function renderAvisoNovaSemanaMes() {
+      const semanaAtual = getInicioSemanaDe(getDataHojeISO());
+      const mesAtual = getMesAnoAtual();
+      const avisos = [];
+      if (metas.semanal > 0 && metas.semanaConfirmada !== semanaAtual) {
+        avisos.push('Uma nova semana começou! Confirme quantos dias você vai trabalhar nela, na Meta Semanal, e clique em salvar.');
+      }
+      if (metas.mensal > 0 && metas.mesConfirmado !== mesAtual) {
+        avisos.push('Um novo mês começou! Confirme quantos dias você vai trabalhar nele, na Meta Mensal, e clique em salvar.');
+      }
+      const container = document.getElementById('aviso-nova-semana-mes');
+      if (!container) return;
+      if (avisos.length === 0) { container.innerHTML = ''; return; }
+      container.innerHTML = avisos.map(msg => `
+        <div class="alerta-despesa" style="margin-bottom: 8px;">
+          <i data-lucide="calendar-clock" size="20" style="color:#D97706;"></i>
+          <div><h4 style="font-size:13px; font-weight:700; color:#92400E;">Lembrete</h4><p style="font-size:12px; color:#B45309;">${msg}</p></div>
+        </div>`).join('');
+      criarIconesSeguro();
+    }
+
+    function consultarMetaDoDia() {
+      const dataSelecionada = document.getElementById('input-calendario-metas').value;
+      if (!dataSelecionada) return;
+      const faturamentoDia = totalEntradasDoDia(dataSelecionada);
+      const container = document.getElementById('resultado-calendario-metas');
+      const dataFormatada = new Date(dataSelecionada + 'T00:00:00').toLocaleDateString('pt-BR');
+      const temMeta = metas.diaria > 0;
+      const bateuMeta = temMeta && faturamentoDia >= metas.diaria;
+      container.innerHTML = `
+        <div class="item-row">
+          <div>
+            <span style="font-size:13px; font-weight:600;">${dataFormatada}</span>
+            <p style="font-size:11px; color:var(--texto-secundario);">Meta diária configurada hoje: ${formatarMoeda(metas.diaria)}</p>
+          </div>
+          <div style="text-align:right;">
+            <span style="font-size:15px; font-weight:800; color:${temMeta ? (bateuMeta ? 'var(--max-green)' : 'var(--max-orange)') : 'var(--texto-principal)'};">${formatarMoeda(faturamentoDia)}</span>
+            <p style="font-size:11px; color:${bateuMeta ? 'var(--max-green)' : 'var(--max-orange)'};">${temMeta ? (bateuMeta ? '✓ Bateu a meta' : 'Abaixo da meta') : 'Sem meta configurada'}</p>
+          </div>
+        </div>`;
     }
 
     function renderProgressoMetas() {
       const hoje = getDataHojeISO();
       const entradas = todosLancamentos.filter(l => l.tipo === 'entrada');
+
+      // --- DIÁRIA ---
       const faturamentoHoje = entradas.filter(l => l.data === hoje).reduce((a, l) => a + l.valor, 0);
+      renderBarraMeta({
+        valorAtual: faturamentoHoje, valorMeta: metas.diaria,
+        idTexto: 'texto-progresso-diario', idBarra: 'barra-progresso-diario', idStatus: 'texto-status-diario',
+        rotuloRestante: 'para bater a meta de hoje'
+      });
 
-      const d = new Date();
-      const dow = d.getDay();
-      const mondayOffset = dow === 0 ? 6 : dow - 1;
-      const segunda = new Date(d);
-      segunda.setDate(d.getDate() - mondayOffset);
-      const segundaISO = segunda.toISOString().split('T')[0];
-      const faturamentoSemana = entradas.filter(l => l.data >= segundaISO && l.data <= hoje).reduce((a, l) => a + l.valor, 0);
+      // --- SEMANAL ---
+      const segundaISO = getInicioSemanaDe(hoje);
+      const entradasSemana = entradas.filter(l => l.data >= segundaISO && l.data <= hoje);
+      const faturamentoSemana = entradasSemana.reduce((a, l) => a + l.valor, 0);
+      const diasSemanaComLancamento = new Set(entradasSemana.map(l => l.data)).size;
+      const diasSemanaRestantes = Math.max(1, (metas.diasSemana || 0) - diasSemanaComLancamento);
+      renderBarraMeta({
+        valorAtual: faturamentoSemana, valorMeta: metas.semanal,
+        idTexto: 'texto-progresso-semanal', idBarra: 'barra-progresso-semanal', idStatus: 'texto-status-semanal',
+        rotuloRestante: 'para bater a meta da semana',
+        diasRestantes: diasSemanaRestantes, temDiasConfigurados: !!metas.diasSemana
+      });
 
-      const pctDiario = metas.diaria > 0 ? Math.min(100, (faturamentoHoje / metas.diaria) * 100) : 0;
-      const pctSemanal = metas.semanal > 0 ? Math.min(100, (faturamentoSemana / metas.semanal) * 100) : 0;
+      // --- MENSAL ---
+      const mesAtual = getMesAnoAtual();
+      const entradasMes = entradas.filter(l => mesAnoDeData(l.data) === mesAtual);
+      const faturamentoMes = entradasMes.reduce((a, l) => a + l.valor, 0);
+      const diasMesComLancamento = new Set(entradasMes.map(l => l.data)).size;
+      const diasMesRestantes = Math.max(1, (metas.diasMes || 0) - diasMesComLancamento);
+      renderBarraMeta({
+        valorAtual: faturamentoMes, valorMeta: metas.mensal,
+        idTexto: 'texto-progresso-mensal', idBarra: 'barra-progresso-mensal', idStatus: 'texto-status-mensal',
+        rotuloRestante: 'para bater a meta do mês',
+        diasRestantes: diasMesRestantes, temDiasConfigurados: !!metas.diasMes
+      });
 
-      document.getElementById('texto-progresso-diario').innerText = `${formatarMoeda(faturamentoHoje)} / ${formatarMoeda(metas.diaria)}`;
-      document.getElementById('barra-progresso-diario').style.width = `${pctDiario}%`;
-      document.getElementById('texto-progresso-semanal').innerText = `${formatarMoeda(faturamentoSemana)} / ${formatarMoeda(metas.semanal)}`;
-      document.getElementById('barra-progresso-semanal').style.width = `${pctSemanal}%`;
+      renderAvisoNovaSemanaMes();
     }
 
     // ==========================================================================
@@ -2055,6 +2383,44 @@
         ? formatarMoeda(totalValorMes / totalCorridasMes) : 'R$ 0,00';
       document.getElementById('stat-rs-hora-mes').innerText = totalHorasMes > 0
         ? formatarMoeda(totalValorMes / totalHorasMes) : 'R$ 0,00';
+
+      // --- Passes diários pagos no mês, individuais por app ---
+      const saidasMesAtual = todosLancamentos.filter(l => l.tipo === 'saida' && mesAnoDeData(l.data) === mesAtual);
+      const passesPorApp = {};
+      saidasMesAtual.filter(l => l.categoria.startsWith('Passe')).forEach(l => {
+        passesPorApp[l.categoria] = (passesPorApp[l.categoria] || 0) + l.valor;
+      });
+      const totalPassesMes = Object.values(passesPorApp).reduce((a, v) => a + v, 0);
+      const containerPasses = document.getElementById('analise-passes-por-app');
+      if (containerPasses) {
+        const linhasPasses = Object.keys(passesPorApp)
+          .sort((a, b) => passesPorApp[b] - passesPorApp[a])
+          .map(cat => `
+            <div class="item-row">
+              <span style="font-size: 13px; font-weight: 600;">${cat}</span>
+              <span style="font-size: 14px; font-weight: 800; color: var(--max-red);">${formatarMoeda(passesPorApp[cat])}</span>
+            </div>`).join('');
+        containerPasses.innerHTML = (linhasPasses || `<p style="font-size: 13px; color: var(--texto-secundario); text-align: center; padding: 8px 0;">Nenhum passe lançado neste mês.</p>`)
+          + `<div class="item-row" style="border-top: 1px solid var(--linha); margin-top: 4px; padding-top: 10px;">
+               <span style="font-size: 13px; font-weight: 800;">Total no mês</span>
+               <span style="font-size: 15px; font-weight: 800; color: var(--texto-principal);">${formatarMoeda(totalPassesMes)}</span>
+             </div>`;
+      }
+
+      // --- KM acumulado do mês, R$/km bruto e líquido ---
+      const kmMesAcumulado = Object.keys(kmPorDia)
+        .filter(d => mesAnoDeData(d) === mesAtual)
+        .reduce((a, d) => a + kmPorDia[d], 0);
+      const custosMesAtual = saidasMesAtual.reduce((a, l) => a + l.valor, 0);
+      const custoPorKmSemComb = calcularCustoPorKmSemCombustivel();
+      const custoKmTotalMes = kmMesAcumulado * custoPorKmSemComb;
+      const lucroLiquidoMesComKm = (totalValorMes - custosMesAtual) - custoKmTotalMes;
+
+      document.getElementById('stat-km-mes').innerText = `${kmMesAcumulado.toLocaleString('pt-BR')} km`;
+      document.getElementById('stat-rs-km-bruto-mes').innerText = kmMesAcumulado > 0
+        ? formatarMoeda(totalValorMes / kmMesAcumulado) : 'R$ 0,00';
+      document.getElementById('stat-rs-km-liquido-mes').innerText = kmMesAcumulado > 0
+        ? formatarMoeda(lucroLiquidoMesComKm / kmMesAcumulado) : 'R$ 0,00';
 
       // --- Gráfico 1: Faturamento últimos 7 dias ---
       const dias7 = ultimosNDias(7);
@@ -2157,8 +2523,8 @@
       });
 
       // --- Gráfico 6: Faturamento por app, mês a mês (linhas comparativas) ---
-      const canaisPrincipais = ['Uber', '99', 'inDriver', 'Particular'];
-      const coresCanais = { 'Uber': '#111827', '99': '#FF7412', 'inDriver': '#00B175', 'Particular': '#2878E8' };
+      const canaisPrincipais = ['Uber', '99', 'inDriver', 'Particular/CLT'];
+      const coresCanais = { 'Uber': '#111827', '99': '#FF7412', 'inDriver': '#00B175', 'Particular/CLT': '#2878E8' };
       const datasetsAppMensal = canaisPrincipais.map(canal => ({
         label: canal,
         data: meses6.map(m => entradas.filter(l => mesAnoDeData(l.data) === m && l.categoria === canal).reduce((a, l) => a + l.valor, 0)),
@@ -2208,6 +2574,9 @@
       });
 
       // --- Gráfico 8: Esta semana x semana passada (dia a dia) ---
+      const hojeD = new Date();
+      const dow = hojeD.getDay();
+      const offsetSegunda = dow === 0 ? 6 : dow - 1;
       const segundaAtual = new Date(hojeD);
       segundaAtual.setDate(hojeD.getDate() - offsetSegunda);
       const diasSemanaAtual = Array.from({ length: 7 }, (_, i) => {
@@ -2345,8 +2714,8 @@
                 <button class="btn-status-pago ${conta.pago ? 'pago' : 'pendente'}" onclick="alternarStatusPago('${conta.id}')">
                   ${conta.pago ? '✓ PAGO' : '• PENDENTE'}
                 </button>
-                <button class="btn-delete-row" onclick="excluirConta('${conta.id}')" title="Excluir conta">
-                  <i data-lucide="trash-2" size="14"></i>
+                <button class="btn-delete-row" onclick="pedirConfirmacaoExclusaoConta('${conta.id}')" title="Excluir conta" style="${conta.id === contaParaConfirmarExclusao ? 'background: var(--max-red); color: white; width: auto; padding: 0 10px; font-size: 10px; font-weight: 800; border-radius: 8px;' : ''}">
+                  ${conta.id === contaParaConfirmarExclusao ? 'CONFIRMAR?' : '<i data-lucide="trash-2" size="14"></i>'}
                 </button>
               </div>
             </div>
@@ -2365,8 +2734,25 @@
       }
     }
 
+    let contaParaConfirmarExclusao = null;
+
+    function pedirConfirmacaoExclusaoConta(id) {
+      if (contaParaConfirmarExclusao === id) {
+        contaParaConfirmarExclusao = null;
+        excluirConta(id);
+      } else {
+        contaParaConfirmarExclusao = id;
+        renderDespesas();
+        setTimeout(() => {
+          if (contaParaConfirmarExclusao === id) {
+            contaParaConfirmarExclusao = null;
+            renderDespesas();
+          }
+        }, 3000);
+      }
+    }
+
     async function excluirConta(id) {
-      if (!confirm('Tem certeza que deseja excluir essa conta?')) return;
       bancoContas = bancoContas.filter(c => c.id !== id);
       await storageSet('contas', bancoContas);
       renderDespesas();
@@ -2577,14 +2963,27 @@
         alert('Digite um valor válido.');
         return;
       }
-      const hoje = getDataHojeISO();
-      reservaPorDia[hoje] = valor;
+      reservaPorDia[dataSelecionadaReserva] = valor;
       input.value = '';
       await storageSet('reserva-por-dia', reservaPorDia);
       renderReserva();
       const texto = document.getElementById('texto-reserva-salva');
       texto.innerText = '✓ Guardado registrado!';
       setTimeout(() => { texto.innerText = ''; }, 2500);
+    }
+
+    function aoMudarDataReserva() {
+      const input = document.getElementById('input-data-reserva');
+      dataSelecionadaReserva = input.value || getDataHojeISO();
+      document.getElementById('btn-voltar-hoje-reserva').style.display = dataSelecionadaReserva === getDataHojeISO() ? 'none' : 'flex';
+      renderReserva();
+    }
+
+    function voltarParaHojeReserva() {
+      dataSelecionadaReserva = getDataHojeISO();
+      document.getElementById('input-data-reserva').value = dataSelecionadaReserva;
+      document.getElementById('btn-voltar-hoje-reserva').style.display = 'none';
+      renderReserva();
     }
 
     function exibirSimulacaoReserva() {
@@ -2652,12 +3051,32 @@
     }
 
     function renderReserva() {
-      const hoje = getDataHojeISO();
-      const entradasHoje = totalEntradasDoDia(hoje);
+      const diaAlvo = dataSelecionadaReserva;
+      const ehHoje = diaAlvo === getDataHojeISO();
+      const dataFormatadaTitulo = ehHoje ? 'Hoje' : new Date(diaAlvo + 'T00:00:00').toLocaleDateString('pt-BR');
+
+      document.getElementById('titulo-reserva-hoje').innerText = ehHoje ? 'Reserva de Hoje' : `Reserva — ${dataFormatadaTitulo}`;
+      document.getElementById('reserva-sub-dia').innerText = ehHoje
+        ? '10% calculado em cima do que você já lançou como entrada hoje'
+        : `10% calculado em cima do que foi lançado como entrada em ${dataFormatadaTitulo}`;
+      document.getElementById('label-reserva-guardado').innerText = ehHoje
+        ? 'Quanto você guardou de fato hoje? (R$)'
+        : `Quanto você guardou de fato em ${dataFormatadaTitulo}? (R$)`;
+
+      const entradasHoje = totalEntradasDoDia(diaAlvo);
       const idealHoje = entradasHoje * 0.10;
 
       document.getElementById('reserva-ideal-hoje').innerText = formatarMoeda(idealHoje);
-      document.getElementById('reserva-base-calculo').innerText = `Baseado em ${formatarMoeda(entradasHoje)} de entradas hoje`;
+      document.getElementById('reserva-base-calculo').innerText = ehHoje
+        ? `Baseado em ${formatarMoeda(entradasHoje)} de entradas hoje`
+        : `Baseado em ${formatarMoeda(entradasHoje)} de entradas em ${dataFormatadaTitulo}`;
+
+      // Preenche o campo com o que já foi registrado nesse dia, se houver (limpa se não houver)
+      const inputGuardado = document.getElementById('input-reserva-guardado');
+      if (document.activeElement !== inputGuardado) {
+        const jaRegistrado = reservaPorDia[diaAlvo];
+        inputGuardado.value = jaRegistrado ? formatarParaCampoMoeda(jaRegistrado) : '';
+      }
 
       // Acumulado ideal: 10% de cada dia com entradas já lançadas
       const entradasPorDia = {};
@@ -2923,22 +3342,24 @@
       tentar('renderEstacoesRadio', renderEstacoesRadio);
       tentar('data-selecionada', () => { document.getElementById('input-data-selecionada').value = dataSelecionada; });
       tentar('data-servico', () => { document.getElementById('input-servico-data').value = getDataHojeISO(); });
+      tentar('data-reserva', () => { document.getElementById('input-data-reserva').value = dataSelecionadaReserva; });
       criarIconesSeguro();
 
       let lancamentosSalvos = [], contasSalvas = [], servicosSalvos = [], horasSalvas = {},
           configVeiculoSalva = null, diasFinalizadosSalvos = {}, metasSalvas = { diaria: 0, semanal: 0 },
-          reservaPorDiaSalva = {}, reservaTaxaSalva = 0;
+          reservaPorDiaSalva = {}, reservaTaxaSalva = 0, kmPorDiaSalvo = {};
       try {
-        [lancamentosSalvos, contasSalvas, servicosSalvos, horasSalvas, configVeiculoSalva, diasFinalizadosSalvos, metasSalvas, reservaPorDiaSalva, reservaTaxaSalva] = await Promise.all([
+        [lancamentosSalvos, contasSalvas, servicosSalvos, horasSalvas, configVeiculoSalva, diasFinalizadosSalvos, metasSalvas, reservaPorDiaSalva, reservaTaxaSalva, kmPorDiaSalvo] = await Promise.all([
           storageGet('lancamentos', []),
           storageGet('contas', []),
           storageGet('servicos', []),
           storageGet('horas', {}),
           storageGet('config-veiculo', null),
           storageGet('dias-finalizados', {}),
-          storageGet('metas', { diaria: 0, semanal: 0 }),
+          storageGet('metas', { diaria: 0, semanal: 0, mensal: 0, diasSemana: 0, diasMes: 0, semanaConfirmada: '', mesConfirmado: '' }),
           storageGet('reserva-por-dia', {}),
-          storageGet('reserva-taxa', 0)
+          storageGet('reserva-taxa', 0),
+          storageGet('km-por-dia', {})
         ]);
       } catch (e) {
         console.error('Falha ao carregar dados salvos:', e);
@@ -2948,14 +3369,18 @@
       bancoContas = contasSalvas || [];
       servicos = servicosSalvos || [];
       horasPorDia = horasSalvas || {};
+      kmPorDia = kmPorDiaSalvo || {};
       diasFinalizados = diasFinalizadosSalvos || {};
-      metas = metasSalvas || { diaria: 0, semanal: 0 };
+      metas = metasSalvas || { diaria: 0, semanal: 0, mensal: 0, diasSemana: 0, diasMes: 0, semanaConfirmada: '', mesConfirmado: '' };
       reservaPorDia = reservaPorDiaSalva || {};
       reservaTaxaMensal = reservaTaxaSalva || 0;
 
       tentar('preencher metas na tela', () => {
         document.getElementById('input-meta-diaria').value = formatarParaCampoMoeda(metas.diaria);
         document.getElementById('input-meta-semanal').value = formatarParaCampoMoeda(metas.semanal);
+        document.getElementById('input-meta-mensal').value = formatarParaCampoMoeda(metas.mensal);
+        document.getElementById('input-dias-semana').value = metas.diasSemana || '';
+        document.getElementById('input-dias-mes').value = metas.diasMes || '';
         document.getElementById('historico-filtro-mes').value = getMesAnoAtual();
       });
 
