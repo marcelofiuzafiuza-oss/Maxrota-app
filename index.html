@@ -16,6 +16,11 @@
   <!-- Chart.js para Gráficos -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <!-- Firebase (Login + Banco de Dados na Nuvem) -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
   <style>
     /* ==========================================================================
        MAX ROTA — DESIGN SYSTEM V1.0 (TOKENS CSS)
@@ -501,6 +506,79 @@
       from { opacity: 0; transform: translateY(6px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+
+    /* ========================================================================
+       TELA DE LOGIN
+       ======================================================================== */
+    .tela-login {
+      position: fixed;
+      inset: 0;
+      background: var(--grad-dark);
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-y: auto;
+    }
+    .login-card {
+      background: white;
+      border-radius: 28px;
+      padding: 32px 26px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.35);
+    }
+    .login-logo-box { display: flex; flex-direction: column; align-items: center; margin-bottom: 22px; }
+    .login-logo-icone {
+      width: 62px; height: 62px; border-radius: 18px;
+      background: var(--grad-principal);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 12px;
+      box-shadow: 0 10px 24px rgba(18,185,129,0.35);
+    }
+    .login-logo-texto { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+    .login-logo-texto span { background: var(--grad-principal); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .login-tagline { font-size: 12.5px; color: var(--texto-secundario); text-align: center; margin-top: 2px; }
+
+    .btn-google {
+      width: 100%;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: white;
+      border: 1.5px solid var(--linha);
+      border-radius: var(--radius-md);
+      padding: 13px;
+      font-size: 14px; font-weight: 700; color: #3C4043;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      margin-top: 18px;
+    }
+    .btn-google:hover { background: #F8F9FA; }
+
+    .login-divisor {
+      display: flex; align-items: center; gap: 10px;
+      margin: 18px 0;
+      font-size: 11px; color: var(--texto-secundario); font-weight: 700;
+    }
+    .login-divisor::before, .login-divisor::after {
+      content: ''; flex: 1; height: 1px; background: var(--linha);
+    }
+
+    .login-alterna {
+      text-align: center; font-size: 12.5px; color: var(--texto-secundario);
+      margin-top: 14px; cursor: pointer; font-weight: 600;
+    }
+    .login-alterna span { color: var(--max-blue); font-weight: 800; }
+
+    #login-erro {
+      color: var(--max-red); font-size: 12px; text-align: center;
+      margin-top: 10px; font-weight: 700; min-height: 16px;
+    }
+    #login-carregando {
+      text-align: center; font-size: 12px; color: var(--texto-secundario);
+      margin-top: 10px; min-height: 16px; font-weight: 600;
+    }
+
     .fab-button.aberto { transform: rotate(45deg); }
 
     .fab-menu-overlay {
@@ -629,17 +707,66 @@
     </div>
   </div>
   <script>
-    // Proteção: se algo impedir o carregamento normal, o splash some sozinho depois de 5s
+    // Proteção: se algo impedir o carregamento normal, o splash some sozinho depois de 8s
     setTimeout(() => {
       const el = document.getElementById('splash-screen');
       if (el) el.classList.add('splash-oculto');
-    }, 5000);
+      const loginEl = document.getElementById('tela-login');
+      const erroEl = document.getElementById('login-erro');
+      if (loginEl && loginEl.style.display !== 'flex' && document.getElementById('app-container-principal').style.display !== 'flex') {
+        loginEl.style.display = 'flex';
+        if (erroEl) erroEl.innerText = 'Demorou demais pra conectar. Verifique sua internet e recarregue a página.';
+      }
+    }, 8000);
   </script>
+
+  <!-- TELA DE LOGIN -->
+  <div class="tela-login" id="tela-login">
+    <div class="login-card">
+      <div class="login-logo-box">
+        <div class="login-logo-icone"><i data-lucide="navigation" size="28" style="color: white;"></i></div>
+        <div class="login-logo-texto"><span>MAX</span> ROTA</div>
+        <p class="login-tagline">Entre pra acessar sua gestão</p>
+      </div>
+
+      <button class="btn-google" onclick="entrarComGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18">
+          <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/>
+          <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A9 9 0 0 0 9 18z"/>
+          <path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.66 9c0-.59.1-1.17.29-1.7V4.97H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.03l2.99-2.33z"/>
+          <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97l2.99 2.33C4.66 5.17 6.65 3.58 9 3.58z"/>
+        </svg>
+        Entrar com Google
+      </button>
+
+      <div class="login-divisor"><span>ou com e-mail</span></div>
+
+      <div class="form-group">
+        <label class="form-label">E-mail</label>
+        <input type="email" id="login-email" class="input-field" placeholder="seuemail@exemplo.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Senha</label>
+        <input type="password" id="login-senha" class="input-field" placeholder="Mínimo 6 caracteres">
+      </div>
+
+      <button class="btn btn-primary" id="btn-login-acao" onclick="entrarComEmailSenha()">
+        <i data-lucide="log-in" size="16"></i> Entrar
+      </button>
+
+      <p class="login-alterna" id="texto-alternar-login" onclick="alternarModoLogin()">
+        Ainda não tem conta? <span>Criar conta nova</span>
+      </p>
+
+      <p id="login-erro"></p>
+      <p id="login-carregando"></p>
+    </div>
+  </div>
 
   <!-- ELEMENTO DE ÁUDIO OCULTO PARA REPRODUÇÃO DA RÁDIO -->
   <audio id="audio-player" src="https://live.hunter.fm/pop_high"></audio>
 
-  <main class="app-container">
+  <main class="app-container" id="app-container-principal" style="display: none;">
 
     <!-- CABEÇALHO PRINCIPAL -->
     <header class="header-card">
@@ -648,9 +775,15 @@
         <span class="logo-brand">MAX</span>
         <span class="logo-sub">ROTA</span>
       </div>
-      <div>
+      <div style="flex: 1;">
         <h1 class="header-title">MAX ROTA</h1>
         <p class="header-subtitle">Gestão para Motoristas</p>
+      </div>
+      <div style="text-align: right; flex-shrink: 0;">
+        <p id="header-usuario-email" style="font-size: 10.5px; color: var(--texto-secundario); font-weight: 600; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></p>
+        <button onclick="sair()" style="background: none; border: none; color: var(--max-red); font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 3px; margin-top: 2px; padding: 0;">
+          <i data-lucide="log-out" size="12"></i> Sair
+        </button>
       </div>
     </header>
 
@@ -1688,13 +1821,178 @@
 
   <script>
     // ==========================================================================
-    // HELPERS DE STORAGE — usa localStorage do navegador (funciona no celular,
-    // no GitHub Pages e em qualquer lugar, sem depender de recursos do Claude)
+    // FIREBASE — LOGIN + BANCO DE DADOS NA NUVEM
+    // ==========================================================================
+    // ⚠️ IMPORTANTE: troque os valores abaixo pelos do SEU projeto Firebase.
+    // Vá em https://console.firebase.google.com > seu projeto > ⚙️ Configurações
+    // do projeto > role até "Seus apps" > app da Web > "Config".
+    // Esses valores NÃO são secretos (são de uso público em apps web) — quem
+    // protege seus dados de verdade são as Regras de Segurança do Firestore.
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyBkXE_mHUQ6jIPRKiW-9P7sT4nG4PPIDZM",
+      authDomain: "maxrota-app.firebaseapp.com",
+      projectId: "maxrota-app",
+      storageBucket: "maxrota-app.firebasestorage.app",
+      messagingSenderId: "916510356186",
+      appId: "1:916510356186:web:e047dae45540be9d8eebe3"
+    };
+
+    let usuarioAtual = null;
+    let firestoreDB = null;
+    let modoLoginAtual = 'entrar'; // 'entrar' ou 'criar'
+    let authProntoParaEsconderSplash = false;
+    let tempoMinimoSplashPassou = false;
+
+    function firebaseConfigurado() {
+      return FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith('COLOQUE_AQUI');
+    }
+
+    function tentarEsconderSplash() {
+      if (authProntoParaEsconderSplash && tempoMinimoSplashPassou) {
+        const el = document.getElementById('splash-screen');
+        if (el) el.classList.add('splash-oculto');
+      }
+    }
+    setTimeout(() => { tempoMinimoSplashPassou = true; tentarEsconderSplash(); }, 1400);
+
+    function iniciarAutenticacao() {
+      if (typeof firebase === 'undefined') {
+        console.error('Firebase não carregou (sem internet ou CDN bloqueado).');
+        mostrarTelaLogin('Não consegui carregar o sistema de login. Verifique sua internet e recarregue a página.');
+        authProntoParaEsconderSplash = true;
+        tentarEsconderSplash();
+        return;
+      }
+      if (!firebaseConfigurado()) {
+        console.error('FIREBASE_CONFIG ainda não foi preenchido com os dados do projeto.');
+        mostrarTelaLogin('O aplicativo ainda não foi configurado com um projeto Firebase. (FIREBASE_CONFIG está com valores de exemplo.)');
+        authProntoParaEsconderSplash = true;
+        tentarEsconderSplash();
+        return;
+      }
+      try {
+        if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+        firestoreDB = firebase.firestore();
+        firebase.auth().onAuthStateChanged(async (user) => {
+          authProntoParaEsconderSplash = true;
+          if (user) {
+            usuarioAtual = user;
+            mostrarApp(user);
+            await carregarDadosDoUsuarioEIniciarApp();
+          } else {
+            usuarioAtual = null;
+            mostrarTelaLogin();
+          }
+          tentarEsconderSplash();
+        });
+      } catch (e) {
+        console.error('Erro ao iniciar Firebase:', e);
+        mostrarTelaLogin('Não consegui conectar ao sistema de login. Tenta recarregar a página.');
+        authProntoParaEsconderSplash = true;
+        tentarEsconderSplash();
+      }
+    }
+
+    function mostrarTelaLogin(mensagemErro) {
+      document.getElementById('tela-login').style.display = 'flex';
+      document.getElementById('app-container-principal').style.display = 'none';
+      if (mensagemErro) document.getElementById('login-erro').innerText = mensagemErro;
+    }
+
+    function mostrarApp(user) {
+      document.getElementById('tela-login').style.display = 'none';
+      document.getElementById('app-container-principal').style.display = 'flex';
+      const elEmail = document.getElementById('header-usuario-email');
+      if (elEmail) elEmail.innerText = user.email || user.displayName || '';
+    }
+
+    function alternarModoLogin() {
+      modoLoginAtual = modoLoginAtual === 'entrar' ? 'criar' : 'entrar';
+      const btn = document.getElementById('btn-login-acao');
+      const texto = document.getElementById('texto-alternar-login');
+      document.getElementById('login-erro').innerText = '';
+      if (modoLoginAtual === 'criar') {
+        btn.innerHTML = '<i data-lucide="user-plus" size="16"></i> Criar Conta';
+        btn.setAttribute('onclick', 'criarContaComEmailSenha()');
+        texto.innerHTML = 'Já tem conta? <span>Entrar</span>';
+      } else {
+        btn.innerHTML = '<i data-lucide="log-in" size="16"></i> Entrar';
+        btn.setAttribute('onclick', 'entrarComEmailSenha()');
+        texto.innerHTML = 'Ainda não tem conta? <span>Criar conta nova</span>';
+      }
+      criarIconesSeguro();
+    }
+
+    function entrarComGoogle() {
+      document.getElementById('login-erro').innerText = '';
+      document.getElementById('login-carregando').innerText = 'Conectando com o Google...';
+      const provider = new firebase.auth.GoogleAuthProvider();
+      firebase.auth().signInWithPopup(provider)
+        .catch(e => { document.getElementById('login-erro').innerText = traduzErroFirebase(e); })
+        .finally(() => { document.getElementById('login-carregando').innerText = ''; });
+    }
+
+    async function entrarComEmailSenha() {
+      const email = document.getElementById('login-email').value.trim();
+      const senha = document.getElementById('login-senha').value;
+      document.getElementById('login-erro').innerText = '';
+      if (!email || !senha) { document.getElementById('login-erro').innerText = 'Preencha e-mail e senha.'; return; }
+      document.getElementById('login-carregando').innerText = 'Entrando...';
+      try {
+        await firebase.auth().signInWithEmailAndPassword(email, senha);
+      } catch (e) {
+        document.getElementById('login-erro').innerText = traduzErroFirebase(e);
+      }
+      document.getElementById('login-carregando').innerText = '';
+    }
+
+    async function criarContaComEmailSenha() {
+      const email = document.getElementById('login-email').value.trim();
+      const senha = document.getElementById('login-senha').value;
+      document.getElementById('login-erro').innerText = '';
+      if (!email || !senha) { document.getElementById('login-erro').innerText = 'Preencha e-mail e senha.'; return; }
+      if (senha.length < 6) { document.getElementById('login-erro').innerText = 'A senha precisa ter pelo menos 6 caracteres.'; return; }
+      document.getElementById('login-carregando').innerText = 'Criando sua conta...';
+      try {
+        await firebase.auth().createUserWithEmailAndPassword(email, senha);
+      } catch (e) {
+        document.getElementById('login-erro').innerText = traduzErroFirebase(e);
+      }
+      document.getElementById('login-carregando').innerText = '';
+    }
+
+    function traduzErroFirebase(e) {
+      const mapa = {
+        'auth/email-already-in-use': 'Esse e-mail já tem uma conta. Clica em "Entrar" em vez de criar.',
+        'auth/invalid-email': 'E-mail inválido.',
+        'auth/weak-password': 'Senha muito fraca — use pelo menos 6 caracteres.',
+        'auth/wrong-password': 'Senha incorreta.',
+        'auth/user-not-found': 'Não achei conta com esse e-mail. Clica em "Criar conta nova".',
+        'auth/popup-closed-by-user': 'Login cancelado.',
+        'auth/cancelled-popup-request': 'Login cancelado.',
+        'auth/network-request-failed': 'Falha de conexão. Verifique sua internet.',
+        'auth/invalid-credential': 'E-mail ou senha incorretos.',
+        'auth/too-many-requests': 'Muitas tentativas seguidas. Espera um pouco e tenta de novo.'
+      };
+      return mapa[e.code] || ('Não consegui entrar. ' + (e.message || 'Tenta de novo em instantes.'));
+    }
+
+    function sair() {
+      firebase.auth().signOut();
+    }
+
+    // ==========================================================================
+    // HELPERS DE STORAGE — cada usuário logado tem seus próprios dados no
+    // Firestore (nuvem), separados por UID. Sem login, nada é salvo.
     // ==========================================================================
     const PREFIXO_LOCAL = 'maxrota-';
 
     async function storageGet(key, fallback) {
       try {
+        if (usuarioAtual && firestoreDB) {
+          const doc = await firestoreDB.collection('usuarios').doc(usuarioAtual.uid).collection('dados').doc(key).get();
+          return doc.exists ? doc.data().valor : fallback;
+        }
         const raw = localStorage.getItem(PREFIXO_LOCAL + key);
         return raw ? JSON.parse(raw) : fallback;
       } catch (e) {
@@ -1704,6 +2002,10 @@
     }
     async function storageSet(key, value) {
       try {
+        if (usuarioAtual && firestoreDB) {
+          await firestoreDB.collection('usuarios').doc(usuarioAtual.uid).collection('dados').doc(key).set({ valor: value });
+          return;
+        }
         localStorage.setItem(PREFIXO_LOCAL + key, JSON.stringify(value));
       } catch (e) {
         console.error('Erro ao salvar', key, e);
@@ -3351,18 +3653,28 @@
     // ==========================================================================
     // CARREGAMENTO INICIAL (assíncrono — busca tudo do storage real)
     // ==========================================================================
-    window.onload = async function() {
-      // Cada etapa roda isolada: se uma falhar, as outras continuam normalmente
-      function tentar(nome, fn) {
-        try { fn(); } catch (e) { console.error('Falha em', nome, e); }
-      }
+    // Função global reutilizável: roda uma etapa isolada — se uma falhar, as
+    // outras continuam normalmente.
+    function tentar(nome, fn) {
+      try { fn(); } catch (e) { console.error('Falha em', nome, e); }
+    }
 
+    window.onload = function() {
+      // Essas partes não dependem de estar logado — rodam sempre
       tentar('renderEstacoesRadio', renderEstacoesRadio);
       tentar('data-selecionada', () => { document.getElementById('input-data-selecionada').value = dataSelecionada; });
       tentar('data-servico', () => { document.getElementById('input-servico-data').value = getDataHojeISO(); });
       tentar('data-reserva', () => { document.getElementById('input-data-reserva').value = dataSelecionadaReserva; });
       criarIconesSeguro();
 
+      // A partir daqui, espera o login pra saber se mostra a tela de entrar
+      // ou carrega os dados do usuário e mostra o app
+      iniciarAutenticacao();
+    };
+
+    // Chamada depois que o Firebase confirma quem é o usuário logado —
+    // carrega os dados DELE (separados por conta) e liga o app.
+    async function carregarDadosDoUsuarioEIniciarApp() {
       let lancamentosSalvos = [], contasSalvas = [], servicosSalvos = [], horasSalvas = {},
           configVeiculoSalva = null, diasFinalizadosSalvos = {}, metasSalvas = { diaria: 0, semanal: 0 },
           reservaPorDiaSalva = {}, reservaTaxaSalva = 0, kmPorDiaSalvo = {};
@@ -3411,9 +3723,9 @@
       tentar('renderServicos', renderServicos);
       tentar('calcularCustoPorKM', () => calcularCustoPorKM(false));
 
-      // Os dados salvos só terminam de carregar aqui em cima. Se o usuário tiver
-      // clicado na aba Análise antes disso, os gráficos podem ter sido montados
-      // com a tela ainda vazia — então força um recálculo agora que os dados reais chegaram.
+      // Se o usuário tiver clicado na aba Gráficos antes dos dados chegarem,
+      // os gráficos podem ter sido montados com a tela ainda vazia — então
+      // força um recálculo agora que os dados reais chegaram.
       graficosDesatualizados = true;
       if (document.getElementById('tab-analise').classList.contains('active')) {
         tentar('renderGraficosAnalise (dados carregados)', renderGraficosAnalise);
@@ -3421,13 +3733,7 @@
       }
 
       criarIconesSeguro();
-
-      // Esconde a tela de abertura — garante um tempo mínimo visível pra animação aparecer bem
-      setTimeout(() => {
-        const splash = document.getElementById('splash-screen');
-        if (splash) splash.classList.add('splash-oculto');
-      }, 1600);
-    };
+    }
   </script>
 </body>
 </html>
