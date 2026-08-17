@@ -665,6 +665,27 @@
       pointer-events: none;
     }
 
+    /* CHIPS DE SELEÇÃO DE PERÍODO (DIA / SEMANA / MÊS) */
+    .chips-periodo { display: flex; gap: 8px; margin-bottom: 14px; }
+    .chip-periodo-fechamento {
+      flex: 1;
+      text-align: center;
+      padding: 10px 0;
+      border-radius: var(--radius-pill);
+      background: #F1F3F6;
+      color: var(--texto-secundario);
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+    .chip-periodo-fechamento.ativo {
+      background: var(--texto-principal);
+      color: white;
+      box-shadow: 0 4px 12px rgba(17, 24, 39, 0.15);
+    }
+
     /* ALERTA DE CONTAS VENCENDO */
     .alerta-despesa {
       background: #FFFBEB;
@@ -763,10 +784,37 @@
     </div>
   </div>
 
+  <!-- TELA DE TESTE GRÁTIS EXPIRADO -->
+  <div class="tela-login" id="tela-trial-expirado" style="display: none;">
+    <div class="login-card" style="text-align: center;">
+      <div class="login-logo-box">
+        <div class="login-logo-icone" style="background: var(--grad-sunset, linear-gradient(135deg,#FF7412,#F04444));">
+          <i data-lucide="lock" size="26" style="color: white;"></i>
+        </div>
+        <div class="login-logo-texto"><span>MAX</span> ROTA</div>
+      </div>
+
+      <h2 style="font-size: 18px; font-weight: 800; margin-bottom: 8px;">Seu período de teste acabou</h2>
+      <p style="font-size: 13.5px; color: var(--texto-secundario); line-height: 1.5; margin-bottom: 20px;" id="texto-trial-expirado-dias">
+        Você aproveitou os dias grátis do MAX ROTA. Pra continuar usando e acessando seus dados, fale com a gente e assine.
+      </p>
+
+      <a id="link-whatsapp-vendas" href="#" target="_blank" class="btn btn-primary" style="text-decoration: none;">
+        <i data-lucide="message-circle" size="16"></i> Falar no WhatsApp
+      </a>
+
+      <p class="login-alterna" onclick="sair()" style="margin-top: 16px;">
+        <span>Sair e entrar com outra conta</span>
+      </p>
+    </div>
+  </div>
+
   <!-- ELEMENTO DE ÁUDIO OCULTO PARA REPRODUÇÃO DA RÁDIO -->
   <audio id="audio-player" src="https://live.hunter.fm/pop_high"></audio>
 
   <main class="app-container" id="app-container-principal" style="display: none;">
+
+    <div id="aviso-trial-acabando"></div>
 
     <!-- CABEÇALHO PRINCIPAL -->
     <header class="header-card">
@@ -799,6 +847,7 @@
         <button class="tab-item" onclick="switchTab('reserva', this)"><i data-lucide="piggy-bank" size="15"></i> Reserva</button>
         <button class="tab-item" onclick="switchTab('servicos', this)"><i data-lucide="wrench" size="15"></i> Serv. Veículo</button>
         <button class="tab-item" onclick="switchTab('config-veiculo', this)"><i data-lucide="calculator" size="15"></i> Config. Veículo (Custo/KM)</button>
+        <button class="tab-item" onclick="switchTab('cotacao', this)"><i data-lucide="receipt" size="15"></i> Cotação</button>
       </nav>
     </div>
 
@@ -1276,6 +1325,51 @@
         <p class="section-sub">Qual dia da semana costuma render mais (média histórica)</p>
         <div class="chart-box">
           <canvas id="chartDiaSemana"></canvas>
+        </div>
+      </section>
+
+      <!-- FECHAMENTO POR PERÍODO (DIA / SEMANA / MÊS) -->
+      <section class="card-standard">
+        <h2 class="section-title">Fechamento por Período</h2>
+        <p class="section-sub">Faturamento, custo e lucro — por corrida, por hora e por km</p>
+
+        <div class="chips-periodo">
+          <button class="chip-periodo-fechamento ativo" id="chip-periodo-dia" onclick="selecionarPeriodoFechamento('dia')">Dia</button>
+          <button class="chip-periodo-fechamento" id="chip-periodo-semana" onclick="selecionarPeriodoFechamento('semana')">Semana</button>
+          <button class="chip-periodo-fechamento" id="chip-periodo-mes" onclick="selecionarPeriodoFechamento('mes')">Mês</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+          <div style="background: var(--max-green); border-radius: 12px; padding: 12px 8px; text-align: center;">
+            <div style="font-size: 10px; color: rgba(255,255,255,0.85); font-weight: 700;">FATURAMENTO</div>
+            <div style="font-size: 15px; color: white; font-weight: 800; margin-top: 2px;" id="fp-faturamento">R$ 0,00</div>
+          </div>
+          <div style="background: var(--max-red); border-radius: 12px; padding: 12px 8px; text-align: center;">
+            <div style="font-size: 10px; color: rgba(255,255,255,0.85); font-weight: 700;">DESPESAS</div>
+            <div style="font-size: 15px; color: white; font-weight: 800; margin-top: 2px;" id="fp-despesas">R$ 0,00</div>
+          </div>
+          <div style="background: var(--grad-purple); border-radius: 12px; padding: 12px 8px; text-align: center;">
+            <div style="font-size: 10px; color: rgba(255,255,255,0.85); font-weight: 700;">SALDO</div>
+            <div style="font-size: 15px; color: white; font-weight: 800; margin-top: 2px;" id="fp-saldo">R$ 0,00</div>
+          </div>
+        </div>
+
+        <div class="stats-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+          <div class="card-small"><span style="font-size: 10px; color: var(--texto-secundario); font-weight: 600;">Total de Corridas</span><span style="font-size: 15px; font-weight: 800;" id="fp-total-corridas">0</span></div>
+          <div class="card-small"><span style="font-size: 10px; color: var(--texto-secundario); font-weight: 600;">Horas Trabalhadas</span><span style="font-size: 15px; font-weight: 800;" id="fp-total-horas">0h</span></div>
+          <div class="card-small"><span style="font-size: 10px; color: var(--texto-secundario); font-weight: 600;">KM Rodados</span><span style="font-size: 15px; font-weight: 800;" id="fp-total-km">0 km</span></div>
+
+          <div class="card-small"><span style="font-size: 10px; color: var(--texto-secundario); font-weight: 600;">Fat. por Corrida</span><span style="font-size: 15px; font-weight: 800; color: var(--max-green);" id="fp-fat-corrida">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size: 10px; color: var(--texto-secundario); font-weight: 600;">Fat. por Hora</span><span style="font-size: 15px; font-weight: 800; color: var(--max-green);" id="fp-fat-hora">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size: 10px; color: var(--texto-secundario); font-weight: 600;">Fat. por KM</span><span style="font-size: 15px; font-weight: 800; color: var(--max-green);" id="fp-fat-km">R$ 0,00</span></div>
+
+          <div class="card-small"><span style="font-size: 10px; color: var(--texto-secundario); font-weight: 600;">Custo por Corrida</span><span style="font-size: 15px; font-weight: 800; color: var(--max-red);" id="fp-custo-corrida">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size: 10px; color: var(--texto-secundario); font-weight: 600;">Custo por Hora</span><span style="font-size: 15px; font-weight: 800; color: var(--max-red);" id="fp-custo-hora">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size: 10px; color: var(--texto-secundario); font-weight: 600;">Custo por KM</span><span style="font-size: 15px; font-weight: 800; color: var(--max-red);" id="fp-custo-km">R$ 0,00</span></div>
+
+          <div class="card-small"><span style="font-size: 10px; color: var(--texto-secundario); font-weight: 600;">Lucro por Corrida</span><span style="font-size: 15px; font-weight: 800; color: var(--max-purple);" id="fp-lucro-corrida">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size: 10px; color: var(--texto-secundario); font-weight: 600;">Lucro por Hora</span><span style="font-size: 15px; font-weight: 800; color: var(--max-purple);" id="fp-lucro-hora">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size: 10px; color: var(--texto-secundario); font-weight: 600;">Lucro por KM</span><span style="font-size: 15px; font-weight: 800; color: var(--max-purple);" id="fp-lucro-km">R$ 0,00</span></div>
         </div>
       </section>
 
@@ -1796,6 +1890,93 @@
 
     </div>
 
+    <!-- ==========================================================================
+         ABA: COTAÇÃO — CALCULADORA DE CORRIDA PARTICULAR
+         ========================================================================== -->
+    <div id="tab-cotacao" class="tab-content">
+
+      <section class="card-standard">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+          <div>
+            <h2 class="section-title">Cotação de Corrida Particular</h2>
+            <p class="section-sub">Passageiro perguntou o preço? Calcule na hora, sem chutar</p>
+          </div>
+          <button class="btn" style="width: auto; padding: 0 16px; height: 38px; background: var(--grad-blue); color: white; flex-shrink: 0;" onclick="abrirGoogleMaps()">
+            <i data-lucide="map" size="16"></i> Mapas
+          </button>
+        </div>
+      </section>
+
+      <section class="card-standard">
+        <div class="form-group">
+          <label class="form-label">Distância (KM)</label>
+          <input type="number" id="input-cotacao-km" class="input-field" placeholder="Ex: 15.5" step="0.1" min="0" oninput="calcularCotacao()">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tempo Estimado (minutos)</label>
+          <input type="number" id="input-cotacao-tempo" class="input-field" placeholder="Ex: 25" step="1" min="0" oninput="calcularCotacao()">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Valor por KM de Referência (R$)</label>
+          <input type="text" inputmode="numeric" id="input-cotacao-valor-km" class="input-field" placeholder="0,00" oninput="aplicarMascaraMoeda(this); calcularCotacao()">
+          <p style="font-size: 11px; color: var(--texto-secundario); margin-top: 4px;">Já vem preenchido com o custo/km da Config. Veículo — pode editar se quiser</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Pedágio (R$)</label>
+          <input type="text" inputmode="numeric" id="input-cotacao-pedagio" class="input-field" placeholder="0,00" oninput="aplicarMascaraMoeda(this); calcularCotacao()">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Margem de Lucro Desejada (%)</label>
+          <input type="number" id="input-cotacao-margem" class="input-field" placeholder="Ex: 20" step="1" min="0" value="20" oninput="calcularCotacao()">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tipo de Trajeto</label>
+          <div class="chips-periodo">
+            <button class="chip-periodo-fechamento ativo" id="chip-cotacao-so-ida" onclick="selecionarTipoTrajeto('ida')">Só Ida</button>
+            <button class="chip-periodo-fechamento" id="chip-cotacao-ida-volta" onclick="selecionarTipoTrajeto('volta')">Ida e Volta</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card-hero">
+        <h2 class="section-title" style="margin-bottom: 4px;">Tarifa Sugerida</h2>
+        <p class="section-sub">Já com sua margem aplicada e os pisos mínimos garantidos</p>
+        <div style="text-align: center; padding: 16px 0;">
+          <span style="font-size: 40px; font-weight: 800; color: var(--max-green);" id="cotacao-resultado">R$ 0,00</span>
+        </div>
+        <p id="cotacao-piso-aplicado" style="font-size: 12px; color: var(--max-orange); text-align: center; font-weight: 700; min-height: 16px;"></p>
+
+        <hr style="border: none; border-top: 1px dashed var(--linha); margin: 14px 0;">
+
+        <div class="item-row">
+          <span style="font-size: 12px; color: var(--texto-secundario);">Custo do trajeto (km × valor/km)</span>
+          <span style="font-size: 13px; font-weight: 700;" id="cotacao-detalhe-km">R$ 0,00</span>
+        </div>
+        <div class="item-row">
+          <span style="font-size: 12px; color: var(--texto-secundario);">Pedágio</span>
+          <span style="font-size: 13px; font-weight: 700;" id="cotacao-detalhe-pedagio">R$ 0,00</span>
+        </div>
+        <div class="item-row">
+          <span style="font-size: 12px; color: var(--texto-secundario);">Valor do seu tempo (min. R$50/h)</span>
+          <span style="font-size: 13px; font-weight: 700;" id="cotacao-detalhe-tempo">R$ 0,00</span>
+        </div>
+        <div class="item-row" style="border-bottom: none;">
+          <span style="font-size: 12px; color: var(--texto-secundario);">+ Margem de lucro</span>
+          <span style="font-size: 13px; font-weight: 700;" id="cotacao-detalhe-margem">R$ 0,00</span>
+        </div>
+
+        <p style="font-size: 10.5px; color: var(--texto-secundario); margin-top: 10px; text-align: center;">
+          Nunca fica abaixo de R$ 50,00/hora nem de R$ 2,00/km, mesmo com margem zerada.
+        </p>
+      </section>
+
+    </div>
+
   </main>
 
   <!-- BOTÃO FLUTUANTE DE AÇÃO (FAB) COM MENU DE ATALHOS -->
@@ -1837,6 +2018,13 @@
       appId: "1:916510356186:web:e047dae45540be9d8eebe3"
     };
 
+    // ==========================================================================
+    // TESTE GRÁTIS — quantos dias a pessoa pode usar antes de precisar assinar
+    // ==========================================================================
+    const DIAS_TESTE_GRATIS = 7;
+    // ⚠️ Troque pelo seu número de WhatsApp com DDI+DDD, só números (ex: 5544999998888)
+    const WHATSAPP_VENDAS = "COLOQUE_AQUI_SEU_WHATSAPP";
+
     let usuarioAtual = null;
     let firestoreDB = null;
     let modoLoginAtual = 'entrar'; // 'entrar' ou 'criar'
@@ -1877,8 +2065,7 @@
           authProntoParaEsconderSplash = true;
           if (user) {
             usuarioAtual = user;
-            mostrarApp(user);
-            await carregarDadosDoUsuarioEIniciarApp();
+            await verificarAcessoEContinuar(user);
           } else {
             usuarioAtual = null;
             mostrarTelaLogin();
@@ -1896,1844 +2083,24 @@
     function mostrarTelaLogin(mensagemErro) {
       document.getElementById('tela-login').style.display = 'flex';
       document.getElementById('app-container-principal').style.display = 'none';
+      document.getElementById('tela-trial-expirado').style.display = 'none';
       if (mensagemErro) document.getElementById('login-erro').innerText = mensagemErro;
     }
 
-    function mostrarApp(user) {
-      document.getElementById('tela-login').style.display = 'none';
-      document.getElementById('app-container-principal').style.display = 'flex';
-      const elEmail = document.getElementById('header-usuario-email');
-      if (elEmail) elEmail.innerText = user.email || user.displayName || '';
-    }
-
-    function alternarModoLogin() {
-      modoLoginAtual = modoLoginAtual === 'entrar' ? 'criar' : 'entrar';
-      const btn = document.getElementById('btn-login-acao');
-      const texto = document.getElementById('texto-alternar-login');
-      document.getElementById('login-erro').innerText = '';
-      if (modoLoginAtual === 'criar') {
-        btn.innerHTML = '<i data-lucide="user-plus" size="16"></i> Criar Conta';
-        btn.setAttribute('onclick', 'criarContaComEmailSenha()');
-        texto.innerHTML = 'Já tem conta? <span>Entrar</span>';
-      } else {
-        btn.innerHTML = '<i data-lucide="log-in" size="16"></i> Entrar';
-        btn.setAttribute('onclick', 'entrarComEmailSenha()');
-        texto.innerHTML = 'Ainda não tem conta? <span>Criar conta nova</span>';
-      }
-      criarIconesSeguro();
-    }
-
-    function entrarComGoogle() {
-      document.getElementById('login-erro').innerText = '';
-      document.getElementById('login-carregando').innerText = 'Conectando com o Google...';
-      const provider = new firebase.auth.GoogleAuthProvider();
-      firebase.auth().signInWithPopup(provider)
-        .catch(e => { document.getElementById('login-erro').innerText = traduzErroFirebase(e); })
-        .finally(() => { document.getElementById('login-carregando').innerText = ''; });
-    }
-
-    async function entrarComEmailSenha() {
-      const email = document.getElementById('login-email').value.trim();
-      const senha = document.getElementById('login-senha').value;
-      document.getElementById('login-erro').innerText = '';
-      if (!email || !senha) { document.getElementById('login-erro').innerText = 'Preencha e-mail e senha.'; return; }
-      document.getElementById('login-carregando').innerText = 'Entrando...';
+    // Verifica se o usuário ainda está no período de teste grátis (ou já é
+    // assinante) antes de liberar o acesso ao app.
+    async function verificarAcessoEContinuar(user) {
       try {
-        await firebase.auth().signInWithEmailAndPassword(email, senha);
-      } catch (e) {
-        document.getElementById('login-erro').innerText = traduzErroFirebase(e);
-      }
-      document.getElementById('login-carregando').innerText = '';
-    }
+        const perfilRef = firestoreDB.collection('usuarios').doc(user.uid).collection('perfil').doc('dados');
+        const perfilDoc = await perfilRef.get();
+        let assinanteAtivo = false;
 
-    async function criarContaComEmailSenha() {
-      const email = document.getElementById('login-email').value.trim();
-      const senha = document.getElementById('login-senha').value;
-      document.getElementById('login-erro').innerText = '';
-      if (!email || !senha) { document.getElementById('login-erro').innerText = 'Preencha e-mail e senha.'; return; }
-      if (senha.length < 6) { document.getElementById('login-erro').innerText = 'A senha precisa ter pelo menos 6 caracteres.'; return; }
-      document.getElementById('login-carregando').innerText = 'Criando sua conta...';
-      try {
-        await firebase.auth().createUserWithEmailAndPassword(email, senha);
-      } catch (e) {
-        document.getElementById('login-erro').innerText = traduzErroFirebase(e);
-      }
-      document.getElementById('login-carregando').innerText = '';
-    }
-
-    function traduzErroFirebase(e) {
-      const mapa = {
-        'auth/email-already-in-use': 'Esse e-mail já tem uma conta. Clica em "Entrar" em vez de criar.',
-        'auth/invalid-email': 'E-mail inválido.',
-        'auth/weak-password': 'Senha muito fraca — use pelo menos 6 caracteres.',
-        'auth/wrong-password': 'Senha incorreta.',
-        'auth/user-not-found': 'Não achei conta com esse e-mail. Clica em "Criar conta nova".',
-        'auth/popup-closed-by-user': 'Login cancelado.',
-        'auth/cancelled-popup-request': 'Login cancelado.',
-        'auth/network-request-failed': 'Falha de conexão. Verifique sua internet.',
-        'auth/invalid-credential': 'E-mail ou senha incorretos.',
-        'auth/too-many-requests': 'Muitas tentativas seguidas. Espera um pouco e tenta de novo.'
-      };
-      return mapa[e.code] || ('Não consegui entrar. ' + (e.message || 'Tenta de novo em instantes.'));
-    }
-
-    function sair() {
-      firebase.auth().signOut();
-    }
-
-    // ==========================================================================
-    // HELPERS DE STORAGE — cada usuário logado tem seus próprios dados no
-    // Firestore (nuvem), separados por UID. Sem login, nada é salvo.
-    // ==========================================================================
-    const PREFIXO_LOCAL = 'maxrota-';
-
-    async function storageGet(key, fallback) {
-      try {
-        if (usuarioAtual && firestoreDB) {
-          const doc = await firestoreDB.collection('usuarios').doc(usuarioAtual.uid).collection('dados').doc(key).get();
-          return doc.exists ? doc.data().valor : fallback;
+        if (perfilDoc.exists) {
+          assinanteAtivo = !!perfilDoc.data().assinanteAtivo;
+        } else {
+          // Primeira vez desse usuário: cria o registro de perfil dele
+          await perfilRef.set({
+            assinanteAtivo: false,
+            dataCriacaoConta: user.metadata.creationTime || new Date().toISOString()
+          });
         }
-        const raw = localStorage.getItem(PREFIXO_LOCAL + key);
-        return raw ? JSON.parse(raw) : fallback;
-      } catch (e) {
-        console.error('Erro ao ler', key, e);
-        return fallback;
-      }
-    }
-    async function storageSet(key, value) {
-      try {
-        if (usuarioAtual && firestoreDB) {
-          await firestoreDB.collection('usuarios').doc(usuarioAtual.uid).collection('dados').doc(key).set({ valor: value });
-          return;
-        }
-        localStorage.setItem(PREFIXO_LOCAL + key, JSON.stringify(value));
-      } catch (e) {
-        console.error('Erro ao salvar', key, e);
-      }
-    }
-
-    // Auxiliar de formatação de moeda BRL (R$)
-    // Wrapper seguro: se a biblioteca de ícones não carregar (sem internet, CDN
-    // bloqueado), isso não pode travar o resto do app.
-    function criarIconesSeguro() {
-      try {
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-      } catch (e) {
-        console.error('Erro ao criar ícones:', e);
-      }
-    }
-
-    function formatarMoeda(valor) {
-      return (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    }
-
-    // ==========================================================================
-    // MÁSCARA DE MOEDA — campos "R$" começam vazios (placeholder "0,00") e o
-    // usuário só digita números; a formatação com vírgula é automática.
-    // ==========================================================================
-    function aplicarMascaraMoeda(input) {
-      let digitos = input.value.replace(/\D/g, '');
-      if (digitos === '') { input.value = ''; return; }
-      digitos = digitos.replace(/^0+(?=\d)/, '');
-      while (digitos.length < 3) digitos = '0' + digitos;
-      const centavos = digitos.slice(-2);
-      let inteiros = digitos.slice(0, -2).replace(/^0+(?=\d)/, '');
-      inteiros = inteiros.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-      input.value = `${inteiros},${centavos}`;
-    }
-
-    function moedaParaNumero(valorFormatado) {
-      if (!valorFormatado) return 0;
-      const limpo = String(valorFormatado).replace(/\./g, '').replace(',', '.');
-      return parseFloat(limpo) || 0;
-    }
-
-    function getDataHojeISO() {
-      const d = new Date();
-      return d.toISOString().split('T')[0];
-    }
-
-    function getMesAnoAtual() {
-      const d = new Date();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      return `${d.getFullYear()}-${m}`;
-    }
-
-    function mesAnoDeData(dataISO) {
-      return dataISO.slice(0, 7);
-    }
-
-    // ==========================================================================
-    // ESTADO GLOBAL EM MEMÓRIA (carregado do storage no window.onload)
-    // ==========================================================================
-    let todosLancamentos = [];   // {id, tipo, categoria, valor, corridas, data}
-    let bancoContas = [];
-    let servicos = [];           // {id, nome, km, valor, data}
-    let horasPorDia = {};        // { 'YYYY-MM-DD': horasNumero }
-    let kmPorDia = {};           // { 'YYYY-MM-DD': kmNumero }
-    let diasFinalizados = {};    // { 'YYYY-MM-DD': true }
-    let metas = { diaria: 0, semanal: 0, mensal: 0, diasSemana: 0, diasMes: 0, semanaConfirmada: '', mesConfirmado: '' };
-    let dataSelecionada = getDataHojeISO();
-    let graficosDesatualizados = true; // controla se os gráficos da aba Análise precisam ser recalculados
-    let reservaPorDia = {}; // { 'YYYY-MM-DD': valorGuardadoNumero }
-    let reservaTaxaMensal = 0; // % ao mês, pra simulação de rendimento
-    let dataSelecionadaReserva = getDataHojeISO();
-
-    const CANAIS_CORRIDA = ['Uber', '99', 'inDriver'];
-
-    // ==========================================================================
-    // SELETOR DE DATA (ABA HOJE)
-    // ==========================================================================
-    function aoMudarDataSelecionada() {
-      const input = document.getElementById('input-data-selecionada');
-      dataSelecionada = input.value || getDataHojeISO();
-      document.getElementById('btn-voltar-hoje').style.display = dataSelecionada === getDataHojeISO() ? 'none' : 'flex';
-      atualizarPainelHoje();
-    }
-
-    function voltarParaHoje() {
-      dataSelecionada = getDataHojeISO();
-      document.getElementById('input-data-selecionada').value = dataSelecionada;
-      document.getElementById('btn-voltar-hoje').style.display = 'none';
-      atualizarPainelHoje();
-    }
-
-    // ==========================================================================
-    // ABA "HOJE" — ENTRADAS / SAÍDAS / RESUMO
-    // ==========================================================================
-    async function registrarEntrada(origem) {
-      const inputValor = document.getElementById('input-entrada-valor');
-      const inputCorridas = document.getElementById('input-entrada-corridas');
-      const valor = moedaParaNumero(inputValor.value);
-      let corridas = parseInt(inputCorridas.value) || 1;
-
-      if (isNaN(valor) || valor <= 0) {
-        alert("Por favor, digite um valor válido para a receita.");
-        return;
-      }
-
-      const novoLancamento = {
-        id: Date.now().toString(),
-        tipo: 'entrada',
-        categoria: origem,
-        valor: valor,
-        corridas: CANAIS_CORRIDA.includes(origem) ? corridas : 0,
-        data: dataSelecionada
-      };
-
-      // Limpa os campos IMEDIATAMENTE, antes de qualquer salvamento/render
-      inputValor.value = '';
-      inputCorridas.value = '1';
-
-      todosLancamentos.push(novoLancamento);
-      atualizarPainelHoje();
-      graficosDesatualizados = true;
-      storageSet('lancamentos', todosLancamentos);
-    }
-
-    async function registrarSaida(categoria) {
-      const inputValor = document.getElementById('input-saida-valor');
-      const valor = moedaParaNumero(inputValor.value);
-
-      if (isNaN(valor) || valor <= 0) {
-        alert("Por favor, digite um valor válido para a despesa.");
-        return;
-      }
-
-      const novoLancamento = {
-        id: Date.now().toString(),
-        tipo: 'saida',
-        categoria: categoria,
-        valor: valor,
-        corridas: 0,
-        data: dataSelecionada
-      };
-
-      inputValor.value = '';
-
-      todosLancamentos.push(novoLancamento);
-      atualizarPainelHoje();
-      graficosDesatualizados = true;
-      storageSet('lancamentos', todosLancamentos);
-    }
-
-    async function registrarPasse(categoria) {
-      const inputValor = document.getElementById('input-passe-valor');
-      const valor = moedaParaNumero(inputValor.value);
-
-      if (isNaN(valor) || valor <= 0) {
-        alert("Por favor, digite um valor válido para o passe.");
-        return;
-      }
-
-      const novoLancamento = {
-        id: Date.now().toString(),
-        tipo: 'saida',
-        categoria: categoria,
-        valor: valor,
-        corridas: 0,
-        data: dataSelecionada
-      };
-
-      inputValor.value = '';
-
-      todosLancamentos.push(novoLancamento);
-      atualizarPainelHoje();
-      graficosDesatualizados = true;
-      storageSet('lancamentos', todosLancamentos);
-    }
-
-    async function excluirLancamentoHoje(id) {
-      todosLancamentos = todosLancamentos.filter(item => item.id !== id);
-      atualizarPainelHoje();
-      graficosDesatualizados = true;
-      storageSet('lancamentos', todosLancamentos);
-    }
-
-    async function salvarHorasHoje() {
-      const input = document.getElementById('input-horas-hoje');
-      const horas = parseFloat(input.value);
-      if (isNaN(horas) || horas < 0) {
-        alert('Digite um número de horas válido.');
-        return;
-      }
-      input.value = '';
-      horasPorDia[dataSelecionada] = horas;
-      atualizarPainelHoje();
-      graficosDesatualizados = true;
-      storageSet('horas', horasPorDia);
-    }
-
-    async function salvarKmHoje() {
-      const input = document.getElementById('input-km-hoje');
-      const km = parseFloat(input.value);
-      if (isNaN(km) || km < 0) {
-        alert('Digite um KM válido.');
-        return;
-      }
-      input.value = '';
-      kmPorDia[dataSelecionada] = km;
-      atualizarPainelHoje();
-      graficosDesatualizados = true;
-      storageSet('km-por-dia', kmPorDia);
-    }
-
-    // Custo por KM baseado na Config. Veículo, SEM o combustível — porque o
-    // combustível já é lançado separadamente como despesa do dia.
-    function calcularCustoPorKmSemCombustivel() {
-      const pneuValor = moedaParaNumero(document.getElementById('input-pneu-valor').value);
-      const pneuKM = parseFloat(document.getElementById('input-pneu-km').value) || 1;
-      const oleoValor = moedaParaNumero(document.getElementById('input-oleo-valor').value);
-      const oleoKM = parseFloat(document.getElementById('input-oleo-km').value) || 1;
-      const kmMes = parseFloat(document.getElementById('input-km-mes').value) || 1;
-      const kmAno = kmMes * 12;
-      const depreValorCarro = moedaParaNumero(document.getElementById('input-depre-valor-carro').value);
-      const deprePercentual = parseFloat(document.getElementById('input-depre-percentual').value) || 0;
-      const parcelaMensal = moedaParaNumero(document.getElementById('input-parcela-mensal').value);
-      const seguroAnual = moedaParaNumero(document.getElementById('input-seguro-anual').value);
-      const documentacaoAnual = moedaParaNumero(document.getElementById('input-documentacao-anual').value);
-      const internetMensal = moedaParaNumero(document.getElementById('input-internet-mensal').value);
-      const higienMensal = moedaParaNumero(document.getElementById('input-higien-mensal').value);
-
-      const custoPneuKM = pneuValor / pneuKM;
-      const custoOleoKM = oleoValor / oleoKM;
-      const custoDepreKM = (depreValorCarro * (deprePercentual / 100)) / kmAno;
-      const custoParcelaKM = (parcelaMensal * 12) / kmAno;
-      const custoSeguroKM = seguroAnual / kmAno;
-      const custoDocKM = documentacaoAnual / kmAno;
-      const custoInternetKM = (internetMensal * 12) / kmAno;
-      const custoHigienKM = (higienMensal * 12) / kmAno;
-
-      return custoPneuKM + custoOleoKM + custoDepreKM + custoParcelaKM + custoSeguroKM + custoDocKM + custoInternetKM + custoHigienKM;
-    }
-
-    async function alternarFinalizarDia() {
-      diasFinalizados[dataSelecionada] = !diasFinalizados[dataSelecionada];
-      await storageSet('dias-finalizados', diasFinalizados);
-      atualizarPainelHoje();
-    }
-
-    function aplicarBloqueioDia(finalizado) {
-      const secoes = ['secao-horas', 'secao-entradas', 'secao-passes', 'secao-saidas'];
-      secoes.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.toggle('dia-bloqueado', finalizado);
-      });
-      const btn = document.getElementById('btn-finalizar-dia');
-      if (finalizado) {
-        btn.innerHTML = '<i data-lucide="unlock" size="16"></i> Reabrir o Dia';
-        btn.style.background = '#E2E8F0';
-        btn.style.color = 'var(--texto-secundario)';
-        btn.style.boxShadow = 'none';
-      } else {
-        btn.innerHTML = '<i data-lucide="lock" size="16"></i> Finalizar o Dia';
-        btn.style.background = '';
-        btn.style.color = '';
-        btn.style.boxShadow = '';
-      }
-      criarIconesSeguro();
-    }
-
-    function atualizarPainelHoje() {
-      const hoje = dataSelecionada;
-      const ehHoje = hoje === getDataHojeISO();
-      const lancamentosHoje = todosLancamentos.filter(l => l.data === hoje);
-      const dataFormatadaTitulo = ehHoje ? 'Hoje' : new Date(hoje + 'T00:00:00').toLocaleDateString('pt-BR');
-
-      document.getElementById('titulo-horas').innerText = ehHoje ? 'Horas Trabalhadas Hoje' : `Horas Trabalhadas — ${dataFormatadaTitulo}`;
-      document.getElementById('titulo-resumo').innerText = ehHoje ? 'Resumo do Dia (Hoje)' : `Resumo do Dia — ${dataFormatadaTitulo}`;
-      document.getElementById('titulo-lancamentos').innerText = ehHoje ? 'Lançamentos do Dia' : `Lançamentos — ${dataFormatadaTitulo}`;
-
-      let totalEntradas = 0;
-      let totalSaidas = 0;
-      const entradasMap = {};
-      const saidasMap = {};
-
-      lancamentosHoje.forEach(item => {
-        if (item.tipo === 'entrada') {
-          totalEntradas += item.valor;
-          entradasMap[item.categoria] = (entradasMap[item.categoria] || 0) + item.valor;
-        } else if (item.tipo === 'saida') {
-          totalSaidas += item.valor;
-          saidasMap[item.categoria] = (saidasMap[item.categoria] || 0) + item.valor;
-        }
-      });
-
-      const saldoLiquido = totalEntradas - totalSaidas;
-
-      document.getElementById('resumo-total-entradas').innerText = formatarMoeda(totalEntradas);
-      document.getElementById('resumo-total-saidas').innerText = formatarMoeda(totalSaidas);
-
-      const elSaldo = document.getElementById('resumo-saldo-liquido');
-      elSaldo.innerText = formatarMoeda(saldoLiquido);
-      elSaldo.style.color = saldoLiquido >= 0 ? 'var(--max-blue)' : 'var(--max-red)';
-
-      const detalheEntradasArr = Object.keys(entradasMap).map(cat => `${cat} (${formatarMoeda(entradasMap[cat])})`);
-      document.getElementById('resumo-detalhe-entradas').innerText = detalheEntradasArr.length > 0
-        ? `Detalhamento: ${detalheEntradasArr.join(' | ')}`
-        : 'Detalhamento: Nenhum lançamento';
-
-      const detalheSaidasArr = Object.keys(saidasMap).map(cat => `${cat} (${formatarMoeda(saidasMap[cat])})`);
-      document.getElementById('resumo-detalhe-saidas').innerText = detalheSaidasArr.length > 0
-        ? `Detalhamento: ${detalheSaidasArr.join(' | ')}`
-        : 'Detalhamento: Nenhum lançamento';
-
-      // Horas do dia selecionado e R$/hora (campo sempre limpo após salvar)
-      const horasHoje = horasPorDia[hoje] || 0;
-      document.getElementById('display-horas-hoje').innerText = `${horasHoje}h`;
-      const inputHoras = document.getElementById('input-horas-hoje');
-      inputHoras.value = '';
-      inputHoras.placeholder = horasHoje > 0 ? `Atual: ${horasHoje}h — digite p/ atualizar` : 'Ex: 8';
-
-      // KM do dia selecionado
-      const kmHoje = kmPorDia[hoje] || 0;
-      document.getElementById('display-km-hoje').innerText = `${kmHoje} km`;
-      const inputKm = document.getElementById('input-km-hoje');
-      inputKm.value = '';
-      inputKm.placeholder = kmHoje > 0 ? `Atual: ${kmHoje} km — digite p/ atualizar` : 'Ex: 180';
-
-      // Custo estimado do carro pelos KMs rodados (sem combustível, já lançado à parte)
-      const custoPorKmSemComb = calcularCustoPorKmSemCombustivel();
-      const custoKmHoje = kmHoje * custoPorKmSemComb;
-      document.getElementById('resumo-custo-km-hoje').innerText = formatarMoeda(custoKmHoje);
-      document.getElementById('resumo-custo-km-detalhe').innerText =
-        `Baseado em ${kmHoje} km × ${formatarMoeda(custoPorKmSemComb)}/km — pneu, óleo, depreciação, parcela, seguro, documentação, internet e higienização (combustível não entra aqui, já é lançado separado como despesa)`;
-
-      const saldoReal = saldoLiquido - custoKmHoje;
-      const elSaldoReal = document.getElementById('resumo-saldo-real');
-      elSaldoReal.innerText = formatarMoeda(saldoReal);
-      elSaldoReal.style.color = saldoReal >= 0 ? 'var(--max-cyan)' : 'var(--max-red)';
-
-      // R$/hora bruto e líquido real
-      const rsHoraBruto = horasHoje > 0 ? totalEntradas / horasHoje : 0;
-      const rsHoraLiquido = horasHoje > 0 ? saldoReal / horasHoje : 0;
-      document.getElementById('resumo-rs-hora-bruto').innerText = `${formatarMoeda(rsHoraBruto)}/h`;
-      document.getElementById('resumo-rs-hora').innerText = `${formatarMoeda(rsHoraLiquido)}/h`;
-
-      // R$/km bruto e líquido real
-      const rsKmBruto = kmHoje > 0 ? totalEntradas / kmHoje : 0;
-      const rsKmLiquido = kmHoje > 0 ? saldoReal / kmHoje : 0;
-      document.getElementById('resumo-rs-km-bruto').innerText = `${formatarMoeda(rsKmBruto)}/km`;
-      document.getElementById('resumo-rs-km-liquido').innerText = `${formatarMoeda(rsKmLiquido)}/km`;
-
-      // Tabela de lançamentos
-      const tabelaBody = document.getElementById('tabela-lancamentos-hoje');
-      if (lancamentosHoje.length === 0) {
-        tabelaBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--texto-secundario); padding: 12px;">Nenhum lançamento registrado nesta data.</td></tr>`;
-      } else {
-        tabelaBody.innerHTML = lancamentosHoje.map(item => `
-          <tr>
-            <td>
-              <span class="badge ${item.tipo === 'entrada' ? 'badge-green' : 'badge-orange'}">
-                ${item.tipo === 'entrada' ? 'Entrada' : 'Saída'}
-              </span>
-            </td>
-            <td style="font-weight: 600;">${item.categoria}${item.corridas ? ` <span style="color:var(--texto-secundario); font-weight:500;">(${item.corridas} corrida${item.corridas > 1 ? 's' : ''})</span>` : ''}</td>
-            <td style="font-weight: 700; color: ${item.tipo === 'entrada' ? 'var(--max-green)' : 'var(--max-red)'};">
-              ${formatarMoeda(item.valor)}
-            </td>
-            <td style="text-align: center;">
-              <button class="btn-delete-row" onclick="excluirLancamentoHoje('${item.id}')" title="Excluir">
-                <i data-lucide="trash-2" size="14"></i>
-              </button>
-            </td>
-          </tr>
-        `).join('');
-      }
-
-      aplicarBloqueioDia(!!diasFinalizados[hoje]);
-      criarIconesSeguro();
-    }
-
-    // ==========================================================================
-    // ABA HISTÓRICO — FECHAMENTO E COMPARATIVO MENSAL
-    // ==========================================================================
-    function calcularFechamentoMes(mesAno) {
-      const entradasMes = todosLancamentos.filter(l => l.tipo === 'entrada' && mesAnoDeData(l.data) === mesAno);
-      const saidasMes = todosLancamentos.filter(l => l.tipo === 'saida' && mesAnoDeData(l.data) === mesAno);
-      const faturamento = entradasMes.reduce((a, l) => a + l.valor, 0);
-      const custos = saidasMes.reduce((a, l) => a + l.valor, 0);
-      const lucro = faturamento - custos;
-      const corridas = entradasMes.reduce((a, l) => a + (l.corridas || 0), 0);
-      const horas = Object.keys(horasPorDia).filter(d => mesAnoDeData(d) === mesAno).reduce((a, d) => a + horasPorDia[d], 0);
-
-      const porDia = {};
-      entradasMes.forEach(l => { porDia[l.data] = (porDia[l.data] || 0) + l.valor; });
-      const diasArr = Object.keys(porDia).map(data => ({ data, valor: porDia[data] })).sort((a, b) => b.valor - a.valor);
-
-      const porApp = {};
-      entradasMes.forEach(l => {
-        porApp[l.categoria] = porApp[l.categoria] || { total: 0, qtd: 0 };
-        porApp[l.categoria].total += l.valor;
-        porApp[l.categoria].qtd += (l.corridas || 0);
-      });
-
-      // Maiores gastos do mês — passes de todos os apps somados numa única categoria
-      const porCategoriaGasto = {};
-      saidasMes.forEach(l => {
-        const chave = l.categoria.startsWith('Passe') ? 'Passes Diários (99, Uber, inDriver, Outros)' : l.categoria;
-        porCategoriaGasto[chave] = (porCategoriaGasto[chave] || 0) + l.valor;
-      });
-      const maioresGastos = Object.keys(porCategoriaGasto)
-        .map(categoria => ({ categoria, total: porCategoriaGasto[categoria] }))
-        .sort((a, b) => b.total - a.total);
-
-      return { faturamento, custos, lucro, corridas, horas, diasArr, porApp, maioresGastos };
-    }
-
-    let mesHistoricoSelecionado = getMesAnoAtual(); // fonte confiável — não depende só do <input type="month">
-
-    function renderHistorico() {
-      const inputMes = document.getElementById('historico-filtro-mes');
-      const valorInput = inputMes.value;
-      if (valorInput) mesHistoricoSelecionado = valorInput;
-      inputMes.value = mesHistoricoSelecionado;
-      const mesAno = mesHistoricoSelecionado;
-
-      const fechamento = calcularFechamentoMes(mesAno);
-      document.getElementById('hist-faturamento').innerText = formatarMoeda(fechamento.faturamento);
-      document.getElementById('hist-lucro').innerText = formatarMoeda(fechamento.lucro);
-      document.getElementById('hist-corridas').innerText = fechamento.corridas;
-      document.getElementById('hist-horas').innerText = `${fechamento.horas}h`;
-      document.getElementById('hist-rs-hora').innerText = fechamento.horas > 0 ? formatarMoeda(fechamento.faturamento / fechamento.horas) : 'R$ 0,00';
-      document.getElementById('hist-rs-corrida').innerText = fechamento.corridas > 0 ? formatarMoeda(fechamento.faturamento / fechamento.corridas) : 'R$ 0,00';
-
-      // Comparativo com mês anterior
-      const [ano, mes] = mesAno.split('-').map(Number);
-      const dataAnterior = new Date(ano, mes - 2, 1);
-      const mesAnteriorKey = `${dataAnterior.getFullYear()}-${String(dataAnterior.getMonth() + 1).padStart(2, '0')}`;
-      const fechamentoAnterior = calcularFechamentoMes(mesAnteriorKey);
-
-      const linhasComparativo = [
-        { label: 'Faturamento', atual: fechamento.faturamento, anterior: fechamentoAnterior.faturamento },
-        { label: 'Lucro Líquido', atual: fechamento.lucro, anterior: fechamentoAnterior.lucro },
-        { label: 'Corridas', atual: fechamento.corridas, anterior: fechamentoAnterior.corridas, moeda: false },
-        { label: 'Horas', atual: fechamento.horas, anterior: fechamentoAnterior.horas, moeda: false }
-      ];
-
-      document.getElementById('hist-comparativo').innerHTML = linhasComparativo.map(l => {
-        const variacao = l.anterior !== 0 ? ((l.atual - l.anterior) / Math.abs(l.anterior)) * 100 : (l.atual > 0 ? 100 : 0);
-        const corVariacao = variacao >= 0 ? 'var(--max-green)' : 'var(--max-red)';
-        const valorAtualFmt = l.moeda === false ? l.atual : formatarMoeda(l.atual);
-        const valorAnteriorFmt = l.moeda === false ? l.anterior : formatarMoeda(l.anterior);
-        return `
-          <div class="item-row">
-            <div>
-              <span style="font-size: 13px; font-weight: 600;">${l.label}</span>
-              <p style="font-size: 11px; color: var(--texto-secundario);">Mês anterior: ${valorAnteriorFmt}</p>
-            </div>
-            <div style="text-align: right;">
-              <span style="font-size: 14px; font-weight: 800;">${valorAtualFmt}</span>
-              <p style="font-size: 11px; font-weight: 700; color: ${corVariacao};">${variacao >= 0 ? '+' : ''}${variacao.toFixed(0)}%</p>
-            </div>
-          </div>`;
-      }).join('');
-
-      // Distribuição por app
-      const appsArr = Object.keys(fechamento.porApp).map(cat => ({ categoria: cat, ...fechamento.porApp[cat] }))
-        .sort((a, b) => b.total - a.total);
-      document.getElementById('hist-apps').innerHTML = appsArr.length === 0
-        ? `<p style="font-size: 13px; color: var(--texto-secundario); text-align: center; padding: 8px 0;">Sem corridas lançadas neste mês.</p>`
-        : appsArr.map(a => `
-          <div class="item-row">
-            <span style="font-size: 13px; font-weight: 600;">${a.categoria}${a.qtd ? ` (${a.qtd} corridas)` : ''}</span>
-            <span style="font-size: 14px; font-weight: 800; color: var(--max-green);">${formatarMoeda(a.total)}</span>
-          </div>
-        `).join('');
-
-      // Melhores e piores dias
-      const melhores = fechamento.diasArr.slice(0, 3);
-      const piores = [...fechamento.diasArr].reverse().slice(0, 3);
-      const renderDiaItem = (d) => `
-        <div class="item-row" style="padding: 8px 0;">
-          <span style="font-size: 12px; color: var(--texto-secundario);">${new Date(d.data + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
-          <span style="font-size: 13px; font-weight: 700;">${formatarMoeda(d.valor)}</span>
-        </div>`;
-      document.getElementById('hist-melhores-dias').innerHTML = melhores.length
-        ? melhores.map(renderDiaItem).join('') : `<p style="font-size: 12px; color: var(--texto-secundario);">Sem dados</p>`;
-      document.getElementById('hist-piores-dias').innerHTML = piores.length
-        ? piores.map(renderDiaItem).join('') : `<p style="font-size: 12px; color: var(--texto-secundario);">Sem dados</p>`;
-
-      // Maiores gastos do mês (com passes de todos os apps somados numa categoria só)
-      document.getElementById('hist-maiores-gastos').innerHTML = fechamento.maioresGastos.length
-        ? fechamento.maioresGastos.map((g, i) => `
-          <div class="item-row">
-            <span style="font-size: 13px; font-weight: 600;">${i + 1}º — ${g.categoria}</span>
-            <span style="font-size: 14px; font-weight: 800; color: var(--max-red);">${formatarMoeda(g.total)}</span>
-          </div>`).join('')
-        : `<p style="font-size: 13px; color: var(--texto-secundario); text-align: center; padding: 8px 0;">Nenhum gasto lançado neste mês.</p>`;
-    }
-
-    // ==========================================================================
-    // METAS (DIÁRIA E SEMANAL)
-    // ==========================================================================
-    function getInicioSemanaDe(dataISO) {
-      const d = new Date(dataISO + 'T00:00:00');
-      const dow = d.getDay();
-      const offset = dow === 0 ? 6 : dow - 1;
-      d.setDate(d.getDate() - offset);
-      return d.toISOString().split('T')[0];
-    }
-
-    async function salvarMetas() {
-      metas.diaria = moedaParaNumero(document.getElementById('input-meta-diaria').value);
-      metas.semanal = moedaParaNumero(document.getElementById('input-meta-semanal').value);
-      metas.mensal = moedaParaNumero(document.getElementById('input-meta-mensal').value);
-      metas.diasSemana = parseInt(document.getElementById('input-dias-semana').value) || 0;
-      metas.diasMes = parseInt(document.getElementById('input-dias-mes').value) || 0;
-      metas.semanaConfirmada = getInicioSemanaDe(getDataHojeISO());
-      metas.mesConfirmado = getMesAnoAtual();
-      await storageSet('metas', metas);
-      renderProgressoMetas();
-    }
-
-    function renderBarraMeta(opts) {
-      const { valorAtual, valorMeta, idTexto, idBarra, idStatus, rotuloRestante, diasRestantes, temDiasConfigurados } = opts;
-      const pct = valorMeta > 0 ? (valorAtual / valorMeta) * 100 : 0;
-      document.getElementById(idTexto).innerText = `${formatarMoeda(valorAtual)} / ${formatarMoeda(valorMeta)}`;
-      document.getElementById(idBarra).style.width = `${Math.min(100, pct)}%`;
-
-      const statusEl = document.getElementById(idStatus);
-      if (valorMeta <= 0) {
-        statusEl.innerText = 'Defina um valor de meta acima pra acompanhar o progresso.';
-        statusEl.style.color = 'var(--texto-secundario)';
-        return;
-      }
-      if (valorAtual >= valorMeta) {
-        const excedente = valorAtual - valorMeta;
-        const pctExcedente = (excedente / valorMeta) * 100;
-        statusEl.innerText = `🎉 Meta batida! ${formatarMoeda(excedente)} a mais (${pctExcedente.toFixed(0)}% acima da meta)`;
-        statusEl.style.color = 'var(--max-green)';
-      } else {
-        const falta = valorMeta - valorAtual;
-        let texto = `Falta ${formatarMoeda(falta)} ${rotuloRestante}`;
-        if (diasRestantes && temDiasConfigurados) {
-          const porDia = falta / diasRestantes;
-          texto += ` — ${formatarMoeda(porDia)}/dia nos ${diasRestantes} dia(s) que restam`;
-        }
-        statusEl.innerText = texto;
-        statusEl.style.color = 'var(--max-orange)';
-      }
-    }
-
-    function renderAvisoNovaSemanaMes() {
-      const semanaAtual = getInicioSemanaDe(getDataHojeISO());
-      const mesAtual = getMesAnoAtual();
-      const avisos = [];
-      if (metas.semanal > 0 && metas.semanaConfirmada !== semanaAtual) {
-        avisos.push('Uma nova semana começou! Confirme quantos dias você vai trabalhar nela, na Meta Semanal, e clique em salvar.');
-      }
-      if (metas.mensal > 0 && metas.mesConfirmado !== mesAtual) {
-        avisos.push('Um novo mês começou! Confirme quantos dias você vai trabalhar nele, na Meta Mensal, e clique em salvar.');
-      }
-      const container = document.getElementById('aviso-nova-semana-mes');
-      if (!container) return;
-      if (avisos.length === 0) { container.innerHTML = ''; return; }
-      container.innerHTML = avisos.map(msg => `
-        <div class="alerta-despesa" style="margin-bottom: 8px;">
-          <i data-lucide="calendar-clock" size="20" style="color:#D97706;"></i>
-          <div><h4 style="font-size:13px; font-weight:700; color:#92400E;">Lembrete</h4><p style="font-size:12px; color:#B45309;">${msg}</p></div>
-        </div>`).join('');
-      criarIconesSeguro();
-    }
-
-    function consultarMetaDoDia() {
-      const dataSelecionada = document.getElementById('input-calendario-metas').value;
-      if (!dataSelecionada) return;
-      const faturamentoDia = totalEntradasDoDia(dataSelecionada);
-      const container = document.getElementById('resultado-calendario-metas');
-      const dataFormatada = new Date(dataSelecionada + 'T00:00:00').toLocaleDateString('pt-BR');
-      const temMeta = metas.diaria > 0;
-      const bateuMeta = temMeta && faturamentoDia >= metas.diaria;
-      container.innerHTML = `
-        <div class="item-row">
-          <div>
-            <span style="font-size:13px; font-weight:600;">${dataFormatada}</span>
-            <p style="font-size:11px; color:var(--texto-secundario);">Meta diária configurada hoje: ${formatarMoeda(metas.diaria)}</p>
-          </div>
-          <div style="text-align:right;">
-            <span style="font-size:15px; font-weight:800; color:${temMeta ? (bateuMeta ? 'var(--max-green)' : 'var(--max-orange)') : 'var(--texto-principal)'};">${formatarMoeda(faturamentoDia)}</span>
-            <p style="font-size:11px; color:${bateuMeta ? 'var(--max-green)' : 'var(--max-orange)'};">${temMeta ? (bateuMeta ? '✓ Bateu a meta' : 'Abaixo da meta') : 'Sem meta configurada'}</p>
-          </div>
-        </div>`;
-    }
-
-    function renderProgressoMetas() {
-      const hoje = getDataHojeISO();
-      const entradas = todosLancamentos.filter(l => l.tipo === 'entrada');
-
-      // --- DIÁRIA ---
-      const faturamentoHoje = entradas.filter(l => l.data === hoje).reduce((a, l) => a + l.valor, 0);
-      renderBarraMeta({
-        valorAtual: faturamentoHoje, valorMeta: metas.diaria,
-        idTexto: 'texto-progresso-diario', idBarra: 'barra-progresso-diario', idStatus: 'texto-status-diario',
-        rotuloRestante: 'para bater a meta de hoje'
-      });
-
-      // --- SEMANAL ---
-      const segundaISO = getInicioSemanaDe(hoje);
-      const entradasSemana = entradas.filter(l => l.data >= segundaISO && l.data <= hoje);
-      const faturamentoSemana = entradasSemana.reduce((a, l) => a + l.valor, 0);
-      const diasSemanaComLancamento = new Set(entradasSemana.map(l => l.data)).size;
-      const diasSemanaRestantes = Math.max(1, (metas.diasSemana || 0) - diasSemanaComLancamento);
-      renderBarraMeta({
-        valorAtual: faturamentoSemana, valorMeta: metas.semanal,
-        idTexto: 'texto-progresso-semanal', idBarra: 'barra-progresso-semanal', idStatus: 'texto-status-semanal',
-        rotuloRestante: 'para bater a meta da semana',
-        diasRestantes: diasSemanaRestantes, temDiasConfigurados: !!metas.diasSemana
-      });
-
-      // --- MENSAL ---
-      const mesAtual = getMesAnoAtual();
-      const entradasMes = entradas.filter(l => mesAnoDeData(l.data) === mesAtual);
-      const faturamentoMes = entradasMes.reduce((a, l) => a + l.valor, 0);
-      const diasMesComLancamento = new Set(entradasMes.map(l => l.data)).size;
-      const diasMesRestantes = Math.max(1, (metas.diasMes || 0) - diasMesComLancamento);
-      renderBarraMeta({
-        valorAtual: faturamentoMes, valorMeta: metas.mensal,
-        idTexto: 'texto-progresso-mensal', idBarra: 'barra-progresso-mensal', idStatus: 'texto-status-mensal',
-        rotuloRestante: 'para bater a meta do mês',
-        diasRestantes: diasMesRestantes, temDiasConfigurados: !!metas.diasMes
-      });
-
-      renderAvisoNovaSemanaMes();
-    }
-
-    // ==========================================================================
-    // ABA ANÁLISE — GRÁFICOS DINÂMICOS
-    // ==========================================================================
-    let chartEvolucaoInstance, chartPlataformasInstance, chartCorridasAppInstance,
-        chartFaturamentoMensalInstance, chartHorasMensalInstance, chartAppMensalInstance,
-        chartDiaSemanaInstance, chartSemanaComparativoInstance;
-
-    function ultimosNDias(n) {
-      const dias = [];
-      for (let i = n - 1; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        dias.push(d.toISOString().split('T')[0]);
-      }
-      return dias;
-    }
-
-    function ultimosNMeses(n) {
-      const meses = [];
-      const d = new Date();
-      d.setDate(1);
-      for (let i = n - 1; i >= 0; i--) {
-        const dm = new Date(d.getFullYear(), d.getMonth() - i, 1);
-        const m = String(dm.getMonth() + 1).padStart(2, '0');
-        meses.push(`${dm.getFullYear()}-${m}`);
-      }
-      return meses;
-    }
-
-    function nomeMesCurto(mesAno) {
-      const [ano, mes] = mesAno.split('-');
-      const nomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-      return `${nomes[parseInt(mes) - 1]}/${ano.slice(2)}`;
-    }
-
-    function renderGraficosAnalise() {
-      // Se a biblioteca de gráficos não carregou (ex: sem internet, CDN bloqueado
-      // no navegador/preview), avisa em vez de travar silenciosamente.
-      if (typeof Chart === 'undefined') {
-        console.error('Chart.js não carregou — verifique a conexão com a internet.');
-        const aviso = document.getElementById('aviso-graficos-indisponiveis');
-        if (aviso) aviso.style.display = 'block';
-        try { renderProgressoMetas(); } catch (e) { console.error(e); }
-        return;
-      }
-      const avisoEl = document.getElementById('aviso-graficos-indisponiveis');
-      if (avisoEl) avisoEl.style.display = 'none';
-
-      try {
-      const entradas = todosLancamentos.filter(l => l.tipo === 'entrada');
-      const mesAtual = getMesAnoAtual();
-      const entradasMesAtual = entradas.filter(l => mesAnoDeData(l.data) === mesAtual);
-
-      // --- Stats rápidas ---
-      const totalValorMes = entradasMesAtual.reduce((a, l) => a + l.valor, 0);
-      const totalCorridasMes = entradasMesAtual.reduce((a, l) => a + (l.corridas || 0), 0);
-      const totalHorasMes = Object.keys(horasPorDia)
-        .filter(d => mesAnoDeData(d) === mesAtual)
-        .reduce((a, d) => a + horasPorDia[d], 0);
-
-      document.getElementById('stat-rs-corrida').innerText = totalCorridasMes > 0
-        ? formatarMoeda(totalValorMes / totalCorridasMes) : 'R$ 0,00';
-      document.getElementById('stat-rs-hora-mes').innerText = totalHorasMes > 0
-        ? formatarMoeda(totalValorMes / totalHorasMes) : 'R$ 0,00';
-
-      // --- Passes diários pagos no mês, individuais por app ---
-      const saidasMesAtual = todosLancamentos.filter(l => l.tipo === 'saida' && mesAnoDeData(l.data) === mesAtual);
-      const passesPorApp = {};
-      saidasMesAtual.filter(l => l.categoria.startsWith('Passe')).forEach(l => {
-        passesPorApp[l.categoria] = (passesPorApp[l.categoria] || 0) + l.valor;
-      });
-      const totalPassesMes = Object.values(passesPorApp).reduce((a, v) => a + v, 0);
-      const containerPasses = document.getElementById('analise-passes-por-app');
-      if (containerPasses) {
-        const linhasPasses = Object.keys(passesPorApp)
-          .sort((a, b) => passesPorApp[b] - passesPorApp[a])
-          .map(cat => `
-            <div class="item-row">
-              <span style="font-size: 13px; font-weight: 600;">${cat}</span>
-              <span style="font-size: 14px; font-weight: 800; color: var(--max-red);">${formatarMoeda(passesPorApp[cat])}</span>
-            </div>`).join('');
-        containerPasses.innerHTML = (linhasPasses || `<p style="font-size: 13px; color: var(--texto-secundario); text-align: center; padding: 8px 0;">Nenhum passe lançado neste mês.</p>`)
-          + `<div class="item-row" style="border-top: 1px solid var(--linha); margin-top: 4px; padding-top: 10px;">
-               <span style="font-size: 13px; font-weight: 800;">Total no mês</span>
-               <span style="font-size: 15px; font-weight: 800; color: var(--texto-principal);">${formatarMoeda(totalPassesMes)}</span>
-             </div>`;
-      }
-
-      // --- KM acumulado do mês, R$/km bruto e líquido ---
-      const kmMesAcumulado = Object.keys(kmPorDia)
-        .filter(d => mesAnoDeData(d) === mesAtual)
-        .reduce((a, d) => a + kmPorDia[d], 0);
-      const custosMesAtual = saidasMesAtual.reduce((a, l) => a + l.valor, 0);
-      const custoPorKmSemComb = calcularCustoPorKmSemCombustivel();
-      const custoKmTotalMes = kmMesAcumulado * custoPorKmSemComb;
-      const lucroLiquidoMesComKm = (totalValorMes - custosMesAtual) - custoKmTotalMes;
-
-      document.getElementById('stat-km-mes').innerText = `${kmMesAcumulado.toLocaleString('pt-BR')} km`;
-      document.getElementById('stat-rs-km-bruto-mes').innerText = kmMesAcumulado > 0
-        ? formatarMoeda(totalValorMes / kmMesAcumulado) : 'R$ 0,00';
-      document.getElementById('stat-rs-km-liquido-mes').innerText = kmMesAcumulado > 0
-        ? formatarMoeda(lucroLiquidoMesComKm / kmMesAcumulado) : 'R$ 0,00';
-
-      // --- Gráfico 1: Faturamento últimos 7 dias ---
-      const dias7 = ultimosNDias(7);
-      const valoresPorDia = dias7.map(d => entradas.filter(l => l.data === d).reduce((a, l) => a + l.valor, 0));
-      const labelsDias7 = dias7.map(d => new Date(d + 'T00:00:00').toLocaleDateString('pt-BR', { weekday: 'short' }));
-
-      if (chartEvolucaoInstance) chartEvolucaoInstance.destroy();
-      chartEvolucaoInstance = new Chart(document.getElementById('chartEvolucao').getContext('2d'), {
-        type: 'line',
-        data: {
-          labels: labelsDias7,
-          datasets: [{
-            data: valoresPorDia,
-            borderColor: '#2878E8',
-            backgroundColor: 'rgba(40, 120, 232, 0.1)',
-            fill: true, tension: 0.4, borderWidth: 3
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-      });
-
-      // --- Gráfico 2: Ganhos por plataforma (mês atual) ---
-      const porPlataforma = {};
-      entradasMesAtual.forEach(l => { porPlataforma[l.categoria] = (porPlataforma[l.categoria] || 0) + l.valor; });
-      const labelsPlataforma = Object.keys(porPlataforma);
-      const valoresPlataforma = labelsPlataforma.map(k => porPlataforma[k]);
-      const paletaCores = ['#111827', '#FF7412', '#7C4DFF', '#18B8D0', '#12B981', '#F04444'];
-
-      if (chartPlataformasInstance) chartPlataformasInstance.destroy();
-      chartPlataformasInstance = new Chart(document.getElementById('chartPlataformas').getContext('2d'), {
-        type: 'doughnut',
-        data: {
-          labels: labelsPlataforma.length ? labelsPlataforma : ['Sem dados'],
-          datasets: [{
-            data: valoresPlataforma.length ? valoresPlataforma : [1],
-            backgroundColor: labelsPlataforma.length ? paletaCores : ['#E4E7EC']
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, cutout: '70%' }
-      });
-
-      // --- Gráfico 3: Corridas por app (mês atual) ---
-      const corridasPorApp = {};
-      entradasMesAtual.forEach(l => {
-        if (CANAIS_CORRIDA.includes(l.categoria)) {
-          corridasPorApp[l.categoria] = (corridasPorApp[l.categoria] || 0) + (l.corridas || 0);
-        }
-      });
-      const labelsCorridasApp = Object.keys(corridasPorApp);
-      const valoresCorridasApp = labelsCorridasApp.map(k => corridasPorApp[k]);
-
-      if (chartCorridasAppInstance) chartCorridasAppInstance.destroy();
-      chartCorridasAppInstance = new Chart(document.getElementById('chartCorridasApp').getContext('2d'), {
-        type: 'doughnut',
-        data: {
-          labels: labelsCorridasApp.length ? labelsCorridasApp : ['Sem dados'],
-          datasets: [{
-            data: valoresCorridasApp.length ? valoresCorridasApp : [1],
-            backgroundColor: labelsCorridasApp.length ? paletaCores : ['#E4E7EC']
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, cutout: '70%' }
-      });
-
-      // --- Gráfico 4: Faturamento por mês (últimos 6 meses) ---
-      const meses6 = ultimosNMeses(6);
-      const valoresPorMes = meses6.map(m => entradas.filter(l => mesAnoDeData(l.data) === m).reduce((a, l) => a + l.valor, 0));
-
-      if (chartFaturamentoMensalInstance) chartFaturamentoMensalInstance.destroy();
-      chartFaturamentoMensalInstance = new Chart(document.getElementById('chartFaturamentoMensal').getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels: meses6.map(nomeMesCurto),
-          datasets: [{
-            data: valoresPorMes,
-            backgroundColor: '#12B981',
-            borderRadius: 6
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-      });
-
-      // --- Gráfico 5: Horas trabalhadas por mês ---
-      const horasPorMes = meses6.map(m =>
-        Object.keys(horasPorDia).filter(d => mesAnoDeData(d) === m).reduce((a, d) => a + horasPorDia[d], 0)
-      );
-
-      if (chartHorasMensalInstance) chartHorasMensalInstance.destroy();
-      chartHorasMensalInstance = new Chart(document.getElementById('chartHorasMensal').getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels: meses6.map(nomeMesCurto),
-          datasets: [{
-            data: horasPorMes,
-            backgroundColor: '#7C4DFF',
-            borderRadius: 6
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-      });
-
-      // --- Gráfico 6: Faturamento por app, mês a mês (linhas comparativas) ---
-      const canaisPrincipais = ['Uber', '99', 'inDriver', 'Particular/CLT'];
-      const coresCanais = { 'Uber': '#111827', '99': '#FF7412', 'inDriver': '#00B175', 'Particular/CLT': '#2878E8' };
-      const datasetsAppMensal = canaisPrincipais.map(canal => ({
-        label: canal,
-        data: meses6.map(m => entradas.filter(l => mesAnoDeData(l.data) === m && l.categoria === canal).reduce((a, l) => a + l.valor, 0)),
-        borderColor: coresCanais[canal],
-        backgroundColor: coresCanais[canal],
-        tension: 0.4,
-        borderWidth: 3,
-        fill: false
-      }));
-
-      if (chartAppMensalInstance) chartAppMensalInstance.destroy();
-      chartAppMensalInstance = new Chart(document.getElementById('chartAppMensal').getContext('2d'), {
-        type: 'line',
-        data: {
-          labels: meses6.map(nomeMesCurto),
-          datasets: datasetsAppMensal
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-      });
-
-      // --- Gráfico 7: Faturamento médio por dia da semana (histórico completo) ---
-      const nomesDiasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-      const somaPorDiaSemana = [0, 0, 0, 0, 0, 0, 0];
-      const contagemPorDiaSemana = [0, 0, 0, 0, 0, 0, 0];
-      entradas.forEach(l => {
-        const diaSemana = new Date(l.data + 'T00:00:00').getDay();
-        somaPorDiaSemana[diaSemana] += l.valor;
-      });
-      // conta quantas vezes cada dia da semana teve pelo menos um lançamento (pra tirar média por dia, não por lançamento)
-      const diasComLancamento = {};
-      entradas.forEach(l => { diasComLancamento[l.data] = new Date(l.data + 'T00:00:00').getDay(); });
-      Object.values(diasComLancamento).forEach(dow => { contagemPorDiaSemana[dow]++; });
-      const mediaPorDiaSemana = somaPorDiaSemana.map((soma, i) => contagemPorDiaSemana[i] > 0 ? soma / contagemPorDiaSemana[i] : 0);
-
-      if (chartDiaSemanaInstance) chartDiaSemanaInstance.destroy();
-      chartDiaSemanaInstance = new Chart(document.getElementById('chartDiaSemana').getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels: nomesDiasSemana,
-          datasets: [{
-            data: mediaPorDiaSemana,
-            backgroundColor: '#18B8D0',
-            borderRadius: 6
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-      });
-
-      // --- Gráfico 8: Esta semana x semana passada (dia a dia) ---
-      const hojeD = new Date();
-      const dow = hojeD.getDay();
-      const offsetSegunda = dow === 0 ? 6 : dow - 1;
-      const segundaAtual = new Date(hojeD);
-      segundaAtual.setDate(hojeD.getDate() - offsetSegunda);
-      const diasSemanaAtual = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(segundaAtual);
-        d.setDate(segundaAtual.getDate() + i);
-        return d.toISOString().split('T')[0];
-      });
-      const diasSemanaPassada = diasSemanaAtual.map(d => {
-        const dt = new Date(d + 'T00:00:00');
-        dt.setDate(dt.getDate() - 7);
-        return dt.toISOString().split('T')[0];
-      });
-      const valoresSemanaAtual = diasSemanaAtual.map(d => entradas.filter(l => l.data === d).reduce((a, l) => a + l.valor, 0));
-      const valoresSemanaPassada = diasSemanaPassada.map(d => entradas.filter(l => l.data === d).reduce((a, l) => a + l.valor, 0));
-
-      if (chartSemanaComparativoInstance) chartSemanaComparativoInstance.destroy();
-      chartSemanaComparativoInstance = new Chart(document.getElementById('chartSemanaComparativo').getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels: nomesDiasSemana.slice(1).concat(nomesDiasSemana[0]), // Seg..Dom
-          datasets: [
-            { label: 'Semana Passada', data: valoresSemanaPassada, backgroundColor: '#8B92A0', borderRadius: 6 },
-            { label: 'Esta Semana', data: valoresSemanaAtual, backgroundColor: '#12B981', borderRadius: 6 }
-          ]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-      });
-
-      renderProgressoMetas();
-      } catch (e) {
-        console.error('Erro ao renderizar gráficos:', e);
-      }
-    }
-
-    // ==========================================================================
-    // BANCO DE DADOS DE CONTAS PESSOAIS (ABA DESPESAS)
-    // ==========================================================================
-    let lucroLiquidoAcumuladoMes = 0;
-    let mesDespesasSelecionado = getMesAnoAtual(); // fonte confiável — não depende só do <input type="month">
-
-    document.getElementById('despesas-filtro-mes').value = mesDespesasSelecionado;
-
-    function aoMudarMesDespesas() {
-      const valorInput = document.getElementById('despesas-filtro-mes').value;
-      if (valorInput) mesDespesasSelecionado = valorInput;
-      renderDespesas();
-    }
-
-    function renderDespesas() {
-      const mesSelecionado = mesDespesasSelecionado;
-      if (!mesSelecionado) return;
-
-      // Lucro líquido real do mês selecionado (entradas - saídas do dia a dia)
-      const entradasMes = todosLancamentos.filter(l => l.tipo === 'entrada' && mesAnoDeData(l.data) === mesSelecionado).reduce((a, l) => a + l.valor, 0);
-      const saidasMes = todosLancamentos.filter(l => l.tipo === 'saida' && mesAnoDeData(l.data) === mesSelecionado).reduce((a, l) => a + l.valor, 0);
-      lucroLiquidoAcumuladoMes = entradasMes - saidasMes;
-
-      const contasDoMes = bancoContas.filter(c => c.mesAno === mesSelecionado);
-      const totalDespesasMes = contasDoMes.reduce((acc, c) => acc + c.valor, 0);
-      const jaPago = contasDoMes.filter(c => c.pago).reduce((acc, c) => acc + c.valor, 0);
-
-      const [anoStr, mesStr] = mesSelecionado.split('-');
-      const anoInt = parseInt(anoStr);
-      const mesInt = parseInt(mesStr);
-      const hoje = new Date();
-      
-      const ultimoDiaDoMes = new Date(anoInt, mesInt, 0).getDate();
-      let diasRestantes = ultimoDiaDoMes;
-
-      if (hoje.getFullYear() === anoInt && (hoje.getMonth() + 1) === mesInt) {
-        diasRestantes = Math.max(1, ultimoDiaDoMes - hoje.getDate() + 1);
-      }
-
-      // Alerta de contas vencendo hoje/amanhã (só faz sentido pro mês atual)
-      const alertasContainer = document.getElementById('alertas-despesas');
-      if (hoje.getFullYear() === anoInt && (hoje.getMonth() + 1) === mesInt) {
-        const diaHoje = hoje.getDate();
-        const vencendoHoje = contasDoMes.filter(c => !c.pago && c.vencimento === diaHoje);
-        const vencendoAmanha = contasDoMes.filter(c => !c.pago && c.vencimento === diaHoje + 1);
-        let htmlAlertas = '';
-        if (vencendoHoje.length > 0) {
-          htmlAlertas += `<div class="alerta-despesa"><i data-lucide="alert-triangle" size="20" style="color:#D97706;"></i><div><h4 style="font-size:13px; font-weight:700; color:#92400E;">Vencendo hoje</h4><p style="font-size:12px; color:#B45309;">${vencendoHoje.map(c => c.nome).join(', ')}</p></div></div>`;
-        }
-        if (vencendoAmanha.length > 0) {
-          htmlAlertas += `<div class="alerta-despesa"><i data-lucide="bell-ring" size="20" style="color:#D97706;"></i><div><h4 style="font-size:13px; font-weight:700; color:#92400E;">Vencendo amanhã</h4><p style="font-size:12px; color:#B45309;">${vencendoAmanha.map(c => c.nome).join(', ')}</p></div></div>`;
-        }
-        alertasContainer.innerHTML = htmlAlertas;
-        criarIconesSeguro();
-      } else {
-        alertasContainer.innerHTML = '';
-      }
-
-      const faltaPagar = Math.max(0, totalDespesasMes - jaPago);
-      const faltaPagarPorDia = faltaPagar / diasRestantes;
-      const saldo = lucroLiquidoAcumuladoMes - totalDespesasMes;
-      const precisaLucrarPorDia = Math.max(0, totalDespesasMes - lucroLiquidoAcumuladoMes) / diasRestantes;
-
-      const linhasDespesas = [
-        { label: 'Total de despesas do mês', valor: formatarMoeda(totalDespesasMes), corValor: 'var(--texto-principal)', negritoLabel: false },
-        { label: 'Já pago', valor: formatarMoeda(jaPago), corValor: 'var(--max-green)', negritoLabel: false },
-        { label: 'Falta pagar', valor: formatarMoeda(faltaPagar), corValor: 'var(--max-yellow)', negritoLabel: false },
-        { label: 'Falta pagar / dia restante', valor: formatarMoeda(faltaPagarPorDia), corValor: 'var(--max-orange)', negritoLabel: false },
-        { label: 'Lucro líquido do mês (entradas - saídas do dia a dia)', valor: formatarMoeda(lucroLiquidoAcumuladoMes), corValor: 'var(--max-green)', negritoLabel: false },
-        { label: 'Saldo (lucro - despesas totais)', valor: formatarMoeda(saldo), corValor: saldo >= 0 ? 'var(--max-green)' : 'var(--max-red)', negritoLabel: false },
-        { label: 'Precisa lucrar / dia p/ cobrir tudo', valor: formatarMoeda(precisaLucrarPorDia), corValor: 'var(--max-orange)', negritoLabel: true }
-      ];
-
-      const containerMetricas = document.getElementById('card-metricas-despesas');
-      containerMetricas.innerHTML = linhasDespesas.map((item) => `
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--linha);">
-          <span style="font-size: 13px; font-weight: ${item.negritoLabel ? '700' : '500'}; color: ${item.negritoLabel ? 'var(--texto-principal)' : 'var(--texto-secundario)'};">
-            ${item.label}
-          </span>
-          <span style="font-size: 13px; font-weight: 700; color: ${item.corValor};">
-            ${item.valor}
-          </span>
-        </div>
-      `).join('');
-
-      const containerLista = document.getElementById('lista-contas-mes');
-      if (contasDoMes.length === 0) {
-        containerLista.innerHTML = `<p style="font-size: 13px; color: var(--texto-secundario); text-align: center; padding: 12px 0;">Nenhuma conta lançada para este mês.</p>`;
-      } else {
-        containerLista.innerHTML = contasDoMes.map(conta => `
-          <div class="item-row">
-            <div>
-              <h4 style="font-size: 14px; font-weight: 700; color: var(--texto-principal);">
-                ${conta.nome} ${conta.totalParcelas > 1 ? `<span style="font-size: 11px; color: var(--max-blue);">(${conta.numParcela}/${conta.totalParcelas})</span>` : ''}
-              </h4>
-              <p style="font-size: 12px; color: var(--texto-secundario);">Vencimento: Dia ${conta.vencimento}</p>
-            </div>
-            <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-              <span style="font-size: 14px; font-weight: 800; color: var(--texto-principal);">${formatarMoeda(conta.valor)}</span>
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <button class="btn-status-pago ${conta.pago ? 'pago' : 'pendente'}" onclick="alternarStatusPago('${conta.id}')">
-                  ${conta.pago ? '✓ PAGO' : '• PENDENTE'}
-                </button>
-                <button class="btn-delete-row" onclick="pedirConfirmacaoExclusaoConta('${conta.id}')" title="Excluir conta" style="${conta.id === contaParaConfirmarExclusao ? 'background: var(--max-red); color: white; width: auto; padding: 0 10px; font-size: 10px; font-weight: 800; border-radius: 8px;' : ''}">
-                  ${conta.id === contaParaConfirmarExclusao ? 'CONFIRMAR?' : '<i data-lucide="trash-2" size="14"></i>'}
-                </button>
-              </div>
-            </div>
-          </div>
-        `).join('');
-      }
-      criarIconesSeguro();
-    }
-
-    async function alternarStatusPago(id) {
-      const idx = bancoContas.findIndex(c => c.id === id);
-      if (idx !== -1) {
-        bancoContas[idx].pago = !bancoContas[idx].pago;
-        await storageSet('contas', bancoContas);
-        renderDespesas();
-      }
-    }
-
-    let contaParaConfirmarExclusao = null;
-
-    function pedirConfirmacaoExclusaoConta(id) {
-      if (contaParaConfirmarExclusao === id) {
-        contaParaConfirmarExclusao = null;
-        excluirConta(id);
-      } else {
-        contaParaConfirmarExclusao = id;
-        renderDespesas();
-        setTimeout(() => {
-          if (contaParaConfirmarExclusao === id) {
-            contaParaConfirmarExclusao = null;
-            renderDespesas();
-          }
-        }, 3000);
-      }
-    }
-
-    async function excluirConta(id) {
-      bancoContas = bancoContas.filter(c => c.id !== id);
-      await storageSet('contas', bancoContas);
-      renderDespesas();
-    }
-
-    async function cadastrarNovaConta() {
-      const inputNome = document.getElementById('input-conta-nome');
-      const inputValor = document.getElementById('input-conta-valor');
-      const inputVencimento = document.getElementById('input-conta-vencimento');
-      const inputQtdParcelas = document.getElementById('input-conta-qtd-parcelas');
-
-      const nome = inputNome.value.trim();
-      const valor = moedaParaNumero(inputValor.value);
-      const vencimento = parseInt(inputVencimento.value);
-      const qtdParcelas = parseInt(inputQtdParcelas.value) || 1;
-
-      if (!nome || isNaN(valor) || valor <= 0 || isNaN(vencimento) || vencimento < 1 || vencimento > 31) {
-        alert("Preencha todos os campos da conta corretamente!");
-        return;
-      }
-
-      const mesInicialStr = mesDespesasSelecionado;
-      const [anoStr, mesStr] = mesInicialStr.split('-');
-      let anoAtual = parseInt(anoStr);
-      let mesAtual = parseInt(mesStr);
-
-      for (let p = 1; p <= qtdParcelas; p++) {
-        const mesFormatted = String(mesAtual).padStart(2, '0');
-        const mesAnoChave = `${anoAtual}-${mesFormatted}`;
-
-        const novaConta = {
-          id: Date.now().toString() + '_' + p,
-          nome: nome,
-          valor: valor,
-          vencimento: vencimento,
-          mesAno: mesAnoChave,
-          pago: false,
-          numParcela: p,
-          totalParcelas: qtdParcelas
-        };
-
-        bancoContas.push(novaConta);
-
-        mesAtual++;
-        if (mesAtual > 12) {
-          mesAtual = 1;
-          anoAtual++;
-        }
-      }
-
-      await storageSet('contas', bancoContas);
-      renderDespesas();
-
-      inputNome.value = '';
-      inputValor.value = '';
-      inputVencimento.value = '';
-      inputQtdParcelas.value = '1';
-
-      alert(`${qtdParcelas > 1 ? `${qtdParcelas} parcelas lançadas` : 'Conta lançada'} com sucesso!`);
-    }
-
-    // ==========================================================================
-    // CONTROLE DE NAVEGAÇÃO DE ABAS
-    // ==========================================================================
-    // ==========================================================================
-    // MENU DE ATALHOS DO BOTÃO "+" (FAB)
-    // ==========================================================================
-    function alternarMenuFab() {
-      const menu = document.getElementById('fab-menu');
-      const overlay = document.getElementById('fab-overlay');
-      const btn = document.getElementById('fab-button');
-      const abrindo = !menu.classList.contains('aberto');
-      menu.classList.toggle('aberto', abrindo);
-      overlay.classList.toggle('aberto', abrindo);
-      btn.classList.toggle('aberto', abrindo);
-    }
-
-    function fecharMenuFab() {
-      document.getElementById('fab-menu').classList.remove('aberto');
-      document.getElementById('fab-overlay').classList.remove('aberto');
-      document.getElementById('fab-button').classList.remove('aberto');
-    }
-
-    function irParaAtalho(tabId, idParaFocar) {
-      fecharMenuFab();
-      const tabIndex = Array.from(document.querySelectorAll('.tab-item')).findIndex(
-        el => el.getAttribute('onclick').includes(`'${tabId}'`)
-      );
-      const elementoAba = tabIndex >= 0 ? document.querySelectorAll('.tab-item')[tabIndex] : null;
-      switchTab(tabId, elementoAba);
-      if (idParaFocar) {
-        setTimeout(() => {
-          const campo = document.getElementById(idParaFocar);
-          if (campo) campo.focus();
-        }, 150);
-      }
-    }
-
-    function switchTab(tabId, element) {
-      document.querySelectorAll('.tab-item').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-
-      if (element) element.classList.add('active');
-      document.getElementById('tab-' + tabId).classList.add('active');
-
-      if (tabId === 'analise' && graficosDesatualizados) {
-        if (typeof Chart !== 'undefined') graficosDesatualizados = false; // só marca como "em dia" se realmente conseguiu desenhar
-        renderGraficosAnalise();
-      }
-      if (tabId === 'historico') renderHistorico();
-      if (tabId === 'reserva') renderReserva();
-      if (tabId === 'metas') renderProgressoMetas();
-    }
-
-    // ==========================================================================
-    // RÁDIO — LISTA DE ESTAÇÕES + CONTROLE DE ÁUDIO
-    // ==========================================================================
-    const estacoesRadio = [
-      { titulo: 'Hunter.FM — Top Hits', sub: 'Pop & As Mais Tocadas', url: 'https://live.hunter.fm/pop_high', icone: 'music', cor: 'blue', badge: 'OFICIAL', badgeClasse: 'badge-green' },
-      { titulo: 'Hunter.FM — Sertanejo', sub: 'Modão & Universitário', url: 'https://live.hunter.fm/sertanejo_high', icone: 'disc', cor: 'orange', badge: 'AO VIVO', badgeClasse: 'badge-blue' },
-      { titulo: 'Lo-Fi Chill Driver', sub: 'Música Instrumental Leve', url: 'https://live.hunter.fm/lofi_high', icone: 'headphones', cor: 'green', badge: '24/7', badgeClasse: 'badge-blue' },
-      { titulo: 'Hunter.FM — Rock', sub: 'Clássicos & Nacionais', url: 'https://live.hunter.fm/rock_high', icone: 'radio-tower', cor: 'purple', badge: 'AO VIVO', badgeClasse: 'badge-blue' },
-      // Rádios adicionais (vindas do app antigo)
-      { titulo: 'Rádio Sertanejo Max', sub: 'Rádio Online', url: 'https://live.hunter.fm/sertanejo_high', icone: 'disc', corHex: '#FF7412', badge: 'AO VIVO', badgeClasse: 'badge-blue' },
-      { titulo: 'Hunter Pop', sub: 'Rádio Online', url: 'https://live.hunter.fm/pop_high', icone: 'music', corHex: '#10b981', badge: 'AO VIVO', badgeClasse: 'badge-blue' },
-      { titulo: 'Pop2K', sub: 'Rádio Online', url: 'https://live.hunter.fm/pop2k_high', icone: 'music', corHex: '#06b6d4', badge: 'AO VIVO', badgeClasse: 'badge-blue' },
-      { titulo: '80s', sub: 'Rádio Online', url: 'https://ice1.somafm.com/u80s-128-mp3', icone: 'radio-tower', corHex: '#8b5cf6', badge: 'AO VIVO', badgeClasse: 'badge-blue' },
-      { titulo: 'Power181', sub: 'Rádio Online', url: 'https://live.hunter.fm/hitsbrasil_high', icone: 'radio', corHex: '#f97316', badge: 'AO VIVO', badgeClasse: 'badge-blue' },
-      { titulo: 'Rock', sub: 'Rádio Online', url: 'https://live.hunter.fm/rock_high', icone: 'radio-tower', corHex: '#ef4444', badge: 'AO VIVO', badgeClasse: 'badge-blue' },
-      { titulo: 'Sertanejo', sub: 'Rádio Online', url: 'https://live.hunter.fm/sertanejo_high', icone: 'disc', corHex: '#f59e0b', badge: 'AO VIVO', badgeClasse: 'badge-blue' },
-      { titulo: 'HipHop', sub: 'Rádio Online', url: 'https://live.hunter.fm/hiphop_high', icone: 'music', corHex: '#111827', badge: 'AO VIVO', badgeClasse: 'badge-blue' },
-      { titulo: 'Cristã', sub: 'Rádio Online', url: 'https://live.hunter.fm/gospel_high', icone: 'music', corHex: '#facc15', badge: 'AO VIVO', badgeClasse: 'badge-blue' },
-      { titulo: 'Tropical', sub: 'Rádio Online', url: 'https://live.hunter.fm/tropical_high', icone: 'music', corHex: '#34d399', badge: 'AO VIVO', badgeClasse: 'badge-blue' },
-      { titulo: 'Pagode', sub: 'Rádio Online', url: 'https://live.hunter.fm/pagode_high', icone: 'music', corHex: '#f59e0b', badge: 'AO VIVO', badgeClasse: 'badge-blue' },
-      { titulo: 'Pizadinha', sub: 'Rádio Online', url: 'https://live.hunter.fm/pizadinha_high', icone: 'music', corHex: '#f87171', badge: 'AO VIVO', badgeClasse: 'badge-blue' },
-      { titulo: 'Master', sub: 'Rádio Online', url: 'https://live.hunter.fm/master_high', icone: 'radio', corHex: '#4ade80', badge: 'AO VIVO', badgeClasse: 'badge-blue' },
-      { titulo: 'MPB', sub: 'Rádio Online', url: 'https://live.hunter.fm/mpb_high', icone: 'music', corHex: '#1e3a8a', badge: 'AO VIVO', badgeClasse: 'badge-blue' },
-      { titulo: 'Lo-Fi', sub: 'Rádio Online', url: 'https://live.hunter.fm/lofi_high', icone: 'headphones', corHex: '#64748b', badge: 'AO VIVO', badgeClasse: 'badge-blue' },
-      { titulo: '181 HipHop', sub: 'Rádio Online', url: 'https://live.hunter.fm/hiphop_high', icone: 'music', corHex: '#0ea5e9', badge: 'AO VIVO', badgeClasse: 'badge-blue' },
-      { titulo: 'Hits Brasil', sub: 'Rádio Online', url: 'https://live.hunter.fm/hitsbrasil_high', icone: 'music', corHex: '#f43f5e', badge: 'AO VIVO', badgeClasse: 'badge-blue' }
-    ];
-
-    function renderEstacoesRadio() {
-      const container = document.getElementById('lista-estacoes-radio');
-      container.innerHTML = estacoesRadio.map((estacao, idx) => {
-        const iconBoxAttrs = estacao.corHex
-          ? `class="icon-box" style="background:${estacao.corHex};"`
-          : `class="icon-box ${estacao.cor}"`;
-        return `
-        <div class="radio-station-item ${idx === 0 ? 'active' : ''}" onclick="selectRadio('${estacao.titulo}', '${estacao.sub}', '${estacao.url}', this)">
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <div ${iconBoxAttrs}><i data-lucide="${estacao.icone}" size="18"></i></div>
-            <div>
-              <h4 style="font-size: 14px; font-weight: 700;">${estacao.titulo}</h4>
-              <p style="font-size: 12px; color: var(--texto-secundario);">${estacao.sub}</p>
-            </div>
-          </div>
-          <span class="badge ${estacao.badgeClasse}">${estacao.badge}</span>
-        </div>
-      `;
-      }).join('');
-      criarIconesSeguro();
-    }
-
-    const audioPlayer = document.getElementById('audio-player');
-    const btnPlayRadio = document.getElementById('btn-play-radio');
-
-    function selectRadio(title, sub, streamUrl, element) {
-      document.querySelectorAll('.radio-station-item').forEach(item => item.classList.remove('active'));
-      element.classList.add('active');
-      
-      document.getElementById('current-radio-title').innerText = title;
-      document.getElementById('current-radio-sub').innerText = sub;
-
-      audioPlayer.src = streamUrl;
-      audioPlayer.play();
-      btnPlayRadio.innerHTML = '<i data-lucide="pause" size="22"></i>';
-      criarIconesSeguro();
-    }
-
-    function togglePlayState() {
-      if (audioPlayer.paused) {
-        audioPlayer.play().catch(e => {
-          console.error('Erro ao tocar rádio:', e);
-          alert('Não foi possível tocar essa rádio agora. Verifique sua conexão com a internet ou tente outra estação.');
-        });
-        btnPlayRadio.innerHTML = '<i data-lucide="pause" size="22" style="font-size: 18px; font-style: normal;">⏸</i>';
-      } else {
-        audioPlayer.pause();
-        btnPlayRadio.innerHTML = '<i data-lucide="play" size="22" style="font-size: 18px; font-style: normal;">▶</i>';
-      }
-      criarIconesSeguro();
-    }
-
-    // ==========================================================================
-    // RESERVA — GUARDE 10% (INSPIRADO NO "HOMEM MAIS RICO DA BABILÔNIA")
-    // ==========================================================================
-    function totalEntradasDoDia(dataISO) {
-      return todosLancamentos
-        .filter(l => l.tipo === 'entrada' && l.data === dataISO)
-        .reduce((soma, l) => soma + l.valor, 0);
-    }
-
-    async function registrarReservaHoje() {
-      const input = document.getElementById('input-reserva-guardado');
-      const valor = moedaParaNumero(input.value);
-      if (isNaN(valor) || valor < 0) {
-        alert('Digite um valor válido.');
-        return;
-      }
-      reservaPorDia[dataSelecionadaReserva] = valor;
-      input.value = '';
-      await storageSet('reserva-por-dia', reservaPorDia);
-      renderReserva();
-      const texto = document.getElementById('texto-reserva-salva');
-      texto.innerText = '✓ Guardado registrado!';
-      setTimeout(() => { texto.innerText = ''; }, 2500);
-    }
-
-    function aoMudarDataReserva() {
-      const input = document.getElementById('input-data-reserva');
-      dataSelecionadaReserva = input.value || getDataHojeISO();
-      document.getElementById('btn-voltar-hoje-reserva').style.display = dataSelecionadaReserva === getDataHojeISO() ? 'none' : 'flex';
-      renderReserva();
-    }
-
-    function voltarParaHojeReserva() {
-      dataSelecionadaReserva = getDataHojeISO();
-      document.getElementById('input-data-reserva').value = dataSelecionadaReserva;
-      document.getElementById('btn-voltar-hoje-reserva').style.display = 'none';
-      renderReserva();
-    }
-
-    function exibirSimulacaoReserva() {
-      const taxa = (reservaTaxaMensal || 0) / 100;
-
-      // Mapa 1: o que foi guardado de verdade (valor "realizado")
-      const valorReal = calcularValorSimuladoAPartirDe(reservaPorDia, taxa);
-
-      // Mapa 2: o que seria SE tivesse guardado o ideal (10%) em todo dia com entrada lançada
-      const entradasPorDia = {};
-      todosLancamentos.filter(l => l.tipo === 'entrada').forEach(l => {
-        entradasPorDia[l.data] = (entradasPorDia[l.data] || 0) + l.valor;
-      });
-      const idealPorDia = {};
-      Object.keys(entradasPorDia).forEach(data => { idealPorDia[data] = entradasPorDia[data] * 0.10; });
-      const valorIdeal = calcularValorSimuladoAPartirDe(idealPorDia, taxa);
-
-      document.getElementById('reserva-valor-simulado-real').innerText = formatarMoeda(valorReal);
-      document.getElementById('reserva-valor-simulado-ideal').innerText = formatarMoeda(valorIdeal);
-
-      const avisoVazio = document.getElementById('reserva-aviso-sem-dados');
-      if (avisoVazio) {
-        const semDados = Object.keys(entradasPorDia).length === 0 && Object.keys(reservaPorDia).length === 0;
-        avisoVazio.style.display = semDados ? 'block' : 'none';
-      }
-    }
-
-    function parseTaxaPercentual(texto) {
-      if (!texto) return 0;
-      const limpo = String(texto).trim().replace(',', '.').replace('%', '');
-      const numero = parseFloat(limpo);
-      return isNaN(numero) ? 0 : numero;
-    }
-
-    async function simularRendimentoReserva() {
-      try {
-        reservaTaxaMensal = parseTaxaPercentual(document.getElementById('input-reserva-taxa').value);
-        await storageSet('reserva-taxa', reservaTaxaMensal);
-        exibirSimulacaoReserva();
-      } catch (e) {
-        console.error('Erro ao simular rendimento:', e);
-        alert('Não consegui calcular a simulação agora. Tenta digitar só o número (ex: 1 ou 1.5) e simular de novo.');
-      }
-    }
-
-    // Soma, mês a mês, os valores de um mapa {data: valor} — e projeta cada aporte
-    // mensal rendendo à taxa informada até o mês atual (juros compostos simplificados).
-    function calcularValorSimuladoAPartirDe(mapaPorDia, taxa) {
-      if (!taxa || taxa <= 0) return Object.values(mapaPorDia).reduce((a, v) => a + v, 0);
-
-      const contribPorMes = {};
-      Object.keys(mapaPorDia).forEach(data => {
-        const mes = mesAnoDeData(data);
-        contribPorMes[mes] = (contribPorMes[mes] || 0) + mapaPorDia[data];
-      });
-
-      const [anoAtual, mesAtualNum] = getMesAnoAtual().split('-').map(Number);
-      let total = 0;
-      Object.keys(contribPorMes).forEach(mesAno => {
-        const [ano, mes] = mesAno.split('-').map(Number);
-        const mesesDecorridos = (anoAtual - ano) * 12 + (mesAtualNum - mes);
-        total += contribPorMes[mesAno] * Math.pow(1 + taxa, Math.max(0, mesesDecorridos));
-      });
-      return total;
-    }
-
-    function renderReserva() {
-      const diaAlvo = dataSelecionadaReserva;
-      const ehHoje = diaAlvo === getDataHojeISO();
-      const dataFormatadaTitulo = ehHoje ? 'Hoje' : new Date(diaAlvo + 'T00:00:00').toLocaleDateString('pt-BR');
-
-      document.getElementById('titulo-reserva-hoje').innerText = ehHoje ? 'Reserva de Hoje' : `Reserva — ${dataFormatadaTitulo}`;
-      document.getElementById('reserva-sub-dia').innerText = ehHoje
-        ? '10% calculado em cima do que você já lançou como entrada hoje'
-        : `10% calculado em cima do que foi lançado como entrada em ${dataFormatadaTitulo}`;
-      document.getElementById('label-reserva-guardado').innerText = ehHoje
-        ? 'Quanto você guardou de fato hoje? (R$)'
-        : `Quanto você guardou de fato em ${dataFormatadaTitulo}? (R$)`;
-
-      const entradasHoje = totalEntradasDoDia(diaAlvo);
-      const idealHoje = entradasHoje * 0.10;
-
-      document.getElementById('reserva-ideal-hoje').innerText = formatarMoeda(idealHoje);
-      document.getElementById('reserva-base-calculo').innerText = ehHoje
-        ? `Baseado em ${formatarMoeda(entradasHoje)} de entradas hoje`
-        : `Baseado em ${formatarMoeda(entradasHoje)} de entradas em ${dataFormatadaTitulo}`;
-
-      // Preenche o campo com o que já foi registrado nesse dia, se houver (limpa se não houver)
-      const inputGuardado = document.getElementById('input-reserva-guardado');
-      if (document.activeElement !== inputGuardado) {
-        const jaRegistrado = reservaPorDia[diaAlvo];
-        inputGuardado.value = jaRegistrado ? formatarParaCampoMoeda(jaRegistrado) : '';
-      }
-
-      // Acumulado ideal: 10% de cada dia com entradas já lançadas
-      const entradasPorDia = {};
-      todosLancamentos.filter(l => l.tipo === 'entrada').forEach(l => {
-        entradasPorDia[l.data] = (entradasPorDia[l.data] || 0) + l.valor;
-      });
-      const idealAcumulado = Object.values(entradasPorDia).reduce((a, v) => a + v * 0.10, 0);
-      const guardadoAcumulado = Object.values(reservaPorDia).reduce((a, v) => a + v, 0);
-
-      document.getElementById('reserva-ideal-acumulado').innerText = formatarMoeda(idealAcumulado);
-      document.getElementById('reserva-guardado-acumulado').innerText = formatarMoeda(guardadoAcumulado);
-
-      const percentual = idealAcumulado > 0 ? Math.min(100, (guardadoAcumulado / idealAcumulado) * 100) : 0;
-      document.getElementById('reserva-percentual-atingido').innerText = `${percentual.toFixed(0)}%`;
-      document.getElementById('reserva-barra-progresso').style.width = `${percentual}%`;
-
-      // Simulação de rendimento: só preenche a taxa salva; o cálculo roda ao clicar em "Simular"
-      const inputTaxa = document.getElementById('input-reserva-taxa');
-      if (document.activeElement !== inputTaxa) inputTaxa.value = reservaTaxaMensal || '';
-
-      // Histórico dos últimos dias com registro
-      const diasComRegistro = Object.keys(reservaPorDia).sort((a, b) => b.localeCompare(a)).slice(0, 10);
-      const container = document.getElementById('reserva-historico-dias');
-      if (diasComRegistro.length === 0) {
-        container.innerHTML = `<p style="font-size: 13px; color: var(--texto-secundario); text-align: center; padding: 12px 0;">Nenhum registro ainda. Comece guardando hoje mesmo!</p>`;
-      } else {
-        container.innerHTML = diasComRegistro.map(data => {
-          const idealDoDia = totalEntradasDoDia(data) * 0.10;
-          const guardadoDoDia = reservaPorDia[data];
-          const bateu = guardadoDoDia >= idealDoDia && idealDoDia > 0;
-          return `
-            <div class="item-row">
-              <div>
-                <span style="font-size: 13px; font-weight: 600;">${new Date(data + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
-                <p style="font-size: 11px; color: var(--texto-secundario);">Ideal: ${formatarMoeda(idealDoDia)}</p>
-              </div>
-              <div style="text-align: right;">
-                <span style="font-size: 14px; font-weight: 800; color: ${bateu ? 'var(--max-green)' : 'var(--max-orange)'};">${formatarMoeda(guardadoDoDia)}</span>
-                <p style="font-size: 11px; color: ${bateu ? 'var(--max-green)' : 'var(--max-orange)'};">${bateu ? '✓ Bateu a meta' : 'Abaixo do ideal'}</p>
-              </div>
-            </div>`;
-        }).join('');
-      }
-
-      // Se já existe uma taxa salva, mostra a simulação sem precisar clicar de novo
-      if (reservaTaxaMensal > 0) {
-        exibirSimulacaoReserva();
-      }
-    }
-
-    // ==========================================================================
-    // MANUTENÇÃO / SERVIÇOS DO VEÍCULO — agora persistente
-    // ==========================================================================
-    async function registrarServico() {
-      const inputData = document.getElementById('input-servico-data');
-      const inputNome = document.getElementById('input-servico-nome');
-      const inputLocal = document.getElementById('input-servico-local');
-      const inputKm = document.getElementById('input-servico-km');
-      const inputValor = document.getElementById('input-servico-valor');
-
-      const dataServico = inputData.value || getDataHojeISO();
-      const nome = inputNome.value.trim();
-      const local = inputLocal.value.trim();
-      const km = parseFloat(inputKm.value);
-      const valor = moedaParaNumero(inputValor.value);
-
-      if (!nome || isNaN(km) || isNaN(valor)) {
-        alert('Preencha os campos para salvar a manutenção.');
-        return;
-      }
-
-      servicos.push({
-        id: Date.now().toString(),
-        nome: nome,
-        local: local,
-        km: km,
-        valor: valor,
-        data: dataServico
-      });
-
-      await storageSet('servicos', servicos);
-      renderServicos();
-
-      inputNome.value = '';
-      inputLocal.value = '';
-      inputKm.value = '';
-      inputValor.value = '';
-      inputData.value = getDataHojeISO();
-
-      alert('Registro de manutenção salvo com sucesso!');
-    }
-
-    async function excluirServico(id) {
-      servicos = servicos.filter(s => s.id !== id);
-      await storageSet('servicos', servicos);
-      renderServicos();
-    }
-
-    function renderServicos() {
-      const container = document.getElementById('lista-servicos');
-      const lista = [...servicos].sort((a, b) => Number(b.id) - Number(a.id));
-
-      if (lista.length === 0) {
-        container.innerHTML = `<p style="font-size: 13px; color: var(--texto-secundario); text-align: center; padding: 12px 0;">Nenhuma manutenção registrada ainda.</p>`;
-      } else {
-        container.innerHTML = lista.map(s => {
-          const dataFormatada = new Date(s.data + 'T00:00:00').toLocaleDateString('pt-BR');
-          return `
-          <div class="item-row">
-            <div>
-              <h4 style="font-size: 14px; font-weight: 700;">${s.nome}</h4>
-              <p style="font-size: 12px; color: var(--texto-secundario);">${dataFormatada} • ${s.km.toLocaleString('pt-BR')} km${s.local ? ` • ${s.local}` : ''}</p>
-            </div>
-            <div style="text-align: right; display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 14px; font-weight: 800; color: var(--texto-principal);">${formatarMoeda(s.valor)}</span>
-              <button class="btn-delete-row" onclick="excluirServico('${s.id}')" title="Excluir">
-                <i data-lucide="trash-2" size="14"></i>
-              </button>
-            </div>
-          </div>`;
-        }).join('');
-      }
-
-      // Alertas de próximas manutenções, um card por item com histórico (óleo, pneu, etc.)
-      const itensMonitorados = [
-        { chave: 'óleo', chaveAlt: 'oleo', label: 'Troca de Óleo', inputIntervalo: 'input-oleo-km', padrao: 10000 },
-        { chave: 'pneu', chaveAlt: 'pneu', label: 'Troca de Pneu', inputIntervalo: 'input-pneu-km', padrao: 50000 }
-      ];
-      const cardsAlerta = itensMonitorados.map(item => {
-        const registros = servicos.filter(s => s.nome.toLowerCase().includes(item.chave) || s.nome.toLowerCase().includes(item.chaveAlt));
-        if (registros.length === 0) return null;
-        const ultima = registros.sort((a, b) => Number(b.id) - Number(a.id))[0];
-        const inputEl = document.getElementById(item.inputIntervalo);
-        const intervalo = (inputEl && parseFloat(inputEl.value)) || item.padrao;
-        const proximaKm = ultima.km + intervalo;
-        return `
-          <div class="alerta-despesa">
-            <i data-lucide="alert-triangle" size="20" style="color: #D97706;"></i>
-            <div>
-              <h4 style="font-size: 13px; font-weight: 700; color: #92400E;">${item.label} — Acompanhamento</h4>
-              <p style="font-size: 12px; color: #B45309;">Última aos ${ultima.km.toLocaleString('pt-BR')} km. Próxima prevista aos ${proximaKm.toLocaleString('pt-BR')} km.</p>
-            </div>
-          </div>`;
-      }).filter(Boolean);
-
-      const alertasContainer = document.getElementById('alertas-manutencao-container');
-      alertasContainer.innerHTML = cardsAlerta.length > 0 ? cardsAlerta.join('') : `
-        <div class="alerta-despesa">
-          <i data-lucide="alert-triangle" size="20" style="color: #D97706;"></i>
-          <div>
-            <h4 style="font-size: 13px; font-weight: 700; color: #92400E;">Sem manutenções registradas</h4>
-            <p style="font-size: 12px; color: #B45309;">Registre óleo, pneu, etc. abaixo para acompanhar aqui.</p>
-          </div>
-        </div>`;
-
-      criarIconesSeguro();
-    }
-
-    // ==========================================================================
-    // CONFIG. VEÍCULO — CÁLCULO DINÂMICO DE CUSTO POR KM (COMPLETO)
-    // ==========================================================================
-    async function salvarConfigVeiculoManual() {
-      await calcularCustoPorKM(true);
-      const texto = document.getElementById('texto-config-salva');
-      texto.innerText = '✓ Configuração salva com sucesso!';
-      setTimeout(() => { texto.innerText = ''; }, 2500);
-    }
-
-    async function calcularCustoPorKM(salvar = true) {
-      const kmMes = parseFloat(document.getElementById('input-km-mes').value) || 1;
-      const kmAno = kmMes * 12;
-
-      const pneuValor = moedaParaNumero(document.getElementById('input-pneu-valor').value);
-      const pneuKM = parseFloat(document.getElementById('input-pneu-km').value) || 1;
-      const combPreco = moedaParaNumero(document.getElementById('input-comb-preco').value);
-      const combMedia = parseFloat(document.getElementById('input-comb-media').value) || 1;
-      const oleoValor = moedaParaNumero(document.getElementById('input-oleo-valor').value);
-      const oleoKM = parseFloat(document.getElementById('input-oleo-km').value) || 1;
-
-      const depreValorCarro = moedaParaNumero(document.getElementById('input-depre-valor-carro').value);
-      const deprePercentual = parseFloat(document.getElementById('input-depre-percentual').value) || 0;
-      const parcelaMensal = moedaParaNumero(document.getElementById('input-parcela-mensal').value);
-      const seguroAnual = moedaParaNumero(document.getElementById('input-seguro-anual').value);
-      const documentacaoAnual = moedaParaNumero(document.getElementById('input-documentacao-anual').value);
-      const internetMensal = moedaParaNumero(document.getElementById('input-internet-mensal').value);
-      const higienMensal = moedaParaNumero(document.getElementById('input-higien-mensal').value);
-
-      const custoPneuKM = pneuValor / pneuKM;
-      const custoCombKM = combPreco / combMedia;
-      const custoOleoKM = oleoValor / oleoKM;
-      const custoDepreKM = (depreValorCarro * (deprePercentual / 100)) / kmAno;
-      const custoParcelaKM = (parcelaMensal * 12) / kmAno;
-      const custoSeguroKM = seguroAnual / kmAno;
-      const custoDocKM = documentacaoAnual / kmAno;
-      const custoInternetKM = (internetMensal * 12) / kmAno;
-      const custoHigienKM = (higienMensal * 12) / kmAno;
-
-      const custoTotalKM = custoPneuKM + custoCombKM + custoOleoKM + custoDepreKM +
-        custoParcelaKM + custoSeguroKM + custoDocKM + custoInternetKM + custoHigienKM;
-
-      document.getElementById('display-custo-total-km').innerText = `R$ ${custoTotalKM.toFixed(2).replace('.', ',')} /km`;
-      document.getElementById('detalhe-comb').innerText = `R$ ${custoCombKM.toFixed(2).replace('.', ',')} /km`;
-      document.getElementById('detalhe-pneu').innerText = `R$ ${custoPneuKM.toFixed(2).replace('.', ',')} /km`;
-      document.getElementById('detalhe-oleo').innerText = `R$ ${custoOleoKM.toFixed(2).replace('.', ',')} /km`;
-      document.getElementById('detalhe-depre').innerText = `R$ ${custoDepreKM.toFixed(2).replace('.', ',')} /km`;
-      document.getElementById('detalhe-parcela').innerText = `R$ ${custoParcelaKM.toFixed(2).replace('.', ',')} /km`;
-      document.getElementById('detalhe-seguro').innerText = `R$ ${custoSeguroKM.toFixed(2).replace('.', ',')} /km`;
-      document.getElementById('detalhe-doc').innerText = `R$ ${custoDocKM.toFixed(2).replace('.', ',')} /km`;
-      document.getElementById('detalhe-internet').innerText = `R$ ${custoInternetKM.toFixed(2).replace('.', ',')} /km`;
-      document.getElementById('detalhe-higien').innerText = `R$ ${custoHigienKM.toFixed(2).replace('.', ',')} /km`;
-
-      if (salvar) {
-        const config = {
-          kmMes, pneuValor, pneuKM, combPreco, combMedia, oleoValor, oleoKM,
-          depreValorCarro, deprePercentual, parcelaMensal, seguroAnual,
-          documentacaoAnual, internetMensal, higienMensal
-        };
-        await storageSet('config-veiculo', config);
-      }
-    }
-
-    function formatarParaCampoMoeda(valor) {
-      if (valor === undefined || valor === null || valor === 0) return '';
-      return valor.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d)(?=,))/g, '.');
-    }
-
-    function aplicarConfigVeiculoNaTela(config) {
-      if (!config) return;
-      const camposMoeda = ['input-pneu-valor', 'input-comb-preco', 'input-oleo-valor', 'input-depre-valor-carro',
-        'input-parcela-mensal', 'input-seguro-anual', 'input-documentacao-anual', 'input-internet-mensal', 'input-higien-mensal'];
-      const mapa = {
-        'input-km-mes': config.kmMes,
-        'input-pneu-valor': config.pneuValor,
-        'input-pneu-km': config.pneuKM,
-        'input-comb-preco': config.combPreco,
-        'input-comb-media': config.combMedia,
-        'input-oleo-valor': config.oleoValor,
-        'input-oleo-km': config.oleoKM,
-        'input-depre-valor-carro': config.depreValorCarro,
-        'input-depre-percentual': config.deprePercentual,
-        'input-parcela-mensal': config.parcelaMensal,
-        'input-seguro-anual': config.seguroAnual,
-        'input-documentacao-anual': config.documentacaoAnual,
-        'input-internet-mensal': config.internetMensal,
-        'input-higien-mensal': config.higienMensal
-      };
-      Object.keys(mapa).forEach(id => {
-        if (mapa[id] !== undefined && mapa[id] !== null) {
-          document.getElementById(id).value = camposMoeda.includes(id) ? formatarParaCampoMoeda(mapa[id]) : mapa[id];
-        }
-      });
-    }
-
-    // ==========================================================================
-    // CARREGAMENTO INICIAL (assíncrono — busca tudo do storage real)
-    // ==========================================================================
-    // Função global reutilizável: roda uma etapa isolada — se uma falhar, as
-    // outras continuam normalmente.
-    function tentar(nome, fn) {
-      try { fn(); } catch (e) { console.error('Falha em', nome, e); }
-    }
-
-    window.onload = function() {
-      // Essas partes não dependem de estar logado — rodam sempre
-      tentar('renderEstacoesRadio', renderEstacoesRadio);
-      tentar('data-selecionada', () => { document.getElementById('input-data-selecionada').value = dataSelecionada; });
-      tentar('data-servico', () => { document.getElementById('input-servico-data').value = getDataHojeISO(); });
-      tentar('data-reserva', () => { document.getElementById('input-data-reserva').value = dataSelecionadaReserva; });
-      criarIconesSeguro();
-
-      // A partir daqui, espera o login pra saber se mostra a tela de entrar
-      // ou carrega os dados do usuário e mostra o app
-      iniciarAutenticacao();
-    };
-
-    // Chamada depois que o Firebase confirma quem é o usuário logado —
-    // carrega os dados DELE (separados por conta) e liga o app.
-    async function carregarDadosDoUsuarioEIniciarApp() {
-      let lancamentosSalvos = [], contasSalvas = [], servicosSalvos = [], horasSalvas = {},
-          configVeiculoSalva = null, diasFinalizadosSalvos = {}, metasSalvas = { diaria: 0, semanal: 0 },
-          reservaPorDiaSalva = {}, reservaTaxaSalva = 0, kmPorDiaSalvo = {};
-      try {
-        [lancamentosSalvos, contasSalvas, servicosSalvos, horasSalvas, configVeiculoSalva, diasFinalizadosSalvos, metasSalvas, reservaPorDiaSalva, reservaTaxaSalva, kmPorDiaSalvo] = await Promise.all([
-          storageGet('lancamentos', []),
-          storageGet('contas', []),
-          storageGet('servicos', []),
-          storageGet('horas', {}),
-          storageGet('config-veiculo', null),
-          storageGet('dias-finalizados', {}),
-          storageGet('metas', { diaria: 0, semanal: 0, mensal: 0, diasSemana: 0, diasMes: 0, semanaConfirmada: '', mesConfirmado: '' }),
-          storageGet('reserva-por-dia', {}),
-          storageGet('reserva-taxa', 0),
-          storageGet('km-por-dia', {})
-        ]);
-      } catch (e) {
-        console.error('Falha ao carregar dados salvos:', e);
-      }
-
-      todosLancamentos = lancamentosSalvos || [];
-      bancoContas = contasSalvas || [];
-      servicos = servicosSalvos || [];
-      horasPorDia = horasSalvas || {};
-      kmPorDia = kmPorDiaSalvo || {};
-      diasFinalizados = diasFinalizadosSalvos || {};
-      metas = metasSalvas || { diaria: 0, semanal: 0, mensal: 0, diasSemana: 0, diasMes: 0, semanaConfirmada: '', mesConfirmado: '' };
-      reservaPorDia = reservaPorDiaSalva || {};
-      reservaTaxaMensal = reservaTaxaSalva || 0;
-
-      tentar('preencher metas na tela', () => {
-        document.getElementById('input-meta-diaria').value = formatarParaCampoMoeda(metas.diaria);
-        document.getElementById('input-meta-semanal').value = formatarParaCampoMoeda(metas.semanal);
-        document.getElementById('input-meta-mensal').value = formatarParaCampoMoeda(metas.mensal);
-        document.getElementById('input-dias-semana').value = metas.diasSemana || '';
-        document.getElementById('input-dias-mes').value = metas.diasMes || '';
-        document.getElementById('historico-filtro-mes').value = getMesAnoAtual();
-      });
-
-      tentar('aplicarConfigVeiculoNaTela', () => aplicarConfigVeiculoNaTela(configVeiculoSalva));
-      tentar('atualizarPainelHoje', atualizarPainelHoje);
-      tentar('renderHistorico', renderHistorico);
-      tentar('renderDespesas', renderDespesas);
-      tentar('renderReserva', renderReserva);
-      tentar('renderProgressoMetas', renderProgressoMetas);
-      tentar('renderServicos', renderServicos);
-      tentar('calcularCustoPorKM', () => calcularCustoPorKM(false));
-
-      // Se o usuário tiver clicado na aba Gráficos antes dos dados chegarem,
-      // os gráficos podem ter sido montados com a tela ainda vazia — então
-      // força um recálculo agora que os dados reais chegaram.
-      graficosDesatualizados = true;
-      if (document.getElementById('tab-analise').classList.contains('active')) {
-        tentar('renderGraficosAnalise (dados carregados)', renderGraficosAnalise);
-        graficosDesatualizados = false;
-      }
-
-      criarIconesSeguro();
-    }
-  </script>
-</body>
-</html>
