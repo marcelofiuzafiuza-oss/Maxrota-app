@@ -1002,6 +1002,13 @@
 
     <div id="tab-hoje" class="tab-content">
 
+      <!-- INTELIGÊNCIA SOBRE OS DADOS -->
+      <section class="card-standard" style="background: linear-gradient(135deg, #EEF2FF 0%, #F0FDF9 100%); border: 1px solid #DDE7FE;">
+        <h2 class="section-title" style="font-size: 15px;">💡 Inteligência dos Seus Dados</h2>
+        <p class="section-sub" style="margin-top: 0;">Baseado só no seu próprio histórico — ninguém mais tem esses dados</p>
+        <div id="conteudo-inteligencia" style="margin-top: 10px;"></div>
+      </section>
+
       <!-- SELETOR DE DATA -->
       <section class="card-standard" style="padding: 14px 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
@@ -2316,6 +2323,149 @@
       return d.toISOString().split('T')[0];
     }
 
+    // Hora LOCAL do aparelho (não UTC) — é o horário real que a pessoa vivenciou
+    function obterHoraAtualHHMM() {
+      const d = new Date();
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+
+    // ==========================================================================
+    // INTELIGÊNCIA SOBRE OS DADOS — melhor horário e melhor/pior dia da semana,
+    // calculado só a partir do próprio histórico do motorista.
+    // ==========================================================================
+    const INTELIGENCIA_MIN_DIAS_CONFIAVEIS = 5;
+    const INTELIGENCIA_JANELA_LOTE_MINUTOS = 20; // lançamentos do dia inteiro cabendo numa janela menor que essa = lançamento em lote, não confiável
+
+    // Separa os dias em que os lançamentos foram feitos "em tempo real" (espalhados
+    // ao longo do turno) dos dias em que tudo foi lançado de uma vez só no fim do dia.
+    function calcularDiasConfiaveis() {
+      const entradasComHora = todosLancamentos.filter(l => l.tipo === 'entrada' && l.hora);
+      const porDia = {};
+      entradasComHora.forEach(l => {
+        porDia[l.data] = porDia[l.data] || [];
+        porDia[l.data].push(l);
+      });
+
+      const diasConfiaveis = [];
+      Object.keys(porDia).forEach(data => {
+        const lancamentosDoDia = porDia[data];
+        if (lancamentosDoDia.length < 2) {
+          diasConfiaveis.push({ data, lancamentos: lancamentosDoDia });
+          return;
+        }
+        const minutosDoDia = lancamentosDoDia.map(l => {
+          const [h, m] = l.hora.split(':').map(Number);
+          return h * 60 + m;
+        });
+        const spread = Math.max(...minutosDoDia) - Math.min(...minutosDoDia);
+        if (spread > INTELIGENCIA_JANELA_LOTE_MINUTOS) {
+          diasConfiaveis.push({ data, lancamentos: lancamentosDoDia });
+        }
+      });
+      return diasConfiaveis;
+    }
+
+    function calcularMelhorHorario() {
+      const diasConfiaveis = calcularDiasConfiaveis();
+      const todasEntradasConfiaveis = diasConfiaveis.flatMap(d => d.lancamentos);
+
+      if (diasConfiaveis.length < INTELIGENCIA_MIN_DIAS_CONFIAVEIS || todasEntradasConfiaveis.length === 0) {
+        return { confiavel: false, diasConfiaveis: diasConfiaveis.length };
+      }
+
+      const somaPorBloco = new Array(12).fill(0);
+      const contagemPorBloco = new Array(12).fill(0);
+      todasEntradasConfiaveis.forEach(l => {
+        const hora = parseInt(l.hora.split(':')[0]);
+        const bloco = Math.floor(hora / 2);
+        somaPorBloco[bloco] += l.valor;
+        contagemPorBloco[bloco]++;
+      });
+
+      const mediaPorBloco = somaPorBloco.map((soma, i) => contagemPorBloco[i] > 0 ? soma / contagemPorBloco[i] : 0);
+      let melhorBloco = 0;
+      for (let i = 1; i < 12; i++) if (mediaPorBloco[i] > mediaPorBloco[melhorBloco]) melhorBloco = i;
+
+      if (mediaPorBloco[melhorBloco] === 0) return { confiavel: false, diasConfiaveis: diasConfiaveis.length };
+
+      return {
+        confiavel: true,
+        diasConfiaveis: diasConfiaveis.length,
+        horaInicio: melhorBloco * 2,
+        horaFim: melhorBloco * 2 + 2,
+        mediaValor: mediaPorBloco[melhorBloco]
+      };
+    }
+
+    function calcularMelhorPiorDiaSemana() {
+      const entradas = todosLancamentos.filter(l => l.tipo === 'entrada');
+      const somaPorDia = [0, 0, 0, 0, 0, 0, 0];
+      const diasUnicosPorDow = {};
+      entradas.forEach(l => {
+        const dow = new Date(l.data + 'T00:00:00').getDay();
+        somaPorDia[dow] += l.valor;
+      });
+      [...new Set(entradas.map(l => l.data))].forEach(data => {
+        const dow = new Date(data + 'T00:00:00').getDay();
+        diasUnicosPorDow[dow] = (diasUnicosPorDow[dow] || 0) + 1;
+      });
+
+      const media = somaPorDia.map((s, i) => diasUnicosPorDow[i] ? s / diasUnicosPorDow[i] : 0);
+      const diasComDados = media.map((v, i) => ({ i, v })).filter(x => diasUnicosPorDow[x.i]);
+      if (diasComDados.length < 2) return { confiavel: false };
+
+      let melhor = diasComDados[0], pior = diasComDados[0];
+      diasComDados.forEach(d => {
+        if (d.v > melhor.v) melhor = d;
+        if (d.v < pior.v) pior = d;
+      });
+
+      const nomes = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+      return { confiavel: true, melhorDia: nomes[melhor.i], melhorValor: melhor.v, piorDia: nomes[pior.i], piorValor: pior.v };
+    }
+
+    function renderInteligenciaDados() {
+      const container = document.getElementById('conteudo-inteligencia');
+      if (!container) return;
+
+      const horario = calcularMelhorHorario();
+      const semana = calcularMelhorPiorDiaSemana();
+      let html = '';
+
+      if (!horario.confiavel) {
+        html += `<div>
+          <span style="font-size:13px;font-weight:700;">⏰ Melhor horário pra rodar</span>
+          <p style="font-size:11.5px;color:var(--texto-secundario);margin-top:2px;">Ainda não tenho dados suficientes em tempo real (${horario.diasConfiaveis}/${INTELIGENCIA_MIN_DIAS_CONFIAVEIS} dias confiáveis). Lance suas corridas assim que finalizar, e eu vou aprendendo seus horários mais lucrativos!</p>
+        </div>`;
+      } else {
+        html += `<div>
+          <span style="font-size:13px;font-weight:700;">⏰ Seu horário mais lucrativo</span>
+          <p style="font-size:11.5px;color:var(--texto-secundario);margin-top:2px;">Entre <b>${String(horario.horaInicio).padStart(2, '0')}h e ${String(horario.horaFim).padStart(2, '0')}h</b> — média de ${formatarMoeda(horario.mediaValor)} por lançamento. <span style="color:var(--max-blue);font-weight:600;">Baseado em ${horario.diasConfiaveis} dias com lançamento em tempo real.</span></p>
+        </div>`;
+      }
+
+      html += `<hr style="border:none;border-top:1px dashed var(--linha);margin:10px 0;">`;
+
+      if (!semana.confiavel) {
+        html += `<span style="font-size:12px;color:var(--texto-secundario);">Lance mais alguns dias pra eu descobrir seu melhor e pior dia da semana.</span>`;
+      } else {
+        html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:#F0FDF4;border-radius:10px;padding:10px;">
+            <div style="font-size:10px;font-weight:700;color:var(--max-green);">🏆 MELHOR DIA</div>
+            <div style="font-size:13px;font-weight:800;margin-top:2px;">${semana.melhorDia}</div>
+            <div style="font-size:11px;color:var(--texto-secundario);">média ${formatarMoeda(semana.melhorValor)}</div>
+          </div>
+          <div style="background:#FEF2F2;border-radius:10px;padding:10px;">
+            <div style="font-size:10px;font-weight:700;color:var(--max-red);">📉 DIA MAIS FRACO</div>
+            <div style="font-size:13px;font-weight:800;margin-top:2px;">${semana.piorDia}</div>
+            <div style="font-size:11px;color:var(--texto-secundario);">média ${formatarMoeda(semana.piorValor)}</div>
+          </div>
+        </div>`;
+      }
+
+      container.innerHTML = html;
+    }
+
     function getMesAnoAtual() {
       const d = new Date();
       const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -2381,7 +2531,8 @@
         categoria: origem,
         valor: valor,
         corridas: CANAIS_CORRIDA.includes(origem) ? corridas : 0,
-        data: dataSelecionada
+        data: dataSelecionada,
+        hora: obterHoraAtualHHMM()
       };
 
       // Limpa os campos IMEDIATAMENTE, antes de qualquer salvamento/render
@@ -2409,7 +2560,8 @@
         categoria: categoria,
         valor: valor,
         corridas: 0,
-        data: dataSelecionada
+        data: dataSelecionada,
+        hora: obterHoraAtualHHMM()
       };
 
       inputValor.value = '';
@@ -2435,7 +2587,8 @@
         categoria: categoria,
         valor: valor,
         corridas: 0,
-        data: dataSelecionada
+        data: dataSelecionada,
+        hora: obterHoraAtualHHMM()
       };
 
       inputValor.value = '';
@@ -2645,6 +2798,7 @@
       }
 
       aplicarBloqueioDia(!!diasFinalizados[hoje]);
+      renderInteligenciaDados();
       criarIconesSeguro();
     }
 
