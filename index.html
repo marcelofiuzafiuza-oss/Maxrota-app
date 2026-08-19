@@ -281,6 +281,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 5px;
       transition: all 0.15s ease;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
     }
@@ -297,6 +298,9 @@
     .btn-particular { background-color: #5B8BF7; color: #FFFFFF; }
     .btn-loja { background-color: #0052FF; color: #FFFFFF; }
     .btn-doacao { background-color: #6C2BD9; color: #FFFFFF; }
+    .btn-ifood { background-color: #EA1D2C; color: #FFFFFF; }
+    .btn-rappi { background-color: #FF441F; color: #FFFFFF; }
+    .btn-mercadolivre { background-color: #FFE600; color: #2D3277; }
 
     /* CORES DE SAÍDAS (IGUAL À FOTO) */
     .btn-combustivel { background-color: #FF3B30; color: #FFFFFF; }
@@ -829,6 +833,7 @@
       </div>
       <div style="text-align: right; flex-shrink: 0;">
         <p id="header-usuario-email" style="font-size: 10.5px; color: var(--texto-secundario); font-weight: 600; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></p>
+        <p id="header-status-trial" style="font-size: 10px; font-weight: 800; margin-top: 2px;"></p>
         <button onclick="sair()" style="background: none; border: none; color: var(--max-red); font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 3px; margin-top: 2px; padding: 0;">
           <i data-lucide="log-out" size="12"></i> Sair
         </button>
@@ -1026,17 +1031,36 @@
       <!-- 0. HORAS TRABALHADAS NO DIA -->
       <section class="card-standard" id="secao-horas">
         <h2 class="section-title" id="titulo-horas">Horas Trabalhadas</h2>
-        <p class="section-sub">Registre quanto tempo você ficou rodando/online</p>
-        <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end;">
-          <div class="form-group">
-            <label class="form-label">Horas (ex: 8, 6.5)</label>
-            <input type="number" id="input-horas-hoje" class="input-field" placeholder="Ex: 8" step="0.1" min="0">
+        <p class="section-sub" id="subtitulo-horas">Inicie o cronômetro quando começar a rodar</p>
+
+        <!-- CRONÔMETRO (só aparece quando a data selecionada é hoje) -->
+        <div id="bloco-cronometro">
+          <div style="text-align: center; padding: 14px 0;">
+            <span style="font-size: 36px; font-weight: 800; font-variant-numeric: tabular-nums;" id="display-cronometro">00:00:00</span>
+            <p style="font-size: 11px; color: var(--texto-secundario); font-weight: 700; margin-top: 2px;" id="status-cronometro">PARADO</p>
           </div>
-          <button class="btn btn-primary" style="width: auto; padding: 0 18px;" onclick="salvarHorasHoje()">
-            <i data-lucide="clock" size="16"></i> Salvar
-          </button>
+          <div style="display: flex; gap: 8px;" id="botoes-cronometro">
+            <button class="btn btn-primary" style="flex: 1;" onclick="iniciarCronometro()" id="btn-crono-iniciar">
+              <i data-lucide="play" size="16"></i> Iniciar
+            </button>
+          </div>
         </div>
-        <p style="font-size: 12px; color: var(--texto-secundario);">Horas registradas: <strong id="display-horas-hoje">0h</strong></p>
+
+        <!-- CAMPO MANUAL / AJUSTE (aparece ao finalizar, ou sempre se a data não for hoje) -->
+        <div id="bloco-horas-manual" style="display: none; margin-top: 12px;">
+          <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end;">
+            <div class="form-group">
+              <label class="form-label" id="label-horas-manual">Horas Trabalhadas</label>
+              <input type="number" id="input-horas-hoje" class="input-field" placeholder="Ex: 8" step="0.1" min="0">
+            </div>
+            <button class="btn btn-primary" style="width: auto; padding: 0 18px;" onclick="salvarHorasHoje()">
+              <i data-lucide="check" size="16"></i> Salvar
+            </button>
+          </div>
+          <p style="font-size: 11px; color: var(--texto-secundario); margin-top: 6px;">Esqueceu de iniciar, pausar ou finalizar o cronômetro? Lance as horas certinhas aqui direto.</p>
+        </div>
+
+        <p style="font-size: 12px; color: var(--texto-secundario); margin-top: 8px;">Horas registradas: <strong id="display-horas-hoje">0h</strong></p>
 
         <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; margin-top: 10px;">
           <div class="form-group">
@@ -1073,9 +1097,17 @@
             <button class="btn-custom btn-99" onclick="registrarEntrada('99')">99</button>
             <button class="btn-custom btn-indrive" onclick="registrarEntrada('inDriver')">inDriver</button>
             <button class="btn-custom btn-particular" onclick="registrarEntrada('Particular/CLT')">Particular/CLT</button>
+          </div>
+          <div class="chips-grid" id="chips-canais-extra" style="display: none; margin-top: 8px;">
+            <button class="btn-custom btn-ifood" style="font-size: 13px;" onclick="registrarEntrada('iFood')"><i data-lucide="utensils" size="13"></i> iFood</button>
+            <button class="btn-custom btn-rappi" style="font-size: 13px;" onclick="registrarEntrada('Rappi')"><i data-lucide="zap" size="13"></i> Rappi</button>
+            <button class="btn-custom btn-mercadolivre" style="font-size: 12px;" onclick="registrarEntrada('Mercado Livre')"><i data-lucide="package" size="13"></i> Mercado Livre</button>
             <button class="btn-custom btn-loja" onclick="registrarEntrada('Loja')">Loja</button>
             <button class="btn-custom btn-doacao" onclick="registrarEntrada('Doação')">Doação</button>
           </div>
+          <button type="button" id="btn-toggle-canais-extra" onclick="alternarCanaisExtra()" style="background: none; border: none; color: var(--max-blue); font-size: 12.5px; font-weight: 700; margin-top: 8px; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 0;">
+            <i data-lucide="chevron-down" size="14"></i> Mais opções (iFood, Rappi, Mercado Livre...)
+          </button>
         </div>
       </section>
 
@@ -2050,7 +2082,7 @@
     }
     setTimeout(() => { tempoMinimoSplashPassou = true; tentarEsconderSplash(); }, 1400);
 
-    function iniciarAutenticacao() {
+    async function iniciarAutenticacao() {
       if (typeof firebase === 'undefined') {
         console.error('Firebase não carregou (sem internet ou CDN bloqueado).');
         mostrarTelaLogin('Não consegui carregar o sistema de login. Verifique sua internet e recarregue a página.');
@@ -2068,6 +2100,17 @@
       try {
         if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
         firestoreDB = firebase.firestore();
+
+        // Modo offline: guarda os dados no próprio aparelho quando não há
+        // internet, e sincroniza sozinho com a nuvem assim que ela voltar.
+        try {
+          await firestoreDB.enablePersistence({ synchronizeTabs: true });
+        } catch (erroPersistencia) {
+          // Não trava o app se não conseguir ativar (ex: navegador não suporta,
+          // ou o app está aberto em várias abas ao mesmo tempo sem suporte a isso)
+          console.error('Não foi possível ativar o modo offline:', erroPersistencia);
+        }
+
         firebase.auth().onAuthStateChanged(async (user) => {
           authProntoParaEsconderSplash = true;
           if (user) {
@@ -2120,6 +2163,7 @@
         if (assinanteAtivo || diasRestantes > 0) {
           mostrarApp(user);
           await carregarDadosDoUsuarioEIniciarApp();
+          atualizarIndicadorTrial(assinanteAtivo, diasRestantes);
           if (!assinanteAtivo && diasRestantes <= 2) {
             mostrarAvisoTrialAcabando(diasRestantes);
           }
@@ -2132,6 +2176,18 @@
         // acesso por segurança — melhor não travar o motorista por um bug nosso.
         mostrarApp(user);
         await carregarDadosDoUsuarioEIniciarApp();
+      }
+    }
+
+    function atualizarIndicadorTrial(assinanteAtivo, diasRestantes) {
+      const el = document.getElementById('header-status-trial');
+      if (!el) return;
+      if (assinanteAtivo) {
+        el.innerText = '✓ Assinante';
+        el.style.color = 'var(--max-green)';
+      } else {
+        el.innerText = `Teste: ${diasRestantes} dia${diasRestantes === 1 ? '' : 's'} restante${diasRestantes === 1 ? '' : 's'}`;
+        el.style.color = diasRestantes <= 2 ? 'var(--max-orange)' : 'var(--texto-secundario)';
       }
     }
 
@@ -2414,14 +2470,19 @@
       const diasComDados = media.map((v, i) => ({ i, v })).filter(x => diasUnicosPorDow[x.i]);
       if (diasComDados.length < 2) return { confiavel: false };
 
-      let melhor = diasComDados[0], pior = diasComDados[0];
-      diasComDados.forEach(d => {
-        if (d.v > melhor.v) melhor = d;
-        if (d.v < pior.v) pior = d;
-      });
-
       const nomes = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-      return { confiavel: true, melhorDia: nomes[melhor.i], melhorValor: melhor.v, piorDia: nomes[pior.i], piorValor: pior.v };
+      const ordenadoMelhorPrimeiro = [...diasComDados].sort((a, b) => b.v - a.v);
+      const ordenadoPiorPrimeiro = [...diasComDados].sort((a, b) => a.v - b.v);
+
+      const rankingMelhores = ordenadoMelhorPrimeiro.slice(0, 3).map(d => ({ dia: nomes[d.i], valor: d.v }));
+      const rankingPiores = ordenadoPiorPrimeiro.slice(0, 3).map(d => ({ dia: nomes[d.i], valor: d.v }));
+
+      return {
+        confiavel: true,
+        melhorDia: rankingMelhores[0].dia, melhorValor: rankingMelhores[0].valor,
+        piorDia: rankingPiores[0].dia, piorValor: rankingPiores[0].valor,
+        rankingMelhores, rankingPiores
+      };
     }
 
     function renderInteligenciaDados() {
@@ -2449,16 +2510,20 @@
       if (!semana.confiavel) {
         html += `<span style="font-size:12px;color:var(--texto-secundario);">Lance mais alguns dias pra eu descobrir seu melhor e pior dia da semana.</span>`;
       } else {
+        const linhaRanking = (item, pos) => `
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:11.5px; padding:4px 0; ${pos > 0 ? 'border-top:1px solid rgba(0,0,0,0.06);' : ''}">
+            <span style="color:var(--texto-principal); font-weight: ${pos === 0 ? '800' : '600'};">${pos + 1}º ${item.dia}</span>
+            <span style="font-weight:700;">${formatarMoeda(item.valor)}</span>
+          </div>`;
+
         html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <div style="background:#F0FDF4;border-radius:10px;padding:10px;">
-            <div style="font-size:10px;font-weight:700;color:var(--max-green);">🏆 MELHOR DIA</div>
-            <div style="font-size:13px;font-weight:800;margin-top:2px;">${semana.melhorDia}</div>
-            <div style="font-size:11px;color:var(--texto-secundario);">média ${formatarMoeda(semana.melhorValor)}</div>
+            <div style="font-size:10px;font-weight:700;color:var(--max-green);margin-bottom:4px;">🏆 MELHORES DIAS</div>
+            ${semana.rankingMelhores.map(linhaRanking).join('')}
           </div>
           <div style="background:#FEF2F2;border-radius:10px;padding:10px;">
-            <div style="font-size:10px;font-weight:700;color:var(--max-red);">📉 DIA MAIS FRACO</div>
-            <div style="font-size:13px;font-weight:800;margin-top:2px;">${semana.piorDia}</div>
-            <div style="font-size:11px;color:var(--texto-secundario);">média ${formatarMoeda(semana.piorValor)}</div>
+            <div style="font-size:10px;font-weight:700;color:var(--max-red);margin-bottom:4px;">📉 DIAS MAIS FRACOS</div>
+            ${semana.rankingPiores.map(linhaRanking).join('')}
           </div>
         </div>`;
       }
@@ -2492,11 +2557,22 @@
     let reservaTaxaMensal = 0; // % ao mês, pra simulação de rendimento
     let dataSelecionadaReserva = getDataHojeISO();
 
-    const CANAIS_CORRIDA = ['Uber', '99', 'inDriver'];
+    const CANAIS_CORRIDA = ['Uber', '99', 'inDriver', 'iFood', 'Rappi', 'Mercado Livre'];
 
     // ==========================================================================
     // SELETOR DE DATA (ABA HOJE)
     // ==========================================================================
+    function alternarCanaisExtra() {
+      const container = document.getElementById('chips-canais-extra');
+      const btn = document.getElementById('btn-toggle-canais-extra');
+      const abrindo = container.style.display === 'none';
+      container.style.display = abrindo ? 'grid' : 'none';
+      btn.innerHTML = abrindo
+        ? '<i data-lucide="chevron-up" size="14"></i> Ver menos'
+        : '<i data-lucide="chevron-down" size="14"></i> Mais opções (iFood, Rappi, Mercado Livre...)';
+      criarIconesSeguro();
+    }
+
     function aoMudarDataSelecionada() {
       const input = document.getElementById('input-data-selecionada');
       dataSelecionada = input.value || getDataHojeISO();
@@ -2606,6 +2682,148 @@
       storageSet('lancamentos', todosLancamentos);
     }
 
+    // ==========================================================================
+    // CRONÔMETRO DE EXPEDIENTE — Início / Pausa / Retomar / Finalizar
+    // ==========================================================================
+    let cronometroExpediente = { status: 'parado', data: null, inicioTimestamp: null, acumuladoSegundos: 0 };
+    let intervalCronometroDisplay = null;
+    let intervalCronometroRecalculo = null;
+
+    function segundosAcumuladosAtuais() {
+      let total = cronometroExpediente.acumuladoSegundos;
+      if (cronometroExpediente.status === 'rodando' && cronometroExpediente.inicioTimestamp) {
+        total += Math.floor((Date.now() - cronometroExpediente.inicioTimestamp) / 1000);
+      }
+      return total;
+    }
+
+    function formatarHHMMSS(totalSegundos) {
+      const h = Math.floor(totalSegundos / 3600);
+      const m = Math.floor((totalSegundos % 3600) / 60);
+      const s = totalSegundos % 60;
+      return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
+    }
+
+    // Horas trabalhadas "de verdade agora" — usa o cronômetro ao vivo se estiver
+    // ativo hoje, senão usa o valor salvo (retroativo ou já finalizado).
+    function obterHorasTrabalhadasAtuais(data) {
+      if (data === getDataHojeISO() && cronometroExpediente.status !== 'parado') {
+        return Math.round((segundosAcumuladosAtuais() / 3600) * 10) / 10;
+      }
+      return horasPorDia[data] || 0;
+    }
+
+    async function persistirCronometro() {
+      await storageSet('cronometro-expediente', cronometroExpediente);
+    }
+
+    function atualizarDisplayCronometro() {
+      const display = document.getElementById('display-cronometro');
+      if (display) display.innerText = formatarHHMMSS(segundosAcumuladosAtuais());
+    }
+
+    function pararIntervalosCronometro() {
+      if (intervalCronometroDisplay) { clearInterval(intervalCronometroDisplay); intervalCronometroDisplay = null; }
+      if (intervalCronometroRecalculo) { clearInterval(intervalCronometroRecalculo); intervalCronometroRecalculo = null; }
+    }
+
+    function iniciarIntervalosCronometro() {
+      pararIntervalosCronometro();
+      intervalCronometroDisplay = setInterval(atualizarDisplayCronometro, 1000);
+      // Recalcula R$/hora etc. de tempos em tempos, sem pesar rodando toda hora
+      intervalCronometroRecalculo = setInterval(() => { atualizarPainelHoje(); }, 30000);
+    }
+
+    async function iniciarCronometro() {
+      cronometroExpediente = { status: 'rodando', data: getDataHojeISO(), inicioTimestamp: Date.now(), acumuladoSegundos: 0 };
+      await persistirCronometro();
+      renderBotoesCronometro();
+      iniciarIntervalosCronometro();
+      atualizarDisplayCronometro();
+      atualizarPainelHoje();
+    }
+
+    async function pausarCronometro() {
+      cronometroExpediente.acumuladoSegundos = segundosAcumuladosAtuais();
+      cronometroExpediente.status = 'pausado';
+      cronometroExpediente.inicioTimestamp = null;
+      await persistirCronometro();
+      renderBotoesCronometro();
+      pararIntervalosCronometro();
+      atualizarDisplayCronometro();
+      atualizarPainelHoje();
+    }
+
+    async function retomarCronometro() {
+      cronometroExpediente.status = 'rodando';
+      cronometroExpediente.inicioTimestamp = Date.now();
+      await persistirCronometro();
+      renderBotoesCronometro();
+      iniciarIntervalosCronometro();
+      atualizarDisplayCronometro();
+      atualizarPainelHoje();
+    }
+
+    async function finalizarCronometro() {
+      const totalSegundos = segundosAcumuladosAtuais();
+      pararIntervalosCronometro();
+      cronometroExpediente = { status: 'parado', data: null, inicioTimestamp: null, acumuladoSegundos: 0 };
+      await persistirCronometro();
+      renderBotoesCronometro();
+      atualizarDisplayCronometro();
+
+      // Abre o campo com o total já calculado, pra revisar/ajustar e confirmar
+      const horas = Math.round((totalSegundos / 3600) * 10) / 10;
+      document.getElementById('bloco-horas-manual').style.display = 'block';
+      document.getElementById('input-horas-hoje').value = horas > 0 ? horas : '';
+      document.getElementById('label-horas-manual').innerText = 'Confirme as Horas Trabalhadas';
+    }
+
+    function renderBotoesCronometro() {
+      const container = document.getElementById('botoes-cronometro');
+      const status = document.getElementById('status-cronometro');
+      if (!container || !status) return;
+
+      if (cronometroExpediente.status === 'rodando') {
+        status.innerText = '● RODANDO';
+        status.style.color = 'var(--max-green)';
+        container.innerHTML = `
+          <button class="btn" style="flex:1; background:#FEF3C7; color:#92400E;" onclick="pausarCronometro()"><i data-lucide="pause" size="16"></i> Pausar</button>
+          <button class="btn" style="flex:1; background:var(--max-red); color:white;" onclick="finalizarCronometro()"><i data-lucide="square" size="16"></i> Finalizar</button>`;
+      } else if (cronometroExpediente.status === 'pausado') {
+        status.innerText = '❚❚ PAUSADO';
+        status.style.color = 'var(--max-orange)';
+        container.innerHTML = `
+          <button class="btn btn-primary" style="flex:1;" onclick="retomarCronometro()"><i data-lucide="play" size="16"></i> Retomar</button>
+          <button class="btn" style="flex:1; background:var(--max-red); color:white;" onclick="finalizarCronometro()"><i data-lucide="square" size="16"></i> Finalizar</button>`;
+      } else {
+        status.innerText = 'PARADO';
+        status.style.color = 'var(--texto-secundario)';
+        container.innerHTML = `<button class="btn btn-primary" style="flex:1;" onclick="iniciarCronometro()"><i data-lucide="play" size="16"></i> Iniciar</button>`;
+      }
+      criarIconesSeguro();
+    }
+
+    // Alterna a UI entre "cronômetro" (data = hoje) e "só campo manual" (data retroativa)
+    function atualizarModoHoras() {
+      const ehHoje = dataSelecionada === getDataHojeISO();
+      const blocoCrono = document.getElementById('bloco-cronometro');
+      const blocoManual = document.getElementById('bloco-horas-manual');
+      const label = document.getElementById('label-horas-manual');
+      const subtitulo = document.getElementById('subtitulo-horas');
+      if (!blocoCrono || !blocoManual) return;
+
+      if (ehHoje) {
+        blocoCrono.style.display = 'block';
+        subtitulo.innerText = 'Inicie o cronômetro quando começar a rodar';
+      } else {
+        blocoCrono.style.display = 'none';
+        blocoManual.style.display = 'block';
+        label.innerText = 'Horas Trabalhadas';
+        subtitulo.innerText = 'Lance manualmente as horas desse dia';
+      }
+    }
+
     async function salvarHorasHoje() {
       const input = document.getElementById('input-horas-hoje');
       const horas = parseFloat(input.value);
@@ -2615,6 +2833,12 @@
       }
       input.value = '';
       horasPorDia[dataSelecionada] = horas;
+
+      // Se for hoje, some com o bloco manual de novo (volta pro modo cronômetro)
+      if (dataSelecionada === getDataHojeISO()) {
+        document.getElementById('bloco-horas-manual').style.display = 'none';
+      }
+
       atualizarPainelHoje();
       graficosDesatualizados = true;
       storageSet('horas', horasPorDia);
@@ -2734,11 +2958,14 @@
         ? `Detalhamento: ${detalheSaidasArr.join(' | ')}`
         : 'Detalhamento: Nenhum lançamento';
 
-      // Horas do dia selecionado e R$/hora (campo sempre limpo após salvar)
-      const horasHoje = horasPorDia[hoje] || 0;
+      // Horas do dia selecionado e R$/hora (usa o cronômetro ao vivo se estiver rodando hoje)
+      const horasHoje = obterHorasTrabalhadasAtuais(hoje);
       document.getElementById('display-horas-hoje').innerText = `${horasHoje}h`;
       const inputHoras = document.getElementById('input-horas-hoje');
-      inputHoras.value = '';
+      const blocoManualVisivel = document.getElementById('bloco-horas-manual').style.display === 'block';
+      if (!blocoManualVisivel) {
+        inputHoras.value = '';
+      }
       inputHoras.placeholder = horasHoje > 0 ? `Atual: ${horasHoje}h — digite p/ atualizar` : 'Ex: 8';
 
       // KM do dia selecionado
@@ -2798,6 +3025,7 @@
       }
 
       aplicarBloqueioDia(!!diasFinalizados[hoje]);
+      atualizarModoHoras();
       renderInteligenciaDados();
       criarIconesSeguro();
     }
@@ -2952,7 +3180,7 @@
       if (periodoFechamentoAtual === 'dia') {
         entradasFiltradas = todosLancamentos.filter(l => l.tipo === 'entrada' && l.data === hoje);
         saidasFiltradas = todosLancamentos.filter(l => l.tipo === 'saida' && l.data === hoje);
-        horasFiltradas = horasPorDia[hoje] || 0;
+        horasFiltradas = obterHorasTrabalhadasAtuais(hoje);
         kmFiltrado = kmPorDia[hoje] || 0;
       } else if (periodoFechamentoAtual === 'semana') {
         const inicioSemana = getInicioSemanaDe(hoje);
@@ -3385,8 +3613,8 @@
       });
 
       // --- Gráfico 6: Faturamento por app, mês a mês (linhas comparativas) ---
-      const canaisPrincipais = ['Uber', '99', 'inDriver', 'Particular/CLT'];
-      const coresCanais = { 'Uber': '#111827', '99': '#FF7412', 'inDriver': '#00B175', 'Particular/CLT': '#2878E8' };
+      const canaisPrincipais = ['Uber', '99', 'inDriver', 'iFood', 'Rappi', 'Mercado Livre', 'Particular/CLT'];
+      const coresCanais = { 'Uber': '#111827', '99': '#FF7412', 'inDriver': '#00B175', 'Particular/CLT': '#2878E8', 'iFood': '#EA1D2C', 'Rappi': '#FF441F', 'Mercado Livre': '#FFE600' };
       const datasetsAppMensal = canaisPrincipais.map(canal => ({
         label: canal,
         data: meses6.map(m => entradas.filter(l => mesAnoDeData(l.data) === m && l.categoria === canal).reduce((a, l) => a + l.valor, 0)),
@@ -4264,6 +4492,13 @@
         console.error('Falha ao carregar dados salvos:', e);
       }
 
+      let cronometroSalvo = null;
+      try {
+        cronometroSalvo = await storageGet('cronometro-expediente', null);
+      } catch (e) {
+        console.error('Falha ao carregar cronômetro:', e);
+      }
+
       todosLancamentos = lancamentosSalvos || [];
       bancoContas = contasSalvas || [];
       servicos = servicosSalvos || [];
@@ -4273,6 +4508,19 @@
       metas = metasSalvas || { diaria: 0, semanal: 0, mensal: 0, diasSemana: 0, diasMes: 0, semanaConfirmada: '', mesConfirmado: '' };
       reservaPorDia = reservaPorDiaSalva || {};
       reservaTaxaMensal = reservaTaxaSalva || 0;
+
+      // Retoma o cronômetro de onde parou — mas só se for do dia de hoje.
+      // Se a pessoa esqueceu ligado de um dia anterior, não arrasta esse erro.
+      if (cronometroSalvo && cronometroSalvo.data === getDataHojeISO()) {
+        cronometroExpediente = cronometroSalvo;
+        if (cronometroExpediente.status === 'rodando') {
+          iniciarIntervalosCronometro();
+        }
+      } else {
+        cronometroExpediente = { status: 'parado', data: null, inicioTimestamp: null, acumuladoSegundos: 0 };
+      }
+      tentar('renderBotoesCronometro', renderBotoesCronometro);
+      tentar('atualizarDisplayCronometro', atualizarDisplayCronometro);
 
       tentar('preencher metas na tela', () => {
         document.getElementById('input-meta-diaria').value = formatarParaCampoMoeda(metas.diaria);
