@@ -2374,9 +2374,19 @@
       return parseFloat(limpo) || 0;
     }
 
+    // Data de HOJE no fuso LOCAL do aparelho — nunca usar toISOString() sozinho
+    // pra isso, porque ele converte pra UTC e "vira o dia" horas antes da
+    // meia-noite local (ex: 21h no Brasil já é depois da meia-noite em UTC).
+    function formatarDataLocalISO(d) {
+      const ano = d.getFullYear();
+      const mes = String(d.getMonth() + 1).padStart(2, '0');
+      const dia = String(d.getDate()).padStart(2, '0');
+      return `${ano}-${mes}-${dia}`;
+    }
+
     function getDataHojeISO() {
       const d = new Date();
-      return d.toISOString().split('T')[0];
+      return formatarDataLocalISO(d);
     }
 
     // Hora LOCAL do aparelho (não UTC) — é o horário real que a pessoa vivenciou
@@ -3157,7 +3167,7 @@
       const dow = d.getDay();
       const offset = dow === 0 ? 6 : dow - 1;
       d.setDate(d.getDate() - offset);
-      return d.toISOString().split('T')[0];
+      return formatarDataLocalISO(d);
     }
 
     // ==========================================================================
@@ -3420,7 +3430,7 @@
       for (let i = n - 1; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i);
-        dias.push(d.toISOString().split('T')[0]);
+        dias.push(formatarDataLocalISO(d));
       }
       return dias;
     }
@@ -3672,12 +3682,12 @@
       const diasSemanaAtual = Array.from({ length: 7 }, (_, i) => {
         const d = new Date(segundaAtual);
         d.setDate(segundaAtual.getDate() + i);
-        return d.toISOString().split('T')[0];
+        return formatarDataLocalISO(d);
       });
       const diasSemanaPassada = diasSemanaAtual.map(d => {
         const dt = new Date(d + 'T00:00:00');
         dt.setDate(dt.getDate() - 7);
-        return dt.toISOString().split('T')[0];
+        return formatarDataLocalISO(dt);
       });
       const valoresSemanaAtual = diasSemanaAtual.map(d => entradas.filter(l => l.data === d).reduce((a, l) => a + l.valor, 0));
       const valoresSemanaPassada = diasSemanaPassada.map(d => entradas.filter(l => l.data === d).reduce((a, l) => a + l.valor, 0));
