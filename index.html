@@ -543,6 +543,51 @@
     }
     .login-logo-texto { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
     .login-logo-texto span { background: var(--grad-principal); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    /* CARDS DE PLANO — TELA DE TESTE EXPIRADO */
+    .plano-trial-card {
+      display: block;
+      text-decoration: none;
+      border: 2px solid var(--linha);
+      border-radius: 16px;
+      padding: 14px 16px;
+      position: relative;
+      transition: all 0.15s ease;
+    }
+    .plano-trial-card:active { transform: scale(0.98); }
+    .plano-trial-destaque {
+      border-color: var(--max-green);
+      background: #F0FDF9;
+    }
+    .plano-trial-selo {
+      position: absolute;
+      top: -10px;
+      right: 14px;
+      background: var(--grad-principal);
+      color: white;
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+    .plano-trial-nome {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--texto-secundario);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .plano-trial-preco {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--texto-principal);
+      margin-top: 2px;
+    }
+    .plano-trial-preco span {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--texto-secundario);
+    }
     .login-tagline { font-size: 12.5px; color: var(--texto-secundario); text-align: center; margin-top: 2px; }
 
     .btn-google {
@@ -790,7 +835,7 @@
 
   <!-- TELA DE TESTE GRÁTIS EXPIRADO -->
   <div class="tela-login" id="tela-trial-expirado" style="display: none;">
-    <div class="login-card" style="text-align: center;">
+    <div class="login-card" style="text-align: center; max-width: 420px;">
       <div class="login-logo-box">
         <div class="login-logo-icone" style="background: var(--grad-sunset, linear-gradient(135deg,#FF7412,#F04444));">
           <i data-lucide="lock" size="26" style="color: white;"></i>
@@ -799,12 +844,31 @@
       </div>
 
       <h2 style="font-size: 18px; font-weight: 800; margin-bottom: 8px;">Seu período de teste acabou</h2>
-      <p style="font-size: 13.5px; color: var(--texto-secundario); line-height: 1.5; margin-bottom: 20px;" id="texto-trial-expirado-dias">
-        Você aproveitou os dias grátis do MAX ROTA. Pra continuar usando e acessando seus dados, fale com a gente e assine.
+      <p style="font-size: 13.5px; color: var(--texto-secundario); line-height: 1.5; margin-bottom: 18px;" id="texto-trial-expirado-dias">
+        Você aproveitou os dias grátis do MAX ROTA. Escolha um plano pra continuar usando e acessando seus dados.
       </p>
 
-      <a id="link-whatsapp-vendas" href="#" target="_blank" class="btn btn-primary" style="text-decoration: none;">
-        <i data-lucide="message-circle" size="16"></i> Falar no WhatsApp
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <a id="link-plano-mensal" href="https://pay.hotmart.com/D107248687D?off=bm1yngfj" target="_blank" class="plano-trial-card">
+          <div class="plano-trial-nome">Mensal</div>
+          <div class="plano-trial-preco">R$ 8,99<span>/mês</span></div>
+        </a>
+
+        <a id="link-plano-semestral" href="https://pay.hotmart.com/D107248687D?off=twau2gub" target="_blank" class="plano-trial-card plano-trial-destaque">
+          <div class="plano-trial-selo">⭐ MAIS ESCOLHIDO</div>
+          <div class="plano-trial-nome">Semestral</div>
+          <div class="plano-trial-preco">R$ 44,90<span>/6 meses (equivale a R$ 7,48/mês)</span></div>
+        </a>
+
+        <a id="link-plano-anual" href="https://pay.hotmart.com/D107248687D?off=qw0pnbr2" target="_blank" class="plano-trial-card">
+          <div class="plano-trial-nome">Anual</div>
+          <div class="plano-trial-preco">R$ 79,90<span>/ano (equivale a R$ 6,66/mês)</span></div>
+        </a>
+      </div>
+
+      <p style="font-size: 11.5px; color: var(--texto-secundario); margin-top: 18px; margin-bottom: 6px;">Ficou com alguma dúvida antes de assinar?</p>
+      <a id="link-whatsapp-vendas" href="#" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--max-green); font-size: 13px; font-weight: 700; text-decoration: none;">
+        <i data-lucide="message-circle" size="15"></i> Falar no WhatsApp
       </a>
 
       <p class="login-alterna" onclick="sair()" style="margin-top: 16px;">
@@ -2208,12 +2272,25 @@
       criarIconesSeguro();
     }
 
+    // ⚠️ Troque pelos links reais de cada plano no Hotmart, assim que estiverem prontos
+    const LINK_PLANO_MENSAL = "https://pay.hotmart.com/D107248687D?off=bm1yngfj";
+    const LINK_PLANO_SEMESTRAL = "https://pay.hotmart.com/D107248687D?off=twau2gub";
+    const LINK_PLANO_ANUAL = "https://pay.hotmart.com/D107248687D?off=qw0pnbr2";
+
     function mostrarTelaTrialExpirado() {
       document.getElementById('tela-login').style.display = 'none';
       document.getElementById('app-container-principal').style.display = 'none';
       document.getElementById('tela-trial-expirado').style.display = 'flex';
       const textoDias = document.getElementById('texto-trial-expirado-dias');
-      if (textoDias) textoDias.innerText = `Você aproveitou os ${DIAS_TESTE_GRATIS} dias grátis do MAX ROTA. Pra continuar usando e acessando seus dados, fale com a gente e assine.`;
+      if (textoDias) textoDias.innerText = `Você aproveitou os ${DIAS_TESTE_GRATIS} dias grátis do MAX ROTA. Escolha um plano pra continuar usando e acessando seus dados.`;
+
+      const linkMensal = document.getElementById('link-plano-mensal');
+      const linkSemestral = document.getElementById('link-plano-semestral');
+      const linkAnual = document.getElementById('link-plano-anual');
+      if (linkMensal) linkMensal.href = LINK_PLANO_MENSAL;
+      if (linkSemestral) linkSemestral.href = LINK_PLANO_SEMESTRAL;
+      if (linkAnual) linkAnual.href = LINK_PLANO_ANUAL;
+
       const linkWhats = document.getElementById('link-whatsapp-vendas');
       if (linkWhats) {
         if (WHATSAPP_VENDAS && !WHATSAPP_VENDAS.startsWith('COLOQUE_AQUI')) {
