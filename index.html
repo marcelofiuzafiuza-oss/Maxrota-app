@@ -21,6 +21,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
+  <!-- jsPDF (Geração de Relatório em PDF) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <style>
     /* ==========================================================================
        MAX ROTA — DESIGN SYSTEM V1.0 (TOKENS CSS)
@@ -628,7 +631,7 @@
       margin-top: 10px; min-height: 16px; font-weight: 600;
     }
 
-    .fab-button.aberto { transform: rotate(45deg); }
+    /* O ícone agora troca (seta -> X) em vez de girar, então sem rotação aqui */
 
     .fab-menu-overlay {
       position: fixed;
@@ -1499,6 +1502,9 @@
           </div>
           <input type="month" id="historico-filtro-mes" class="input-field" style="width: 150px; height: 40px; font-size: 13px;" onchange="renderHistorico()">
         </div>
+        <button class="btn btn-primary" style="margin-top: 12px;" onclick="gerarRelatorioPDF()">
+          <i data-lucide="file-down" size="16"></i> Gerar Relatório em PDF
+        </button>
       </section>
 
       <section class="card-hero">
@@ -2101,7 +2107,9 @@
       <span class="icone-fab" style="background: var(--max-blue);"><i data-lucide="calculator" size="16"></i></span> Config. Veículo
     </button>
   </div>
-  <button class="fab-button" id="fab-button" onclick="alternarMenuFab()">+</button>
+  <button class="fab-button" id="fab-button" onclick="alternarMenuFab()">
+    <i data-lucide="navigation" size="24"></i>
+  </button>
 
   <script>
     // ==========================================================================
@@ -3153,6 +3161,202 @@
       return { faturamento, custos, lucro, corridas, horas, diasArr, porApp, maioresGastos };
     }
 
+    // ==========================================================================
+    // RELATÓRIO MENSAL EM PDF
+    // ==========================================================================
+    function gerarRelatorioPDF() {
+      if (typeof window.jspdf === 'undefined') {
+        alert('Não consegui carregar a biblioteca de PDF. Verifique sua internet e tente novamente.');
+        return;
+      }
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+        const mesAno = mesHistoricoSelecionado;
+        const fechamento = calcularFechamentoMes(mesAno);
+        const kmMes = Object.keys(kmPorDia).filter(d => mesAnoDeData(d) === mesAno).reduce((a, d) => a + kmPorDia[d], 0);
+        const [ano, mes] = mesAno.split('-');
+        const nomesMes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        const mesFormatado = `${nomesMes[parseInt(mes) - 1]} de ${ano}`;
+        const nomeUsuario = (usuarioAtual && (usuarioAtual.displayName || usuarioAtual.email)) || 'Motorista';
+
+        const corVerde = [18, 185, 129], corAzul = [40, 120, 232], corRoxo = [124, 77, 255],
+          corVermelho = [240, 68, 68], corNavy = [17, 24, 39], corCinza = [107, 114, 128];
+        const margemX = 15;
+        let y = 46;
+
+        // Cabeçalho
+        doc.setFillColor(...corNavy);
+        doc.rect(0, 0, 210, 34, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(20);
+        doc.text('MAX ROTA', margemX, 15);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Relatório Mensal de Gestão', margemX, 22);
+        doc.setFontSize(9);
+        doc.text(`${mesFormatado}  -  ${nomeUsuario}`, margemX, 28);
+
+        // 3 cards de KPI
+        const larguraCard = (180 - 12) / 3;
+        function desenharKpiCard(x, titulo, valor, cor) {
+          doc.setFillColor(...cor);
+          doc.roundedRect(x, y, larguraCard, 24, 3, 3, 'F');
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          doc.text(titulo, x + 4, y + 8);
+          doc.setFontSize(13);
+          doc.setFont('helvetica', 'bold');
+          doc.text(formatarMoeda(valor), x + 4, y + 18);
+        }
+        desenharKpiCard(margemX, 'FATURAMENTO', fechamento.faturamento, corVerde);
+        desenharKpiCard(margemX + larguraCard + 6, 'DESPESAS', fechamento.custos, corVermelho);
+        desenharKpiCard(margemX + (larguraCard + 6) * 2, 'LUCRO LÍQUIDO', fechamento.lucro, corAzul);
+        y += 34;
+
+        // Grade de estatísticas
+        const statsItens = [
+          ['Total de Corridas', `${fechamento.corridas}`],
+          ['Horas Trabalhadas', `${fechamento.horas}h`],
+          ['KM Rodados', `${kmMes} km`],
+          ['R$ / Corrida', fechamento.corridas > 0 ? formatarMoeda(fechamento.faturamento / fechamento.corridas) : 'R$ 0,00'],
+          ['R$ / Hora', fechamento.horas > 0 ? formatarMoeda(fechamento.faturamento / fechamento.horas) : 'R$ 0,00'],
+          ['R$ / KM', kmMes > 0 ? formatarMoeda(fechamento.faturamento / kmMes) : 'R$ 0,00'],
+        ];
+        const colWidth = 180 / 3;
+        statsItens.forEach((item, i) => {
+          const col = i % 3, row = Math.floor(i / 3);
+          const x = margemX + col * colWidth, yy = y + row * 18;
+          doc.setFontSize(7.5);
+          doc.setTextColor(...corCinza);
+          doc.setFont('helvetica', 'normal');
+          doc.text(item[0].toUpperCase(), x, yy);
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...corNavy);
+          doc.text(item[1], x, yy + 6);
+        });
+        y += 42;
+
+        doc.setDrawColor(220, 220, 220);
+        doc.line(margemX, y, 195, y);
+        y += 8;
+
+        // Faturamento por App (gráfico de barras)
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...corNavy);
+        doc.text('Faturamento por App', margemX, y);
+        y += 6;
+
+        const appsArr = Object.keys(fechamento.porApp).map(cat => ({ categoria: cat, ...fechamento.porApp[cat] })).sort((a, b) => b.total - a.total);
+        if (appsArr.length === 0) {
+          doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(...corCinza);
+          doc.text('Nenhuma entrada lançada neste mês.', margemX, y);
+          y += 8;
+        } else {
+          const maiorValorApp = Math.max(...appsArr.map(a => a.total));
+          appsArr.slice(0, 6).forEach(app => {
+            doc.setFontSize(8.5);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(...corNavy);
+            doc.text(app.categoria, margemX, y);
+            doc.text(formatarMoeda(app.total), 195, y, { align: 'right' });
+            y += 2;
+            const largBarraMax = 180;
+            const largBarra = Math.max(2, (app.total / maiorValorApp) * largBarraMax);
+            doc.setFillColor(230, 230, 230);
+            doc.roundedRect(margemX, y, largBarraMax, 3, 1, 1, 'F');
+            doc.setFillColor(...corVerde);
+            doc.roundedRect(margemX, y, largBarra, 3, 1, 1, 'F');
+            y += 8;
+          });
+        }
+
+        y += 4;
+        doc.setDrawColor(220, 220, 220);
+        doc.line(margemX, y, 195, y);
+        y += 8;
+
+        // Maiores Gastos
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...corNavy);
+        doc.text('Maiores Gastos do Mês', margemX, y);
+        y += 6;
+        if (fechamento.maioresGastos.length === 0) {
+          doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(...corCinza);
+          doc.text('Nenhum gasto lançado neste mês.', margemX, y);
+          y += 8;
+        } else {
+          fechamento.maioresGastos.slice(0, 5).forEach((g, i) => {
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(...corNavy);
+            doc.text(`${i + 1}o  ${g.categoria}`, margemX, y);
+            doc.setTextColor(...corVermelho);
+            doc.setFont('helvetica', 'bold');
+            doc.text(formatarMoeda(g.total), 195, y, { align: 'right' });
+            y += 7;
+          });
+        }
+
+        y += 4;
+        doc.setDrawColor(220, 220, 220);
+        doc.line(margemX, y, 195, y);
+        y += 8;
+
+        // Melhores e Piores Dias
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...corNavy);
+        doc.text('Melhores e Piores Dias', margemX, y);
+        y += 7;
+
+        const melhores = fechamento.diasArr.slice(0, 3);
+        const piores = [...fechamento.diasArr].reverse().slice(0, 3);
+        const colX2 = margemX + 95;
+
+        doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...corVerde);
+        doc.text('MELHORES DIAS', margemX, y);
+        doc.setTextColor(...corVermelho);
+        doc.text('DIAS MAIS FRACOS', colX2, y);
+        y += 6;
+
+        const maxLinhas = Math.max(melhores.length, piores.length, 1);
+        for (let i = 0; i < maxLinhas; i++) {
+          doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...corNavy);
+          if (melhores[i]) {
+            const dataFmt = new Date(melhores[i].data + 'T00:00:00').toLocaleDateString('pt-BR');
+            doc.text(`${dataFmt}  -  ${formatarMoeda(melhores[i].valor)}`, margemX, y);
+          }
+          if (piores[i]) {
+            const dataFmt = new Date(piores[i].data + 'T00:00:00').toLocaleDateString('pt-BR');
+            doc.text(`${dataFmt}  -  ${formatarMoeda(piores[i].valor)}`, colX2, y);
+          }
+          y += 6;
+        }
+        if (melhores.length === 0) {
+          doc.setFontSize(9); doc.setTextColor(...corCinza);
+          doc.text('Sem lançamentos suficientes neste mês.', margemX, y);
+        }
+
+        // Rodapé
+        doc.setFontSize(8);
+        doc.setTextColor(...corCinza);
+        doc.text(`Gerado pelo MAX ROTA em ${new Date().toLocaleDateString('pt-BR')} - Gestão para Motoristas`, margemX, 287);
+
+        doc.save(`MaxRota-Relatorio-${mesAno}.pdf`);
+      } catch (e) {
+        console.error('Erro ao gerar relatório PDF:', e);
+        alert('Não consegui gerar o PDF agora. Tenta de novo em instantes.');
+      }
+    }
+
     let mesHistoricoSelecionado = getMesAnoAtual(); // fonte confiável — não depende só do <input type="month">
 
     function renderHistorico() {
@@ -4006,12 +4210,19 @@
       menu.classList.toggle('aberto', abrindo);
       overlay.classList.toggle('aberto', abrindo);
       btn.classList.toggle('aberto', abrindo);
+      btn.innerHTML = abrindo
+        ? '<i data-lucide="x" size="24"></i>'
+        : '<i data-lucide="navigation" size="24"></i>';
+      criarIconesSeguro();
     }
 
     function fecharMenuFab() {
       document.getElementById('fab-menu').classList.remove('aberto');
       document.getElementById('fab-overlay').classList.remove('aberto');
-      document.getElementById('fab-button').classList.remove('aberto');
+      const btn = document.getElementById('fab-button');
+      btn.classList.remove('aberto');
+      btn.innerHTML = '<i data-lucide="navigation" size="24"></i>';
+      criarIconesSeguro();
     }
 
     function irParaAtalho(tabId, idParaFocar) {
