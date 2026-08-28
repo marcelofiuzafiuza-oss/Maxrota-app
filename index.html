@@ -2412,16 +2412,36 @@
       }
     }
     async function storageSet(key, value) {
-      try {
-        if (usuarioAtual && firestoreDB) {
-          await firestoreDB.collection('usuarios').doc(usuarioAtual.uid).collection('dados').doc(key).set({ valor: value });
-          return;
+      if (usuarioAtual && firestoreDB) {
+        // Tenta salvar até 3 vezes antes de desistir — protege contra
+        // falhas momentâneas de rede sem perder o lançamento da pessoa.
+        for (let tentativa = 1; tentativa <= 3; tentativa++) {
+          try {
+            await firestoreDB.collection('usuarios').doc(usuarioAtual.uid).collection('dados').doc(key).set({ valor: value });
+            return true;
+          } catch (e) {
+            console.error(`Erro ao salvar ${key} (tentativa ${tentativa}):`, e);
+            if (tentativa < 3) await new Promise(r => setTimeout(r, 800 * tentativa));
+          }
         }
+        return false;
+      }
+      try {
         localStorage.setItem(PREFIXO_LOCAL + key, JSON.stringify(value));
+        return true;
       } catch (e) {
         console.error('Erro ao salvar', key, e);
+        return false;
       }
     }
+
+    // Avisa a pessoa, de forma visível, se um salvamento importante falhar de
+    // verdade (depois das 3 tentativas) — nunca deixa ela achar que salvou
+    // quando na real não salvou.
+    function avisarFalhaDeSalvamento() {
+      alert('⚠ Não consegui salvar esse lançamento agora. Verifique sua internet e tente lançar de novo — o valor pode não ter sido guardado.');
+    }
+
 
     // Auxiliar de formatação de moeda BRL (R$)
     // Wrapper seguro: se a biblioteca de ícones não carregar (sem internet, CDN
@@ -2652,7 +2672,7 @@
     let reservaTaxaMensal = 0; // % ao mês, pra simulação de rendimento
     let dataSelecionadaReserva = getDataHojeISO();
 
-    const CANAIS_CORRIDA = ['Uber', '99', 'inDriver', 'iFood', 'Rappi', 'Mercado Livre'];
+    const CANAIS_CORRIDA = ['Uber', '99', 'inDriver', 'iFood', 'Rappi', 'Mercado Livre', 'Particular/CLT'];
 
     // ==========================================================================
     // SELETOR DE DATA (ABA HOJE)
@@ -2713,7 +2733,7 @@
       todosLancamentos.push(novoLancamento);
       atualizarPainelHoje();
       graficosDesatualizados = true;
-      storageSet('lancamentos', todosLancamentos);
+      if (!(await storageSet('lancamentos', todosLancamentos))) avisarFalhaDeSalvamento();
     }
 
     async function registrarSaida(categoria) {
@@ -2740,7 +2760,7 @@
       todosLancamentos.push(novoLancamento);
       atualizarPainelHoje();
       graficosDesatualizados = true;
-      storageSet('lancamentos', todosLancamentos);
+      if (!(await storageSet('lancamentos', todosLancamentos))) avisarFalhaDeSalvamento();
     }
 
     async function registrarPasse(categoria) {
@@ -2767,14 +2787,14 @@
       todosLancamentos.push(novoLancamento);
       atualizarPainelHoje();
       graficosDesatualizados = true;
-      storageSet('lancamentos', todosLancamentos);
+      if (!(await storageSet('lancamentos', todosLancamentos))) avisarFalhaDeSalvamento();
     }
 
     async function excluirLancamentoHoje(id) {
       todosLancamentos = todosLancamentos.filter(item => item.id !== id);
       atualizarPainelHoje();
       graficosDesatualizados = true;
-      storageSet('lancamentos', todosLancamentos);
+      if (!(await storageSet('lancamentos', todosLancamentos))) avisarFalhaDeSalvamento();
     }
 
     // ==========================================================================
@@ -2936,7 +2956,7 @@
 
       atualizarPainelHoje();
       graficosDesatualizados = true;
-      storageSet('horas', horasPorDia);
+      if (!(await storageSet('horas', horasPorDia))) avisarFalhaDeSalvamento();
     }
 
     async function salvarKmHoje() {
@@ -2950,7 +2970,7 @@
       kmPorDia[dataSelecionada] = km;
       atualizarPainelHoje();
       graficosDesatualizados = true;
-      storageSet('km-por-dia', kmPorDia);
+      if (!(await storageSet('km-por-dia', kmPorDia))) avisarFalhaDeSalvamento();
     }
 
     // Custo por KM baseado na Config. Veículo, SEM o combustível — porque o
