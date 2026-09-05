@@ -1860,10 +1860,14 @@
           <div class="card-small">
             <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">Ideal acumulado (10%)</span>
             <span style="font-size: 17px; font-weight: 800; color: var(--max-blue);" id="reserva-ideal-acumulado">R$ 0,00</span>
+            <span style="font-size: 10.5px; color: var(--texto-secundario); margin-top: 5px;">Com rendimento: <strong id="reserva-ideal-acumulado-rendido" style="color: var(--max-blue);">R$ 0,00</strong></span>
+            <span style="font-size: 10px; color: var(--max-green); margin-top: 2px;" id="reserva-ideal-rendimento-ganho">+ R$ 0,00 de rendimento</span>
           </div>
           <div class="card-small">
             <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">Guardado de verdade</span>
             <span style="font-size: 17px; font-weight: 800; color: var(--max-green);" id="reserva-guardado-acumulado">R$ 0,00</span>
+            <span style="font-size: 10.5px; color: var(--texto-secundario); margin-top: 5px;">Com rendimento: <strong id="reserva-real-acumulado-rendido" style="color: var(--max-green);">R$ 0,00</strong></span>
+            <span style="font-size: 10px; color: var(--max-green); margin-top: 2px;" id="reserva-real-rendimento-ganho">+ R$ 0,00 de rendimento</span>
           </div>
         </div>
 
@@ -1885,7 +1889,7 @@
 
         <div class="form-group">
           <label class="form-label">Taxa de rendimento estimada (% ao mês)</label>
-          <input type="text" inputmode="decimal" id="input-reserva-taxa" class="input-field" placeholder="Ex: 1">
+          <input type="text" inputmode="decimal" id="input-reserva-taxa" class="input-field" placeholder="Ex: 1" oninput="previsualizarRendimentoReserva()">
         </div>
 
         <button class="btn btn-primary" onclick="simularRendimentoReserva()">
@@ -3009,8 +3013,26 @@
       todosLancamentos.push(novoLancamento);
       atualizarPainelHoje();
       graficosDesatualizados = true;
-      if (!(await storageSet('lancamentos', todosLancamentos))) avisarFalhaDeSalvamento();
-      await registrarSnapshotRentabilidade(true, 'entrada');
+
+      // O snapshot precisa nascer IMEDIATAMENTE junto com a entrada.
+      // Não esperamos o Firebase salvar o lançamento antes de criar o ponto,
+      // porque o motorista pode abrir Gráficos enquanto a rede ainda está salvando.
+      // Como registrarSnapshotRentabilidade adiciona o ponto em memória antes do
+      // primeiro await, chamar a função aqui já deixa o gráfico atualizado na hora.
+      const promessaSnapshot = registrarSnapshotRentabilidade(true, 'entrada');
+
+      // Se a aba Gráficos já estiver visível em outro fluxo de navegação, redesenha
+      // somente o gráfico intradiário sem esperar a persistência na nuvem.
+      const abaGraficosVisivel = document.getElementById('tab-analise')?.classList.contains('active');
+      if (abaGraficosVisivel) {
+        try { renderGraficoRentabilidadeDia(); } catch (e) { console.error('Falha ao atualizar gráfico de rentabilidade:', e); }
+      }
+
+      const [salvouLancamentos] = await Promise.all([
+        storageSet('lancamentos', todosLancamentos),
+        promessaSnapshot
+      ]);
+      if (!salvouLancamentos) avisarFalhaDeSalvamento();
     }
 
     async function registrarSaida(categoria) {
@@ -5227,23 +5249,44 @@
       renderReserva();
     }
 
-    function exibirSimulacaoReserva() {
-      const taxa = (reservaTaxaMensal || 0) / 100;
-
-      // Mapa 1: o que foi guardado de verdade (valor "realizado")
-      const valorReal = calcularValorSimuladoAPartirDe(reservaPorDia, taxa);
-
-      // Mapa 2: o que seria SE tivesse guardado o ideal (10%) em todo dia com entrada lançada
+    function montarMapasReserva() {
       const entradasPorDia = {};
       todosLancamentos.filter(l => l.tipo === 'entrada').forEach(l => {
-        entradasPorDia[l.data] = (entradasPorDia[l.data] || 0) + l.valor;
+        const valor = Number(l.valor) || 0;
+        if (!l.data || valor <= 0) return;
+        entradasPorDia[l.data] = (entradasPorDia[l.data] || 0) + valor;
       });
+
       const idealPorDia = {};
-      Object.keys(entradasPorDia).forEach(data => { idealPorDia[data] = entradasPorDia[data] * 0.10; });
+      Object.keys(entradasPorDia).forEach(data => {
+        idealPorDia[data] = entradasPorDia[data] * 0.10;
+      });
+      return { entradasPorDia, idealPorDia };
+    }
+
+    function exibirSimulacaoReserva(taxaPercentualOverride = null) {
+      const taxaPercentual = taxaPercentualOverride === null ? (reservaTaxaMensal || 0) : taxaPercentualOverride;
+      const taxa = Math.max(0, Number(taxaPercentual) || 0) / 100;
+      const { entradasPorDia, idealPorDia } = montarMapasReserva();
+
+      const guardadoAcumulado = Object.values(reservaPorDia).reduce((a, v) => a + (Number(v) || 0), 0);
+      const idealAcumulado = Object.values(idealPorDia).reduce((a, v) => a + (Number(v) || 0), 0);
+      const valorReal = calcularValorSimuladoAPartirDe(reservaPorDia, taxa);
       const valorIdeal = calcularValorSimuladoAPartirDe(idealPorDia, taxa);
 
-      document.getElementById('reserva-valor-simulado-real').innerText = formatarMoeda(valorReal);
-      document.getElementById('reserva-valor-simulado-ideal').innerText = formatarMoeda(valorIdeal);
+      const elReal = document.getElementById('reserva-valor-simulado-real');
+      const elIdeal = document.getElementById('reserva-valor-simulado-ideal');
+      if (elReal) elReal.innerText = formatarMoeda(valorReal);
+      if (elIdeal) elIdeal.innerText = formatarMoeda(valorIdeal);
+
+      const idealRendido = document.getElementById('reserva-ideal-acumulado-rendido');
+      const realRendido = document.getElementById('reserva-real-acumulado-rendido');
+      const idealGanho = document.getElementById('reserva-ideal-rendimento-ganho');
+      const realGanho = document.getElementById('reserva-real-rendimento-ganho');
+      if (idealRendido) idealRendido.innerText = formatarMoeda(valorIdeal);
+      if (realRendido) realRendido.innerText = formatarMoeda(valorReal);
+      if (idealGanho) idealGanho.innerText = `+ ${formatarMoeda(Math.max(0, valorIdeal - idealAcumulado))} de rendimento`;
+      if (realGanho) realGanho.innerText = `+ ${formatarMoeda(Math.max(0, valorReal - guardadoAcumulado))} de rendimento`;
 
       const avisoVazio = document.getElementById('reserva-aviso-sem-dados');
       if (avisoVazio) {
@@ -5256,7 +5299,13 @@
       if (!texto) return 0;
       const limpo = String(texto).trim().replace(',', '.').replace('%', '');
       const numero = parseFloat(limpo);
-      return isNaN(numero) ? 0 : numero;
+      return isNaN(numero) ? 0 : Math.max(0, numero);
+    }
+
+    function previsualizarRendimentoReserva() {
+      const input = document.getElementById('input-reserva-taxa');
+      if (!input) return;
+      exibirSimulacaoReserva(parseTaxaPercentual(input.value));
     }
 
     async function simularRendimentoReserva() {
@@ -5266,27 +5315,25 @@
         exibirSimulacaoReserva();
       } catch (e) {
         console.error('Erro ao simular rendimento:', e);
-        alert('Não consegui calcular a simulação agora. Tenta digitar só o número (ex: 1 ou 1.5) e simular de novo.');
+        alert('Não consegui calcular a simulação agora. Tenta digitar só o número (ex: 1 ou 0,9) e simular de novo.');
       }
     }
 
-    // Soma, mês a mês, os valores de um mapa {data: valor} — e projeta cada aporte
-    // mensal rendendo à taxa informada até o mês atual (juros compostos simplificados).
-    function calcularValorSimuladoAPartirDe(mapaPorDia, taxa) {
-      if (!taxa || taxa <= 0) return Object.values(mapaPorDia).reduce((a, v) => a + v, 0);
-
-      const contribPorMes = {};
-      Object.keys(mapaPorDia).forEach(data => {
-        const mes = mesAnoDeData(data);
-        contribPorMes[mes] = (contribPorMes[mes] || 0) + mapaPorDia[data];
-      });
-
-      const [anoAtual, mesAtualNum] = getMesAnoAtual().split('-').map(Number);
+    // Aplica rendimento a cada aporte desde o dia em que ele foi feito até hoje.
+    // Como a taxa informada é mensal, usamos a taxa diária equivalente a um mês de 30 dias.
+    function calcularValorSimuladoAPartirDe(mapaPorDia, taxaMensal) {
+      const hojeISO = getDataHojeISO();
+      const hoje = new Date(hojeISO + 'T00:00:00');
+      const taxa = Math.max(0, Number(taxaMensal) || 0);
+      const taxaDiaria = taxa > 0 ? Math.pow(1 + taxa, 1 / 30) - 1 : 0;
       let total = 0;
-      Object.keys(contribPorMes).forEach(mesAno => {
-        const [ano, mes] = mesAno.split('-').map(Number);
-        const mesesDecorridos = (anoAtual - ano) * 12 + (mesAtualNum - mes);
-        total += contribPorMes[mesAno] * Math.pow(1 + taxa, Math.max(0, mesesDecorridos));
+
+      Object.keys(mapaPorDia || {}).forEach(data => {
+        const aporte = Number(mapaPorDia[data]) || 0;
+        if (aporte <= 0 || !/^\d{4}-\d{2}-\d{2}$/.test(data)) return;
+        const dataAporte = new Date(data + 'T00:00:00');
+        const diasDecorridos = Math.max(0, Math.floor((hoje - dataAporte) / 86400000));
+        total += aporte * Math.pow(1 + taxaDiaria, diasDecorridos);
       });
       return total;
     }
@@ -5362,10 +5409,8 @@
         }).join('');
       }
 
-      // Se já existe uma taxa salva, mostra a simulação sem precisar clicar de novo
-      if (reservaTaxaMensal > 0) {
-        exibirSimulacaoReserva();
-      }
+      // Mantém os valores com rendimento sempre sincronizados com o acumulado.
+      exibirSimulacaoReserva();
     }
 
     // ==========================================================================
