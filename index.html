@@ -994,6 +994,50 @@
             <div id="barra-progresso-diario" style="background: var(--grad-principal); height: 100%; width: 0%; transition: width 0.4s ease;"></div>
           </div>
           <p id="texto-status-diario" style="font-size: 12.5px; margin-top: 8px; font-weight: 700;"></p>
+          <p id="texto-previsao-diaria" style="font-size: 11.5px; margin-top: 5px; color: var(--texto-secundario); font-weight: 600;"></p>
+        </div>
+      </section>
+
+      <!-- META LÍQUIDA REAL DO DIA -->
+      <section class="card-standard">
+        <h2 class="section-title">Meta Líquida Real do Dia</h2>
+        <p class="section-sub">Quanto você quer que realmente sobre no dia, depois das despesas lançadas e dos custos do veículo</p>
+
+        <div class="form-group">
+          <label class="form-label">Valor da Meta Líquida Real (R$)</label>
+          <input type="text" inputmode="numeric" id="input-meta-liquida-diaria" class="input-field" placeholder="0,00" oninput="aplicarMascaraMoeda(this)">
+        </div>
+        <button class="btn btn-primary" onclick="salvarMetas()">
+          <i data-lucide="save" size="16"></i> Salvar Meta Líquida
+        </button>
+
+        <div style="margin-top: 16px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--texto-secundario); margin-bottom: 6px; gap: 8px;">
+            <span>Lucro líquido real de hoje</span>
+            <span id="texto-progresso-liquido-diario" style="text-align:right;">R$ 0,00 / R$ 0,00</span>
+          </div>
+          <div style="background: #E4E7EC; border-radius: var(--radius-pill); height: 18px; overflow: hidden;">
+            <div id="barra-progresso-liquido-diario" style="background: var(--grad-blue); height: 100%; width: 0%; transition: width 0.4s ease;"></div>
+          </div>
+          <p id="texto-status-liquido-diario" style="font-size: 12.5px; margin-top: 8px; font-weight: 700;"></p>
+          <p id="texto-previsao-liquida" style="font-size: 11.5px; margin-top: 5px; color: var(--texto-secundario); font-weight: 600;"></p>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;">
+          <div class="card-small">
+            <span style="font-size:10px; color:var(--texto-secundario); font-weight:600;">R$/hora líquido real atual</span>
+            <span id="meta-liquida-rs-hora" style="font-size:15px; font-weight:800; color:var(--max-cyan);">R$ 0,00/h</span>
+          </div>
+          <div class="card-small">
+            <span style="font-size:10px; color:var(--texto-secundario); font-weight:600;">Tempo de trabalho restante</span>
+            <span id="meta-liquida-tempo-restante" style="font-size:15px; font-weight:800; color:var(--max-purple);">—</span>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;">
+          <h3 style="font-size:13px; font-weight:800; margin-bottom:4px;">Projeção no ritmo atual</h3>
+          <p style="font-size:11px; color:var(--texto-secundario); margin-bottom:8px;">Quanto seu lucro líquido real total pode chegar se você continuar trabalhando no mesmo ritmo</p>
+          <div id="tabela-cenarios-meta-liquida"></div>
         </div>
       </section>
 
@@ -1327,6 +1371,20 @@
          ========================================================================== -->
     <div id="tab-analise" class="tab-content">
 
+      <!-- DATA DE REFERÊNCIA DOS GRÁFICOS -->
+      <section class="card-standard" style="padding: 14px 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <div>
+            <h2 class="section-title" style="font-size: 15px;">Data de Referência</h2>
+            <p class="section-sub" style="margin-top: 0;">Consulte gráficos e períodos a partir de qualquer dia</p>
+          </div>
+          <input type="date" id="input-data-graficos" class="input-field" style="width: 155px; height: 40px; font-size: 13px;" onchange="aoMudarDataGraficos()">
+        </div>
+        <button id="btn-voltar-hoje-graficos" class="btn" style="background: #E2E8F0; color: var(--texto-secundario); height: 38px; margin-top: 8px; display: none;" onclick="voltarGraficosParaHoje()">
+          <i data-lucide="rotate-ccw" size="14"></i> Voltar para hoje
+        </button>
+      </section>
+
       <div id="aviso-graficos-indisponiveis" class="alerta-despesa" style="display: none;">
         <i data-lucide="wifi-off" size="20" style="color: #D97706;"></i>
         <div>
@@ -1350,7 +1408,7 @@
 
       <section class="card-standard">
         <h2 class="section-title">Passes Diários Pagos no Mês</h2>
-        <p class="section-sub">Quanto você já pagou de passe pra trabalhar, mês atual, por app</p>
+        <p class="section-sub">Quanto você pagou de passe no mês de referência, por app</p>
         <div id="analise-passes-por-app">
           <!-- Renderizado dinamicamente -->
         </div>
@@ -1379,6 +1437,29 @@
       </section>
 
       <section class="card-standard">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px;">
+          <div>
+            <h2 class="section-title">Oscilação de Rentabilidade no Dia</h2>
+            <p class="section-sub">Acompanhe como seu rendimento muda ao longo da jornada</p>
+          </div>
+        </div>
+        <div class="chips-periodo">
+          <button class="chip-periodo-fechamento ativo" id="chip-rentabilidade-hora" onclick="selecionarModoRentabilidade('hora')">R$/hora bruto</button>
+          <button class="chip-periodo-fechamento" id="chip-rentabilidade-km" onclick="selecionarModoRentabilidade('km')">R$/km bruto</button>
+        </div>
+        <div class="stats-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr; margin-bottom:12px;">
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Atual</span><span style="font-size:14px;font-weight:800;" id="rent-atual">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Pico do dia</span><span style="font-size:14px;font-weight:800;color:var(--max-green);" id="rent-pico">R$ 0,00</span><span style="font-size:9px;color:var(--texto-secundario);" id="rent-pico-hora">--:--</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Menor ponto</span><span style="font-size:14px;font-weight:800;color:var(--max-red);" id="rent-minimo">R$ 0,00</span><span style="font-size:9px;color:var(--texto-secundario);" id="rent-minimo-hora">--:--</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Média</span><span style="font-size:14px;font-weight:800;" id="rent-media">R$ 0,00</span></div>
+        </div>
+        <div class="chart-box">
+          <canvas id="chartRentabilidadeDia"></canvas>
+        </div>
+        <p id="rentabilidade-sem-dados" style="display:none;font-size:11px;color:var(--texto-secundario);margin-top:8px;">O histórico de oscilação começa a ser registrado a partir desta atualização. Inicie a jornada e lance as corridas para formar a curva.</p>
+      </section>
+
+      <section class="card-standard">
         <h2 class="section-title">Faturamento — Últimos 7 dias</h2>
         <p class="section-sub">Evolução do faturamento bruto nos últimos dias</p>
         <div class="chart-box">
@@ -1387,7 +1468,7 @@
       </section>
 
       <section class="card-standard">
-        <h2 class="section-title">Ganhos por Aplicativo (mês atual)</h2>
+        <h2 class="section-title">Ganhos por Aplicativo (mês de referência)</h2>
         <p class="section-sub">Distribuição dos ganhos por plataforma</p>
         <div class="chart-box" style="height: 180px;">
           <canvas id="chartPlataformas"></canvas>
@@ -1395,7 +1476,7 @@
       </section>
 
       <section class="card-standard">
-        <h2 class="section-title">Corridas por Aplicativo (mês atual)</h2>
+        <h2 class="section-title">Corridas por Aplicativo (mês de referência)</h2>
         <p class="section-sub">Quantas corridas você fez em cada canal</p>
         <div class="chart-box" style="height: 180px;">
           <canvas id="chartCorridasApp"></canvas>
@@ -1487,6 +1568,19 @@
         </div>
       </section>
 
+      <section class="card-standard">
+        <h2 class="section-title">Mês de Referência x Mesmo Período Anterior</h2>
+        <p class="section-sub" id="sub-comparativo-mes-periodo">Compare os mesmos dias do mês com o mês anterior</p>
+        <div class="stats-grid" style="grid-template-columns:1fr 1fr 1fr; margin-bottom:12px;">
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Período atual</span><span style="font-size:14px;font-weight:800;color:var(--max-green);" id="comp-periodo-atual">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Período anterior</span><span style="font-size:14px;font-weight:800;" id="comp-periodo-anterior">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Evolução</span><span style="font-size:14px;font-weight:800;" id="comp-periodo-variacao">0%</span></div>
+        </div>
+        <div class="chart-box">
+          <canvas id="chartMesmoPeriodoMes"></canvas>
+        </div>
+      </section>
+
     </div>
 
     <!-- ==========================================================================
@@ -1515,8 +1609,14 @@
             <span style="font-size: 17px; font-weight: 800; color: var(--max-green);" id="hist-faturamento">R$ 0,00</span>
           </div>
           <div class="card-small">
-            <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">Lucro Líquido</span>
+            <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">Lucro Líquido Operacional</span>
             <span style="font-size: 17px; font-weight: 800; color: var(--max-blue);" id="hist-lucro">R$ 0,00</span>
+            <span style="font-size: 9.5px; color: var(--texto-secundario);">Após saídas lançadas: combustível, passes e demais gastos</span>
+          </div>
+          <div class="card-small">
+            <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">Lucro Líquido Real</span>
+            <span style="font-size: 17px; font-weight: 800; color: var(--max-purple);" id="hist-lucro-real">R$ 0,00</span>
+            <span style="font-size: 9.5px; color: var(--texto-secundario);">Operacional menos os custos estruturais do veículo</span>
           </div>
           <div class="card-small">
             <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">Total de Corridas</span>
@@ -1534,7 +1634,59 @@
             <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">R$ / Corrida</span>
             <span style="font-size: 17px; font-weight: 800; color: var(--max-orange);" id="hist-rs-corrida">R$ 0,00</span>
           </div>
+          <div class="card-small">
+            <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">Despesas Lançadas</span>
+            <span style="font-size: 17px; font-weight: 800; color: var(--max-red);" id="hist-despesas">R$ 0,00</span>
+          </div>
+          <div class="card-small">
+            <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">KM Rodados</span>
+            <span style="font-size: 17px; font-weight: 800;" id="hist-km">0 km</span>
+          </div>
+          <div class="card-small">
+            <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">R$ / KM Bruto</span>
+            <span style="font-size: 17px; font-weight: 800; color: var(--max-green);" id="hist-rs-km-bruto">R$ 0,00</span>
+          </div>
+          <div class="card-small">
+            <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">R$ / KM Líquido Real</span>
+            <span style="font-size: 17px; font-weight: 800; color: var(--max-purple);" id="hist-rs-km-real">R$ 0,00</span>
+          </div>
+          <div class="card-small">
+            <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">Lucro Real / Hora</span>
+            <span style="font-size: 17px; font-weight: 800; color: var(--max-purple);" id="hist-lucro-hora-real">R$ 0,00</span>
+          </div>
+          <div class="card-small">
+            <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">Lucro Real / Corrida</span>
+            <span style="font-size: 17px; font-weight: 800; color: var(--max-purple);" id="hist-lucro-corrida-real">R$ 0,00</span>
+          </div>
+          <div class="card-small">
+            <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">Dias Trabalhados</span>
+            <span style="font-size: 17px; font-weight: 800;" id="hist-dias-trabalhados">0</span>
+          </div>
+          <div class="card-small">
+            <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">Média Faturada / Dia</span>
+            <span style="font-size: 17px; font-weight: 800; color: var(--max-green);" id="hist-media-dia">R$ 0,00</span>
+          </div>
+          <div class="card-small">
+            <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">Média Lucro Real / Dia</span>
+            <span style="font-size: 17px; font-weight: 800; color: var(--max-purple);" id="hist-media-lucro-dia">R$ 0,00</span>
+          </div>
+          <div class="card-small">
+            <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">Margem Líquida Real</span>
+            <span style="font-size: 17px; font-weight: 800; color: var(--max-blue);" id="hist-margem-real">0%</span>
+          </div>
         </div>
+      </section>
+
+      <section class="card-standard">
+        <h2 class="section-title">Resumo de Eficiência do Mês</h2>
+        <p class="section-sub">Leitura rápida da produtividade e do resultado real</p>
+        <div id="hist-resumo-eficiencia"></div>
+      </section>
+
+      <section class="card-standard">
+        <h2 class="section-title">Destaques do Mês</h2>
+        <p class="section-sub">Os principais números que ajudam a entender como foi o período</p>
+        <div id="hist-destaques-mes"></div>
       </section>
 
       <section class="card-standard">
@@ -2660,12 +2812,13 @@
     // ESTADO GLOBAL EM MEMÓRIA (carregado do storage no window.onload)
     // ==========================================================================
     let todosLancamentos = [];   // {id, tipo, categoria, valor, corridas, data}
+    let rentabilidadeSnapshots = []; // pontos históricos de R$/hora e R$/km ao longo da jornada
     let bancoContas = [];
     let servicos = [];           // {id, nome, km, valor, data}
     let horasPorDia = {};        // { 'YYYY-MM-DD': horasNumero }
     let kmPorDia = {};           // { 'YYYY-MM-DD': kmNumero }
     let diasFinalizados = {};    // { 'YYYY-MM-DD': true }
-    let metas = { diaria: 0, semanal: 0, mensal: 0, diasSemana: 0, diasMes: 0, semanaConfirmada: '', mesConfirmado: '' };
+    let metas = { diaria: 0, liquidaDiaria: 0, semanal: 0, mensal: 0, diasSemana: 0, diasMes: 0, semanaConfirmada: '', mesConfirmado: '' };
     let dataSelecionada = getDataHojeISO();
     let graficosDesatualizados = true; // controla se os gráficos da aba Análise precisam ser recalculados
     let reservaPorDia = {}; // { 'YYYY-MM-DD': valorGuardadoNumero }
@@ -2705,6 +2858,43 @@
     // ==========================================================================
     // ABA "HOJE" — ENTRADAS / SAÍDAS / RESUMO
     // ==========================================================================
+    async function registrarSnapshotRentabilidade(forcar = false) {
+      const hoje = getDataHojeISO();
+      // O gráfico intradiário registra somente o dia corrente em tempo real.
+      if (dataSelecionada !== hoje) return;
+
+      const horas = Number(obterHorasTrabalhadasAtuais(hoje) || 0);
+      const faturamento = todosLancamentos
+        .filter(l => l.tipo === 'entrada' && l.data === hoje)
+        .reduce((a, l) => a + Number(l.valor || 0), 0);
+      if (horas <= 0 || faturamento <= 0) return;
+
+      const agora = Date.now();
+      const pontosHoje = rentabilidadeSnapshots.filter(p => p.data === hoje);
+      const ultimo = pontosHoje.length ? pontosHoje[pontosHoje.length - 1] : null;
+      // Nos registros automáticos, no máximo 1 ponto a cada 10 minutos.
+      if (!forcar && ultimo && agora - Number(ultimo.timestamp || 0) < 10 * 60 * 1000) return;
+
+      const kmAtual = Number(kmPorDia[hoje] || 0);
+      const ponto = {
+        id: String(agora),
+        data: hoje,
+        hora: obterHoraAtualHHMM(),
+        timestamp: agora,
+        faturamento: faturamento,
+        horas: horas,
+        km: kmAtual,
+        rsHoraBruto: faturamento / horas,
+        rsKmBruto: kmAtual > 0 ? faturamento / kmAtual : null
+      };
+
+      rentabilidadeSnapshots.push(ponto);
+      // Mantém um histórico amplo sem deixar o documento crescer indefinidamente.
+      if (rentabilidadeSnapshots.length > 5000) rentabilidadeSnapshots = rentabilidadeSnapshots.slice(-5000);
+      graficosDesatualizados = true;
+      if (!(await storageSet('rentabilidade-snapshots', rentabilidadeSnapshots))) avisarFalhaDeSalvamento();
+    }
+
     async function registrarEntrada(origem) {
       const inputValor = document.getElementById('input-entrada-valor');
       const inputCorridas = document.getElementById('input-entrada-corridas');
@@ -2734,6 +2924,7 @@
       atualizarPainelHoje();
       graficosDesatualizados = true;
       if (!(await storageSet('lancamentos', todosLancamentos))) avisarFalhaDeSalvamento();
+      await registrarSnapshotRentabilidade(true);
     }
 
     async function registrarSaida(categoria) {
@@ -2846,7 +3037,10 @@
       pararIntervalosCronometro();
       intervalCronometroDisplay = setInterval(atualizarDisplayCronometro, 1000);
       // Recalcula R$/hora etc. de tempos em tempos, sem pesar rodando toda hora
-      intervalCronometroRecalculo = setInterval(() => { atualizarPainelHoje(); }, 30000);
+      intervalCronometroRecalculo = setInterval(() => {
+        atualizarPainelHoje();
+        registrarSnapshotRentabilidade(false);
+      }, 30000);
     }
 
     async function iniciarCronometro() {
@@ -2971,6 +3165,7 @@
       atualizarPainelHoje();
       graficosDesatualizados = true;
       if (!(await storageSet('km-por-dia', kmPorDia))) avisarFalhaDeSalvamento();
+      await registrarSnapshotRentabilidade(true);
     }
 
     // Custo por KM baseado na Config. Veículo, SEM o combustível — porque o
@@ -3114,6 +3309,11 @@
       document.getElementById('resumo-rs-km-bruto').innerText = `${formatarMoeda(rsKmBruto)}/km`;
       document.getElementById('resumo-rs-km-liquido').innerText = `${formatarMoeda(rsKmLiquido)}/km`;
 
+      // Mantém as previsões das metas diárias sincronizadas com o ritmo atual.
+      if (typeof renderProgressoMetas === 'function') {
+        try { renderProgressoMetas(); } catch (e) { console.error('Erro ao atualizar previsões de metas:', e); }
+      }
+
       // Tabela de lançamentos
       const tabelaBody = document.getElementById('tabela-lancamentos-hoje');
       if (lancamentosHoje.length === 0) {
@@ -3153,9 +3353,17 @@
       const saidasMes = todosLancamentos.filter(l => l.tipo === 'saida' && mesAnoDeData(l.data) === mesAno);
       const faturamento = entradasMes.reduce((a, l) => a + l.valor, 0);
       const custos = saidasMes.reduce((a, l) => a + l.valor, 0);
-      const lucro = faturamento - custos;
+      const lucro = faturamento - custos; // operacional: saídas efetivamente lançadas
       const corridas = entradasMes.reduce((a, l) => a + (l.corridas || 0), 0);
       const horas = Object.keys(horasPorDia).filter(d => mesAnoDeData(d) === mesAno).reduce((a, d) => a + horasPorDia[d], 0);
+      const km = Object.keys(kmPorDia).filter(d => mesAnoDeData(d) === mesAno).reduce((a, d) => a + kmPorDia[d], 0);
+      const diasTrabalhados = new Set(entradasMes.map(l => l.data)).size;
+
+      // Custo estrutural do veículo SEM combustível, pois combustível já entra nas saídas diárias.
+      const custoEstruturalPorKm = calcularCustoPorKmSemCombustivel();
+      const custoEstruturalVeiculo = km * custoEstruturalPorKm;
+      const lucroReal = lucro - custoEstruturalVeiculo;
+      const margemReal = faturamento > 0 ? (lucroReal / faturamento) * 100 : 0;
 
       const porDia = {};
       entradasMes.forEach(l => { porDia[l.data] = (porDia[l.data] || 0) + l.valor; });
@@ -3168,7 +3376,6 @@
         porApp[l.categoria].qtd += (l.corridas || 0);
       });
 
-      // Maiores gastos do mês — passes de todos os apps somados numa única categoria
       const porCategoriaGasto = {};
       saidasMes.forEach(l => {
         const chave = l.categoria.startsWith('Passe') ? 'Passes Diários (99, Uber, inDriver, Outros)' : l.categoria;
@@ -3178,7 +3385,7 @@
         .map(categoria => ({ categoria, total: porCategoriaGasto[categoria] }))
         .sort((a, b) => b.total - a.total);
 
-      return { faturamento, custos, lucro, corridas, horas, diasArr, porApp, maioresGastos };
+      return { faturamento, custos, lucro, lucroReal, custoEstruturalVeiculo, custoEstruturalPorKm, corridas, horas, km, diasTrabalhados, margemReal, diasArr, porApp, maioresGastos };
     }
 
     // ==========================================================================
@@ -3189,188 +3396,328 @@
         alert('Não consegui carregar a biblioteca de PDF. Verifique sua internet e tente novamente.');
         return;
       }
+
       try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-
         const mesAno = mesHistoricoSelecionado;
         const fechamento = calcularFechamentoMes(mesAno);
-        const kmMes = Object.keys(kmPorDia).filter(d => mesAnoDeData(d) === mesAno).reduce((a, d) => a + kmPorDia[d], 0);
-        const [ano, mes] = mesAno.split('-');
+        const [anoStr, mesStr] = mesAno.split('-');
+        const ano = Number(anoStr), mes = Number(mesStr);
         const nomesMes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-        const mesFormatado = `${nomesMes[parseInt(mes) - 1]} de ${ano}`;
+        const mesFormatado = `${nomesMes[mes - 1]} de ${ano}`;
         const nomeUsuario = (usuarioAtual && (usuarioAtual.displayName || usuarioAtual.email)) || 'Motorista';
+        const entradasMes = todosLancamentos.filter(l => l.tipo === 'entrada' && mesAnoDeData(l.data) === mesAno);
+        const saidasMes = todosLancamentos.filter(l => l.tipo === 'saida' && mesAnoDeData(l.data) === mesAno);
 
         const corVerde = [18, 185, 129], corAzul = [40, 120, 232], corRoxo = [124, 77, 255],
-          corVermelho = [240, 68, 68], corNavy = [17, 24, 39], corCinza = [107, 114, 128];
-        const margemX = 15;
-        let y = 46;
+          corLaranja = [255, 116, 18], corVermelho = [240, 68, 68], corNavy = [17, 24, 39],
+          corCinza = [107, 114, 128], corCinzaClaro = [245, 247, 250], corBorda = [224, 228, 235];
+        const margemX = 15, larguraUtil = 180;
+        let y = 42;
 
-        // Cabeçalho
-        doc.setFillColor(...corNavy);
-        doc.rect(0, 0, 210, 34, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(20);
-        doc.text('MAX ROTA', margemX, 15);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Relatório Mensal de Gestão', margemX, 22);
-        doc.setFontSize(9);
-        doc.text(`${mesFormatado}  -  ${nomeUsuario}`, margemX, 28);
+        const fmtData = (iso) => {
+          if (!iso) return '-';
+          const [a, m, d] = iso.split('-');
+          return `${d}/${m}/${a}`;
+        };
+        const fmtNum = (v, casas = 0) => Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
+        const soma = arr => arr.reduce((acc, v) => acc + Number(v || 0), 0);
 
-        // 3 cards de KPI
-        const larguraCard = (180 - 12) / 3;
-        function desenharKpiCard(x, titulo, valor, cor) {
-          doc.setFillColor(...cor);
-          doc.roundedRect(x, y, larguraCard, 24, 3, 3, 'F');
+        function cabecalhoPagina(tituloSecao = '') {
+          doc.setFillColor(...corNavy);
+          doc.rect(0, 0, 210, 30, 'F');
           doc.setTextColor(255, 255, 255);
-          doc.setFontSize(8);
-          doc.setFont('helvetica', 'normal');
-          doc.text(titulo, x + 4, y + 8);
-          doc.setFontSize(13);
           doc.setFont('helvetica', 'bold');
-          doc.text(formatarMoeda(valor), x + 4, y + 18);
+          doc.setFontSize(18);
+          doc.text('MAX ROTA', margemX, 13);
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          doc.text('Relatório Completo de Gestão', margemX, 20);
+          doc.text(`${mesFormatado}  •  ${nomeUsuario}`, margemX, 26);
+          if (tituloSecao) {
+            doc.setTextColor(...corNavy);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(13);
+            doc.text(tituloSecao, margemX, 38);
+          }
+          y = tituloSecao ? 45 : 38;
         }
-        desenharKpiCard(margemX, 'FATURAMENTO', fechamento.faturamento, corVerde);
-        desenharKpiCard(margemX + larguraCard + 6, 'DESPESAS', fechamento.custos, corVermelho);
-        desenharKpiCard(margemX + (larguraCard + 6) * 2, 'LUCRO LÍQUIDO', fechamento.lucro, corAzul);
-        y += 34;
 
-        // Grade de estatísticas
-        const statsItens = [
-          ['Total de Corridas', `${fechamento.corridas}`],
-          ['Horas Trabalhadas', `${fechamento.horas}h`],
-          ['KM Rodados', `${kmMes} km`],
-          ['R$ / Corrida', fechamento.corridas > 0 ? formatarMoeda(fechamento.faturamento / fechamento.corridas) : 'R$ 0,00'],
-          ['R$ / Hora', fechamento.horas > 0 ? formatarMoeda(fechamento.faturamento / fechamento.horas) : 'R$ 0,00'],
-          ['R$ / KM', kmMes > 0 ? formatarMoeda(fechamento.faturamento / kmMes) : 'R$ 0,00'],
-        ];
-        const colWidth = 180 / 3;
-        statsItens.forEach((item, i) => {
-          const col = i % 3, row = Math.floor(i / 3);
-          const x = margemX + col * colWidth, yy = y + row * 18;
+        function rodapePagina() {
+          const pagina = doc.getNumberOfPages();
+          doc.setFont('helvetica', 'normal');
           doc.setFontSize(7.5);
           doc.setTextColor(...corCinza);
-          doc.setFont('helvetica', 'normal');
-          doc.text(item[0].toUpperCase(), x, yy);
-          doc.setFontSize(12);
+          doc.text(`MAX ROTA • ${mesFormatado}`, margemX, 289);
+          doc.text(`Página ${pagina}`, 195, 289, { align: 'right' });
+        }
+
+        function novaPagina(titulo) {
+          rodapePagina();
+          doc.addPage();
+          cabecalhoPagina(titulo);
+        }
+
+        function garantirEspaco(necessario, tituloContinua = '') {
+          if (y + necessario > 280) novaPagina(tituloContinua || 'Continuação');
+        }
+
+        function tituloSecao(texto, subtitulo = '') {
+          garantirEspaco(subtitulo ? 18 : 12);
           doc.setFont('helvetica', 'bold');
+          doc.setFontSize(11);
           doc.setTextColor(...corNavy);
-          doc.text(item[1], x, yy + 6);
-        });
-        y += 42;
-
-        doc.setDrawColor(220, 220, 220);
-        doc.line(margemX, y, 195, y);
-        y += 8;
-
-        // Faturamento por App (gráfico de barras)
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...corNavy);
-        doc.text('Faturamento por App', margemX, y);
-        y += 6;
-
-        const appsArr = Object.keys(fechamento.porApp).map(cat => ({ categoria: cat, ...fechamento.porApp[cat] })).sort((a, b) => b.total - a.total);
-        if (appsArr.length === 0) {
-          doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(...corCinza);
-          doc.text('Nenhuma entrada lançada neste mês.', margemX, y);
-          y += 8;
-        } else {
-          const maiorValorApp = Math.max(...appsArr.map(a => a.total));
-          appsArr.slice(0, 6).forEach(app => {
-            doc.setFontSize(8.5);
+          doc.text(texto, margemX, y);
+          y += 5;
+          if (subtitulo) {
             doc.setFont('helvetica', 'normal');
-            doc.setTextColor(...corNavy);
-            doc.text(app.categoria, margemX, y);
-            doc.text(formatarMoeda(app.total), 195, y, { align: 'right' });
-            y += 2;
-            const largBarraMax = 180;
-            const largBarra = Math.max(2, (app.total / maiorValorApp) * largBarraMax);
-            doc.setFillColor(230, 230, 230);
-            doc.roundedRect(margemX, y, largBarraMax, 3, 1, 1, 'F');
-            doc.setFillColor(...corVerde);
-            doc.roundedRect(margemX, y, largBarra, 3, 1, 1, 'F');
-            y += 8;
-          });
+            doc.setFontSize(7.8);
+            doc.setTextColor(...corCinza);
+            doc.text(subtitulo, margemX, y);
+            y += 5;
+          }
         }
 
-        y += 4;
-        doc.setDrawColor(220, 220, 220);
-        doc.line(margemX, y, 195, y);
-        y += 8;
-
-        // Maiores Gastos
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...corNavy);
-        doc.text('Maiores Gastos do Mês', margemX, y);
-        y += 6;
-        if (fechamento.maioresGastos.length === 0) {
-          doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(...corCinza);
-          doc.text('Nenhum gasto lançado neste mês.', margemX, y);
-          y += 8;
-        } else {
-          fechamento.maioresGastos.slice(0, 5).forEach((g, i) => {
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(...corNavy);
-            doc.text(`${i + 1}o  ${g.categoria}`, margemX, y);
-            doc.setTextColor(...corVermelho);
-            doc.setFont('helvetica', 'bold');
-            doc.text(formatarMoeda(g.total), 195, y, { align: 'right' });
-            y += 7;
-          });
-        }
-
-        y += 4;
-        doc.setDrawColor(220, 220, 220);
-        doc.line(margemX, y, 195, y);
-        y += 8;
-
-        // Melhores e Piores Dias
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...corNavy);
-        doc.text('Melhores e Piores Dias', margemX, y);
-        y += 7;
-
-        const melhores = fechamento.diasArr.slice(0, 3);
-        const piores = [...fechamento.diasArr].reverse().slice(0, 3);
-        const colX2 = margemX + 95;
-
-        doc.setFontSize(9); doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...corVerde);
-        doc.text('MELHORES DIAS', margemX, y);
-        doc.setTextColor(...corVermelho);
-        doc.text('DIAS MAIS FRACOS', colX2, y);
-        y += 6;
-
-        const maxLinhas = Math.max(melhores.length, piores.length, 1);
-        for (let i = 0; i < maxLinhas; i++) {
-          doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...corNavy);
-          if (melhores[i]) {
-            const dataFmt = new Date(melhores[i].data + 'T00:00:00').toLocaleDateString('pt-BR');
-            doc.text(`${dataFmt}  -  ${formatarMoeda(melhores[i].valor)}`, margemX, y);
-          }
-          if (piores[i]) {
-            const dataFmt = new Date(piores[i].data + 'T00:00:00').toLocaleDateString('pt-BR');
-            doc.text(`${dataFmt}  -  ${formatarMoeda(piores[i].valor)}`, colX2, y);
-          }
+        function linhaSeparadora() {
+          doc.setDrawColor(...corBorda);
+          doc.line(margemX, y, 195, y);
           y += 6;
         }
-        if (melhores.length === 0) {
-          doc.setFontSize(9); doc.setTextColor(...corCinza);
-          doc.text('Sem lançamentos suficientes neste mês.', margemX, y);
+
+        function kpiCard(x, yy, w, titulo, valor, cor, detalhe = '') {
+          doc.setFillColor(...cor);
+          doc.roundedRect(x, yy, w, detalhe ? 28 : 24, 3, 3, 'F');
+          doc.setTextColor(255, 255, 255);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7.5);
+          doc.text(titulo, x + 4, yy + 7);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(12);
+          doc.text(valor, x + 4, yy + 17);
+          if (detalhe) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(6.3);
+            const linhas = doc.splitTextToSize(detalhe, w - 8);
+            doc.text(linhas.slice(0, 2), x + 4, yy + 22);
+          }
         }
 
-        // Rodapé
-        doc.setFontSize(8);
-        doc.setTextColor(...corCinza);
-        doc.text(`Gerado pelo MAX ROTA em ${new Date().toLocaleDateString('pt-BR')} - Gestão para Motoristas`, margemX, 287);
+        function tabelaCabecalho(colunas, larguras) {
+          garantirEspaco(9);
+          doc.setFillColor(...corCinzaClaro);
+          doc.rect(margemX, y - 4, larguraUtil, 8, 'F');
+          let x = margemX;
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(7.3);
+          doc.setTextColor(...corCinza);
+          colunas.forEach((c, i) => {
+            doc.text(c, x + (i === 0 ? 2 : larguras[i] - 2), y + 1, { align: i === 0 ? 'left' : 'right' });
+            x += larguras[i];
+          });
+          y += 7;
+        }
 
-        doc.save(`MaxRota-Relatorio-${mesAno}.pdf`);
+        function tabelaLinha(valores, larguras, opts = {}) {
+          garantirEspaco(7, opts.tituloContinua);
+          let x = margemX;
+          doc.setFont('helvetica', opts.negrito ? 'bold' : 'normal');
+          doc.setFontSize(7.8);
+          doc.setTextColor(...(opts.cor || corNavy));
+          valores.forEach((v, i) => {
+            const align = i === 0 ? 'left' : 'right';
+            doc.text(String(v), x + (i === 0 ? 2 : larguras[i] - 2), y, { align });
+            x += larguras[i];
+          });
+          doc.setDrawColor(238, 240, 244);
+          doc.line(margemX, y + 2.3, 195, y + 2.3);
+          y += 6;
+        }
+
+        // Dados derivados por dia
+        const diasNoMes = new Date(ano, mes, 0).getDate();
+        const resumoDias = [];
+        for (let dia = 1; dia <= diasNoMes; dia++) {
+          const data = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+          const entradas = entradasMes.filter(l => l.data === data);
+          const saidas = saidasMes.filter(l => l.data === data);
+          const fat = soma(entradas.map(l => l.valor));
+          const despesas = soma(saidas.map(l => l.valor));
+          const corridas = soma(entradas.map(l => l.corridas || 0));
+          const horas = Number(horasPorDia[data] || 0);
+          const km = Number(kmPorDia[data] || 0);
+          const custoEstrutural = km * fechamento.custoEstruturalPorKm;
+          const operacional = fat - despesas;
+          const real = operacional - custoEstrutural;
+          if (fat || despesas || corridas || horas || km || diasFinalizados[data]) {
+            resumoDias.push({ data, fat, despesas, operacional, real, corridas, horas, km, custoEstrutural });
+          }
+        }
+
+        // Dados derivados por semana do mês
+        const mapaSemanas = {};
+        resumoDias.forEach(d => {
+          const inicio = getInicioSemanaDe(d.data);
+          if (!mapaSemanas[inicio]) mapaSemanas[inicio] = { inicio, fim: inicio, fat: 0, despesas: 0, operacional: 0, real: 0, corridas: 0, horas: 0, km: 0 };
+          const s = mapaSemanas[inicio];
+          s.fim = d.data > s.fim ? d.data : s.fim;
+          s.fat += d.fat; s.despesas += d.despesas; s.operacional += d.operacional; s.real += d.real;
+          s.corridas += d.corridas; s.horas += d.horas; s.km += d.km;
+        });
+        const semanas = Object.values(mapaSemanas).sort((a, b) => a.inicio.localeCompare(b.inicio));
+
+        // Comparativo mês anterior
+        const dataAnterior = new Date(ano, mes - 2, 1);
+        const mesAnteriorKey = `${dataAnterior.getFullYear()}-${String(dataAnterior.getMonth() + 1).padStart(2, '0')}`;
+        const anterior = calcularFechamentoMes(mesAnteriorKey);
+        const variacao = (atual, ant) => ant !== 0 ? ((atual - ant) / Math.abs(ant)) * 100 : (atual > 0 ? 100 : 0);
+
+        // PÁGINA 1 — RESUMO EXECUTIVO
+        cabecalhoPagina('Resumo Executivo');
+        const gap = 5, w2 = (larguraUtil - gap) / 2;
+        kpiCard(margemX, y, w2, 'FATURAMENTO', formatarMoeda(fechamento.faturamento), corVerde);
+        kpiCard(margemX + w2 + gap, y, w2, 'DESPESAS LANÇADAS', formatarMoeda(fechamento.custos), corVermelho);
+        y += 30;
+        kpiCard(margemX, y, w2, 'LUCRO LÍQUIDO OPERACIONAL', formatarMoeda(fechamento.lucro), corAzul, 'Entradas menos combustível, passes e demais saídas lançadas.');
+        kpiCard(margemX + w2 + gap, y, w2, 'LUCRO LÍQUIDO REAL', formatarMoeda(fechamento.lucroReal), corRoxo, 'Operacional menos os custos estruturais do veículo.');
+        y += 36;
+
+        tituloSecao('Indicadores principais');
+        const stats = [
+          ['Corridas', fmtNum(fechamento.corridas)], ['Horas trabalhadas', `${fmtNum(fechamento.horas, 1)} h`], ['KM rodados', `${fmtNum(fechamento.km, 1)} km`],
+          ['Dias trabalhados', fmtNum(fechamento.diasTrabalhados)], ['R$/hora bruto', fechamento.horas > 0 ? formatarMoeda(fechamento.faturamento / fechamento.horas) : 'R$ 0,00'], ['R$/corrida bruto', fechamento.corridas > 0 ? formatarMoeda(fechamento.faturamento / fechamento.corridas) : 'R$ 0,00'],
+          ['R$/KM bruto', fechamento.km > 0 ? formatarMoeda(fechamento.faturamento / fechamento.km) : 'R$ 0,00'], ['R$/KM líquido real', fechamento.km > 0 ? formatarMoeda(fechamento.lucroReal / fechamento.km) : 'R$ 0,00'], ['Margem líquida real', `${fechamento.margemReal.toFixed(1).replace('.', ',')}%`],
+          ['Lucro real/hora', fechamento.horas > 0 ? formatarMoeda(fechamento.lucroReal / fechamento.horas) : 'R$ 0,00'], ['Lucro real/corrida', fechamento.corridas > 0 ? formatarMoeda(fechamento.lucroReal / fechamento.corridas) : 'R$ 0,00'], ['Média faturada/dia', fechamento.diasTrabalhados > 0 ? formatarMoeda(fechamento.faturamento / fechamento.diasTrabalhados) : 'R$ 0,00']
+        ];
+        const cellW = larguraUtil / 3;
+        stats.forEach((item, i) => {
+          const col = i % 3, row = Math.floor(i / 3);
+          const x = margemX + col * cellW, yy = y + row * 17;
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(6.8); doc.setTextColor(...corCinza); doc.text(item[0].toUpperCase(), x, yy);
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(...corNavy); doc.text(item[1], x, yy + 5.5);
+        });
+        y += 72;
+        linhaSeparadora();
+
+        tituloSecao('Composição do resultado real', 'O combustível já faz parte das despesas lançadas e não é descontado duas vezes.');
+        const composicao = [
+          ['Faturamento do mês', formatarMoeda(fechamento.faturamento), corVerde],
+          ['(-) Despesas lançadas', formatarMoeda(fechamento.custos), corVermelho],
+          ['(=) Lucro operacional', formatarMoeda(fechamento.lucro), corAzul],
+          ['(-) Custos estruturais do veículo', formatarMoeda(fechamento.custoEstruturalVeiculo), corLaranja],
+          ['(=) Lucro líquido real', formatarMoeda(fechamento.lucroReal), corRoxo]
+        ];
+        composicao.forEach((r, i) => {
+          garantirEspaco(7);
+          doc.setFont('helvetica', i === composicao.length - 1 ? 'bold' : 'normal');
+          doc.setFontSize(8.5); doc.setTextColor(...corNavy); doc.text(r[0], margemX, y);
+          doc.setFont('helvetica', 'bold'); doc.setTextColor(...r[2]); doc.text(r[1], 195, y, { align: 'right' });
+          y += 6;
+        });
+
+        // PÁGINA 2 — APPS E DESPESAS
+        novaPagina('Aplicativos e Despesas');
+        tituloSecao('Faturamento por aplicativo', 'Valor faturado e quantidade de corridas por canal no mês.');
+        tabelaCabecalho(['Aplicativo', 'Corridas', 'Faturamento'], [90, 35, 55]);
+        const appsArr = Object.entries(fechamento.porApp).map(([categoria, v]) => ({ categoria, ...v })).sort((a, b) => b.total - a.total);
+        if (!appsArr.length) tabelaLinha(['Sem entradas no período', '', ''], [90, 35, 55]);
+        else appsArr.forEach(a => tabelaLinha([a.categoria, fmtNum(a.qtd), formatarMoeda(a.total)], [90, 35, 55], { tituloContinua: 'Aplicativos e Despesas' }));
+        y += 5;
+        tituloSecao('Despesas por categoria', 'Inclui combustível, passes e todas as saídas registradas no mês.');
+        tabelaCabecalho(['Categoria', '% despesas', 'Total'], [95, 35, 50]);
+        if (!fechamento.maioresGastos.length) tabelaLinha(['Sem despesas lançadas', '', ''], [95, 35, 50]);
+        else fechamento.maioresGastos.forEach(g => {
+          const pct = fechamento.custos > 0 ? (g.total / fechamento.custos) * 100 : 0;
+          tabelaLinha([g.categoria, `${pct.toFixed(1).replace('.', ',')}%`, formatarMoeda(g.total)], [95, 35, 50], { tituloContinua: 'Aplicativos e Despesas' });
+        });
+        y += 5;
+        tituloSecao('Custos estruturais do veículo');
+        tabelaLinha(['Custo estrutural por KM (sem combustível)', '', formatarMoeda(fechamento.custoEstruturalPorKm)], [120, 10, 50], { negrito: true });
+        tabelaLinha(['Custo estrutural apropriado no mês', '', formatarMoeda(fechamento.custoEstruturalVeiculo)], [120, 10, 50], { negrito: true });
+
+        // PÁGINA 3 — SEMANAS
+        novaPagina('Desempenho por Semana');
+        tituloSecao('Fechamento semanal', 'Cada semana agrupa os dias trabalhados do mês selecionado.');
+        tabelaCabecalho(['Período', 'Fat.', 'Desp.', 'L. oper.', 'L. real'], [32, 37, 37, 37, 37]);
+        if (!semanas.length) tabelaLinha(['Sem atividade no período', '', '', '', ''], [32, 37, 37, 37, 37]);
+        else semanas.forEach((s, i) => tabelaLinha([`S${i + 1} ${fmtData(s.inicio).slice(0,5)}-${fmtData(s.fim).slice(0,5)}`, formatarMoeda(s.fat), formatarMoeda(s.despesas), formatarMoeda(s.operacional), formatarMoeda(s.real)], [32, 37, 37, 37, 37], { tituloContinua: 'Desempenho por Semana' }));
+        y += 5;
+        tabelaCabecalho(['Período', 'Corridas', 'Horas', 'KM'], [75, 35, 35, 35]);
+        semanas.forEach((s, i) => tabelaLinha([`Semana ${i + 1}`, fmtNum(s.corridas), fmtNum(s.horas, 1), fmtNum(s.km, 1)], [75, 35, 35, 35], { tituloContinua: 'Desempenho por Semana' }));
+
+        // PÁGINA 4+ — DIAS
+        novaPagina('Detalhamento Dia a Dia');
+        tituloSecao('Resultado diário', 'Faturamento, despesas, lucro operacional, lucro real, horas, corridas e KM por dia trabalhado.');
+        tabelaCabecalho(['Data', 'Fat.', 'Desp.', 'L. oper.', 'L. real'], [32, 37, 37, 37, 37]);
+        if (!resumoDias.length) tabelaLinha(['Sem atividade no mês', '', '', '', ''], [32, 37, 37, 37, 37]);
+        else resumoDias.forEach(d => tabelaLinha([fmtData(d.data).slice(0,5), formatarMoeda(d.fat), formatarMoeda(d.despesas), formatarMoeda(d.operacional), formatarMoeda(d.real)], [32, 37, 37, 37, 37], { tituloContinua: 'Detalhamento Dia a Dia' }));
+        y += 5;
+        tabelaCabecalho(['Data', 'Corridas', 'Horas', 'KM'], [55, 40, 40, 45]);
+        resumoDias.forEach(d => tabelaLinha([fmtData(d.data), fmtNum(d.corridas), fmtNum(d.horas, 1), fmtNum(d.km, 1)], [55, 40, 40, 45], { tituloContinua: 'Detalhamento Dia a Dia' }));
+
+        // PÁGINA — DESTAQUES E COMPARATIVO
+        novaPagina('Destaques e Comparativos');
+        const melhores = fechamento.diasArr.slice(0, 5);
+        const piores = [...fechamento.diasArr].reverse().slice(0, 5);
+        tituloSecao('Melhores dias do mês');
+        melhores.forEach((d, i) => tabelaLinha([`${i + 1}º • ${fmtData(d.data)}`, '', formatarMoeda(d.valor)], [90, 35, 55], { tituloContinua: 'Destaques e Comparativos' }));
+        if (!melhores.length) tabelaLinha(['Sem dados suficientes', '', ''], [90, 35, 55]);
+        y += 4;
+        tituloSecao('Dias mais fracos do mês');
+        piores.forEach((d, i) => tabelaLinha([`${i + 1}º • ${fmtData(d.data)}`, '', formatarMoeda(d.valor)], [90, 35, 55], { tituloContinua: 'Destaques e Comparativos' }));
+        if (!piores.length) tabelaLinha(['Sem dados suficientes', '', ''], [90, 35, 55]);
+        y += 5;
+        tituloSecao('Comparativo com o mês anterior');
+        tabelaCabecalho(['Indicador', 'Anterior', 'Atual / var.'], [80, 48, 52]);
+        const comparativos = [
+          ['Faturamento', anterior.faturamento, fechamento.faturamento, true],
+          ['Lucro operacional', anterior.lucro, fechamento.lucro, true],
+          ['Lucro líquido real', anterior.lucroReal, fechamento.lucroReal, true],
+          ['Corridas', anterior.corridas, fechamento.corridas, false],
+          ['Horas', anterior.horas, fechamento.horas, false],
+          ['KM', anterior.km, fechamento.km, false]
+        ];
+        comparativos.forEach(c => {
+          const v = variacao(c[2], c[1]);
+          const antFmt = c[3] ? formatarMoeda(c[1]) : fmtNum(c[1], c[0] === 'Corridas' ? 0 : 1);
+          const atualFmt = c[3] ? formatarMoeda(c[2]) : fmtNum(c[2], c[0] === 'Corridas' ? 0 : 1);
+          tabelaLinha([c[0], antFmt, `${atualFmt} (${v >= 0 ? '+' : ''}${v.toFixed(0)}%)`], [80, 48, 52], { tituloContinua: 'Destaques e Comparativos' });
+        });
+
+        y += 6;
+        tituloSecao('Resumo de eficiência');
+        const appTop = appsArr[0];
+        const melhorDia = fechamento.diasArr[0];
+        const maiorGasto = fechamento.maioresGastos[0];
+        const linhasResumo = [
+          `Foram ${fechamento.diasTrabalhados} dias trabalhados, ${fmtNum(fechamento.horas,1)} horas, ${fmtNum(fechamento.km,1)} km e ${fmtNum(fechamento.corridas)} corridas.`,
+          `A média foi de ${fechamento.horas > 0 ? formatarMoeda(fechamento.faturamento / fechamento.horas) : 'R$ 0,00'} por hora e ${fechamento.km > 0 ? formatarMoeda(fechamento.faturamento / fechamento.km) : 'R$ 0,00'} por KM bruto.`,
+          `O lucro operacional foi ${formatarMoeda(fechamento.lucro)} e o lucro líquido real, após os custos estruturais do veículo, foi ${formatarMoeda(fechamento.lucroReal)}.`,
+          appTop ? `O canal com maior faturamento foi ${appTop.categoria}, com ${formatarMoeda(appTop.total)}.` : 'Não houve faturamento por aplicativo no período.',
+          melhorDia ? `O melhor dia foi ${fmtData(melhorDia.data)}, com ${formatarMoeda(melhorDia.valor)} de faturamento.` : 'Não houve dados suficientes para identificar o melhor dia.',
+          maiorGasto ? `A maior categoria de despesa lançada foi ${maiorGasto.categoria}, totalizando ${formatarMoeda(maiorGasto.total)}.` : 'Não houve despesas lançadas no período.'
+        ];
+        linhasResumo.forEach(txt => {
+          garantirEspaco(13, 'Destaques e Comparativos');
+          doc.setFillColor(...corCinzaClaro);
+          const linhas = doc.splitTextToSize(txt, larguraUtil - 8);
+          const h = Math.max(10, linhas.length * 4 + 5);
+          doc.roundedRect(margemX, y - 3, larguraUtil, h, 2, 2, 'F');
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(8.2); doc.setTextColor(...corNavy);
+          doc.text(linhas, margemX + 4, y + 2);
+          y += h + 3;
+        });
+
+        // Observação metodológica
+        garantirEspaco(24, 'Destaques e Comparativos');
+        tituloSecao('Como o MAX ROTA calcula os dois lucros');
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7.7); doc.setTextColor(...corCinza);
+        const metodologia = doc.splitTextToSize('Lucro Líquido Operacional = faturamento menos todas as saídas lançadas no período (como combustível, passes, alimentação, manutenção e outros gastos). Lucro Líquido Real = lucro operacional menos os custos estruturais do veículo calculados pela aba Config. Veículo. O custo estrutural usado aqui não inclui combustível, evitando desconto em duplicidade.', larguraUtil);
+        doc.text(metodologia, margemX, y);
+        y += metodologia.length * 4;
+
+        rodapePagina();
+        doc.save(`MaxRota-Relatorio-Completo-${mesAno}.pdf`);
       } catch (e) {
         console.error('Erro ao gerar relatório PDF:', e);
         alert('Não consegui gerar o PDF agora. Tenta de novo em instantes.');
@@ -3393,6 +3740,35 @@
       document.getElementById('hist-horas').innerText = `${fechamento.horas}h`;
       document.getElementById('hist-rs-hora').innerText = fechamento.horas > 0 ? formatarMoeda(fechamento.faturamento / fechamento.horas) : 'R$ 0,00';
       document.getElementById('hist-rs-corrida').innerText = fechamento.corridas > 0 ? formatarMoeda(fechamento.faturamento / fechamento.corridas) : 'R$ 0,00';
+      document.getElementById('hist-lucro-real').innerText = formatarMoeda(fechamento.lucroReal);
+      document.getElementById('hist-despesas').innerText = formatarMoeda(fechamento.custos);
+      document.getElementById('hist-km').innerText = `${fechamento.km.toLocaleString('pt-BR')} km`;
+      document.getElementById('hist-rs-km-bruto').innerText = fechamento.km > 0 ? formatarMoeda(fechamento.faturamento / fechamento.km) : 'R$ 0,00';
+      document.getElementById('hist-rs-km-real').innerText = fechamento.km > 0 ? formatarMoeda(fechamento.lucroReal / fechamento.km) : 'R$ 0,00';
+      document.getElementById('hist-lucro-hora-real').innerText = fechamento.horas > 0 ? formatarMoeda(fechamento.lucroReal / fechamento.horas) : 'R$ 0,00';
+      document.getElementById('hist-lucro-corrida-real').innerText = fechamento.corridas > 0 ? formatarMoeda(fechamento.lucroReal / fechamento.corridas) : 'R$ 0,00';
+      document.getElementById('hist-dias-trabalhados').innerText = fechamento.diasTrabalhados;
+      document.getElementById('hist-media-dia').innerText = fechamento.diasTrabalhados > 0 ? formatarMoeda(fechamento.faturamento / fechamento.diasTrabalhados) : 'R$ 0,00';
+      document.getElementById('hist-media-lucro-dia').innerText = fechamento.diasTrabalhados > 0 ? formatarMoeda(fechamento.lucroReal / fechamento.diasTrabalhados) : 'R$ 0,00';
+      document.getElementById('hist-margem-real').innerText = `${fechamento.margemReal.toFixed(1).replace('.', ',')}%`;
+
+      const appTop = Object.entries(fechamento.porApp).sort((a,b) => b[1].total - a[1].total)[0];
+      const melhorDia = fechamento.diasArr[0];
+      const piorDia = fechamento.diasArr.length ? fechamento.diasArr[fechamento.diasArr.length - 1] : null;
+      const maiorGasto = fechamento.maioresGastos[0];
+      document.getElementById('hist-resumo-eficiencia').innerHTML = `
+        <div class="item-row"><span style="font-size:13px;font-weight:600;">Faturamento por hora</span><span style="font-size:14px;font-weight:800;">${fechamento.horas > 0 ? formatarMoeda(fechamento.faturamento / fechamento.horas) : 'R$ 0,00'}</span></div>
+        <div class="item-row"><span style="font-size:13px;font-weight:600;">Faturamento por km</span><span style="font-size:14px;font-weight:800;">${fechamento.km > 0 ? formatarMoeda(fechamento.faturamento / fechamento.km) : 'R$ 0,00'}</span></div>
+        <div class="item-row"><span style="font-size:13px;font-weight:600;">Lucro real por hora</span><span style="font-size:14px;font-weight:800;color:var(--max-purple);">${fechamento.horas > 0 ? formatarMoeda(fechamento.lucroReal / fechamento.horas) : 'R$ 0,00'}</span></div>
+        <div class="item-row"><span style="font-size:13px;font-weight:600;">Lucro real por km</span><span style="font-size:14px;font-weight:800;color:var(--max-purple);">${fechamento.km > 0 ? formatarMoeda(fechamento.lucroReal / fechamento.km) : 'R$ 0,00'}</span></div>
+        <div class="item-row"><span style="font-size:13px;font-weight:600;">Custo estrutural do veículo no mês</span><span style="font-size:14px;font-weight:800;color:var(--max-red);">${formatarMoeda(fechamento.custoEstruturalVeiculo)}</span></div>`;
+
+      document.getElementById('hist-destaques-mes').innerHTML = `
+        <div class="item-row"><span style="font-size:13px;font-weight:600;">🏆 Melhor dia</span><span style="font-size:13px;font-weight:800;">${melhorDia ? new Date(melhorDia.data + 'T00:00:00').toLocaleDateString('pt-BR') + ' — ' + formatarMoeda(melhorDia.valor) : 'Sem dados'}</span></div>
+        <div class="item-row"><span style="font-size:13px;font-weight:600;">📉 Dia mais fraco</span><span style="font-size:13px;font-weight:800;">${piorDia ? new Date(piorDia.data + 'T00:00:00').toLocaleDateString('pt-BR') + ' — ' + formatarMoeda(piorDia.valor) : 'Sem dados'}</span></div>
+        <div class="item-row"><span style="font-size:13px;font-weight:600;">🚗 App que mais faturou</span><span style="font-size:13px;font-weight:800;color:var(--max-green);">${appTop ? appTop[0] + ' — ' + formatarMoeda(appTop[1].total) : 'Sem dados'}</span></div>
+        <div class="item-row"><span style="font-size:13px;font-weight:600;">💸 Maior gasto lançado</span><span style="font-size:13px;font-weight:800;color:var(--max-red);">${maiorGasto ? maiorGasto.categoria + ' — ' + formatarMoeda(maiorGasto.total) : 'Sem dados'}</span></div>
+        <div class="item-row"><span style="font-size:13px;font-weight:600;">📊 Média faturada por dia</span><span style="font-size:13px;font-weight:800;">${fechamento.diasTrabalhados > 0 ? formatarMoeda(fechamento.faturamento / fechamento.diasTrabalhados) : 'R$ 0,00'}</span></div>`;
 
       // Comparativo com mês anterior
       const [ano, mes] = mesAno.split('-').map(Number);
@@ -3402,7 +3778,8 @@
 
       const linhasComparativo = [
         { label: 'Faturamento', atual: fechamento.faturamento, anterior: fechamentoAnterior.faturamento },
-        { label: 'Lucro Líquido', atual: fechamento.lucro, anterior: fechamentoAnterior.lucro },
+        { label: 'Lucro Operacional', atual: fechamento.lucro, anterior: fechamentoAnterior.lucro },
+        { label: 'Lucro Líquido Real', atual: fechamento.lucroReal, anterior: fechamentoAnterior.lucroReal },
         { label: 'Corridas', atual: fechamento.corridas, anterior: fechamentoAnterior.corridas, moeda: false },
         { label: 'Horas', atual: fechamento.horas, anterior: fechamentoAnterior.horas, moeda: false }
       ];
@@ -3475,6 +3852,34 @@
     // FECHAMENTO POR PERÍODO (DIA / SEMANA / MÊS) — ABA GRÁFICOS
     // ==========================================================================
     let periodoFechamentoAtual = 'dia';
+    let dataReferenciaGraficos = getDataHojeISO();
+
+    function aoMudarDataGraficos() {
+      const input = document.getElementById('input-data-graficos');
+      dataReferenciaGraficos = (input && input.value) || getDataHojeISO();
+      const btn = document.getElementById('btn-voltar-hoje-graficos');
+      if (btn) btn.style.display = dataReferenciaGraficos === getDataHojeISO() ? 'none' : 'flex';
+      graficosDesatualizados = true;
+      renderGraficosAnalise();
+      if (typeof Chart !== 'undefined') graficosDesatualizados = false;
+    }
+
+    function voltarGraficosParaHoje() {
+      dataReferenciaGraficos = getDataHojeISO();
+      const input = document.getElementById('input-data-graficos');
+      if (input) input.value = dataReferenciaGraficos;
+      const btn = document.getElementById('btn-voltar-hoje-graficos');
+      if (btn) btn.style.display = 'none';
+      graficosDesatualizados = true;
+      renderGraficosAnalise();
+      if (typeof Chart !== 'undefined') graficosDesatualizados = false;
+    }
+
+    function getFimSemanaDe(dataISO) {
+      const inicio = new Date(getInicioSemanaDe(dataISO) + 'T00:00:00');
+      inicio.setDate(inicio.getDate() + 6);
+      return formatarDataLocalISO(inicio);
+    }
 
     function selecionarPeriodoFechamento(periodo) {
       periodoFechamentoAtual = periodo;
@@ -3485,26 +3890,27 @@
     }
 
     function renderFechamentoPorPeriodo() {
-      const hoje = getDataHojeISO();
+      const referencia = dataReferenciaGraficos || getDataHojeISO();
       let entradasFiltradas, saidasFiltradas, horasFiltradas, kmFiltrado;
 
       if (periodoFechamentoAtual === 'dia') {
-        entradasFiltradas = todosLancamentos.filter(l => l.tipo === 'entrada' && l.data === hoje);
-        saidasFiltradas = todosLancamentos.filter(l => l.tipo === 'saida' && l.data === hoje);
-        horasFiltradas = obterHorasTrabalhadasAtuais(hoje);
-        kmFiltrado = kmPorDia[hoje] || 0;
+        entradasFiltradas = todosLancamentos.filter(l => l.tipo === 'entrada' && l.data === referencia);
+        saidasFiltradas = todosLancamentos.filter(l => l.tipo === 'saida' && l.data === referencia);
+        horasFiltradas = referencia === getDataHojeISO() ? obterHorasTrabalhadasAtuais(referencia) : (horasPorDia[referencia] || 0);
+        kmFiltrado = kmPorDia[referencia] || 0;
       } else if (periodoFechamentoAtual === 'semana') {
-        const inicioSemana = getInicioSemanaDe(hoje);
-        entradasFiltradas = todosLancamentos.filter(l => l.tipo === 'entrada' && l.data >= inicioSemana && l.data <= hoje);
-        saidasFiltradas = todosLancamentos.filter(l => l.tipo === 'saida' && l.data >= inicioSemana && l.data <= hoje);
-        horasFiltradas = Object.keys(horasPorDia).filter(d => d >= inicioSemana && d <= hoje).reduce((a, d) => a + horasPorDia[d], 0);
-        kmFiltrado = Object.keys(kmPorDia).filter(d => d >= inicioSemana && d <= hoje).reduce((a, d) => a + kmPorDia[d], 0);
+        const inicioSemana = getInicioSemanaDe(referencia);
+        const fimSemana = getFimSemanaDe(referencia);
+        entradasFiltradas = todosLancamentos.filter(l => l.tipo === 'entrada' && l.data >= inicioSemana && l.data <= fimSemana);
+        saidasFiltradas = todosLancamentos.filter(l => l.tipo === 'saida' && l.data >= inicioSemana && l.data <= fimSemana);
+        horasFiltradas = Object.keys(horasPorDia).filter(d => d >= inicioSemana && d <= fimSemana).reduce((a, d) => a + horasPorDia[d], 0);
+        kmFiltrado = Object.keys(kmPorDia).filter(d => d >= inicioSemana && d <= fimSemana).reduce((a, d) => a + kmPorDia[d], 0);
       } else {
-        const mesAtual = getMesAnoAtual();
-        entradasFiltradas = todosLancamentos.filter(l => l.tipo === 'entrada' && mesAnoDeData(l.data) === mesAtual);
-        saidasFiltradas = todosLancamentos.filter(l => l.tipo === 'saida' && mesAnoDeData(l.data) === mesAtual);
-        horasFiltradas = Object.keys(horasPorDia).filter(d => mesAnoDeData(d) === mesAtual).reduce((a, d) => a + horasPorDia[d], 0);
-        kmFiltrado = Object.keys(kmPorDia).filter(d => mesAnoDeData(d) === mesAtual).reduce((a, d) => a + kmPorDia[d], 0);
+        const mesReferencia = mesAnoDeData(referencia);
+        entradasFiltradas = todosLancamentos.filter(l => l.tipo === 'entrada' && mesAnoDeData(l.data) === mesReferencia);
+        saidasFiltradas = todosLancamentos.filter(l => l.tipo === 'saida' && mesAnoDeData(l.data) === mesReferencia);
+        horasFiltradas = Object.keys(horasPorDia).filter(d => mesAnoDeData(d) === mesReferencia).reduce((a, d) => a + horasPorDia[d], 0);
+        kmFiltrado = Object.keys(kmPorDia).filter(d => mesAnoDeData(d) === mesReferencia).reduce((a, d) => a + kmPorDia[d], 0);
       }
 
       const faturamento = entradasFiltradas.reduce((a, l) => a + l.valor, 0);
@@ -3515,19 +3921,15 @@
       document.getElementById('fp-faturamento').innerText = formatarMoeda(faturamento);
       document.getElementById('fp-despesas').innerText = formatarMoeda(despesas);
       document.getElementById('fp-saldo').innerText = formatarMoeda(saldo);
-
       document.getElementById('fp-total-corridas').innerText = totalCorridas;
       document.getElementById('fp-total-horas').innerText = `${horasFiltradas}h`;
       document.getElementById('fp-total-km').innerText = `${kmFiltrado} km`;
-
       document.getElementById('fp-fat-corrida').innerText = totalCorridas > 0 ? formatarMoeda(faturamento / totalCorridas) : 'R$ 0,00';
       document.getElementById('fp-fat-hora').innerText = horasFiltradas > 0 ? formatarMoeda(faturamento / horasFiltradas) : 'R$ 0,00';
       document.getElementById('fp-fat-km').innerText = kmFiltrado > 0 ? formatarMoeda(faturamento / kmFiltrado) : 'R$ 0,00';
-
       document.getElementById('fp-custo-corrida').innerText = totalCorridas > 0 ? formatarMoeda(despesas / totalCorridas) : 'R$ 0,00';
       document.getElementById('fp-custo-hora').innerText = horasFiltradas > 0 ? formatarMoeda(despesas / horasFiltradas) : 'R$ 0,00';
       document.getElementById('fp-custo-km').innerText = kmFiltrado > 0 ? formatarMoeda(despesas / kmFiltrado) : 'R$ 0,00';
-
       document.getElementById('fp-lucro-corrida').innerText = totalCorridas > 0 ? formatarMoeda(saldo / totalCorridas) : 'R$ 0,00';
       document.getElementById('fp-lucro-hora').innerText = horasFiltradas > 0 ? formatarMoeda(saldo / horasFiltradas) : 'R$ 0,00';
       document.getElementById('fp-lucro-km').innerText = kmFiltrado > 0 ? formatarMoeda(saldo / kmFiltrado) : 'R$ 0,00';
@@ -3597,6 +3999,7 @@
 
     async function salvarMetas() {
       metas.diaria = moedaParaNumero(document.getElementById('input-meta-diaria').value);
+      metas.liquidaDiaria = moedaParaNumero(document.getElementById('input-meta-liquida-diaria').value);
       metas.semanal = moedaParaNumero(document.getElementById('input-meta-semanal').value);
       metas.mensal = moedaParaNumero(document.getElementById('input-meta-mensal').value);
       metas.diasSemana = parseInt(document.getElementById('input-dias-semana').value) || 0;
@@ -3678,6 +4081,121 @@
         </div>`;
     }
 
+    function formatarDuracaoMeta(horas) {
+      if (!Number.isFinite(horas) || horas < 0) return '—';
+      const totalMin = Math.max(0, Math.round(horas * 60));
+      const h = Math.floor(totalMin / 60);
+      const m = totalMin % 60;
+      if (h <= 0) return `${m}min`;
+      return `${h}h ${String(m).padStart(2, '0')}min`;
+    }
+
+    function formatarHorarioEstimadoMeta(horas) {
+      if (!Number.isFinite(horas) || horas < 0) return '—';
+      const chegada = new Date(Date.now() + horas * 3600000);
+      const hora = chegada.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      const hoje = new Date();
+      if (chegada.toDateString() === hoje.toDateString()) return hora;
+      return `${chegada.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} às ${hora}`;
+    }
+
+    function obterDadosReaisHojeParaMetas() {
+      const hoje = getDataHojeISO();
+      const lancamentosHoje = todosLancamentos.filter(l => l.data === hoje);
+      const faturamento = lancamentosHoje.filter(l => l.tipo === 'entrada').reduce((a, l) => a + l.valor, 0);
+      const despesasLancadas = lancamentosHoje.filter(l => l.tipo === 'saida').reduce((a, l) => a + l.valor, 0);
+      const horas = obterHorasTrabalhadasAtuais(hoje);
+      const km = Number(kmPorDia[hoje] || 0);
+      const custoEstrutural = km * calcularCustoPorKmSemCombustivel();
+      const lucroOperacional = faturamento - despesasLancadas;
+      const lucroReal = lucroOperacional - custoEstrutural;
+      const rsHoraBruto = horas > 0 ? faturamento / horas : 0;
+      const rsHoraLiquidoReal = horas > 0 ? lucroReal / horas : 0;
+      return { faturamento, despesasLancadas, horas, km, custoEstrutural, lucroOperacional, lucroReal, rsHoraBruto, rsHoraLiquidoReal };
+    }
+
+    function renderPrevisoesMetasDiarias() {
+      const dados = obterDadosReaisHojeParaMetas();
+
+      // Meta bruta existente — acrescenta percentual e previsão usando R$/hora bruto.
+      const metaBruta = Number(metas.diaria || 0);
+      const pctBruto = metaBruta > 0 ? (dados.faturamento / metaBruta) * 100 : 0;
+      const textoBruto = document.getElementById('texto-progresso-diario');
+      const previsaoBruta = document.getElementById('texto-previsao-diaria');
+      if (textoBruto) {
+        textoBruto.innerText = `${formatarMoeda(dados.faturamento)} / ${formatarMoeda(metaBruta)} • ${Math.max(0, pctBruto).toFixed(0)}%`;
+      }
+      if (previsaoBruta) {
+        if (metaBruta <= 0) {
+          previsaoBruta.innerText = '';
+        } else if (dados.faturamento >= metaBruta) {
+          previsaoBruta.innerText = '✓ Objetivo bruto do dia já alcançado.';
+          previsaoBruta.style.color = 'var(--max-green)';
+        } else if (dados.horas <= 0 || dados.rsHoraBruto <= 0) {
+          previsaoBruta.innerText = 'A previsão de horas aparece depois que houver faturamento e horas trabalhadas hoje.';
+          previsaoBruta.style.color = 'var(--texto-secundario)';
+        } else {
+          const falta = metaBruta - dados.faturamento;
+          const horasRestantes = falta / dados.rsHoraBruto;
+          previsaoBruta.innerText = `No ritmo atual de ${formatarMoeda(dados.rsHoraBruto)}/h bruto, faltam aproximadamente ${formatarDuracaoMeta(horasRestantes)} de trabalho. Previsão: ${formatarHorarioEstimadoMeta(horasRestantes)}, se mantiver o ritmo atual.`;
+          previsaoBruta.style.color = 'var(--texto-secundario)';
+        }
+      }
+
+      // Nova Meta Líquida Real.
+      const metaLiquida = Number(metas.liquidaDiaria || 0);
+      const pctLiquido = metaLiquida > 0 ? (dados.lucroReal / metaLiquida) * 100 : 0;
+      const progresso = document.getElementById('texto-progresso-liquido-diario');
+      const barra = document.getElementById('barra-progresso-liquido-diario');
+      const status = document.getElementById('texto-status-liquido-diario');
+      const previsao = document.getElementById('texto-previsao-liquida');
+      const rsHoraEl = document.getElementById('meta-liquida-rs-hora');
+      const tempoEl = document.getElementById('meta-liquida-tempo-restante');
+      const cenarios = document.getElementById('tabela-cenarios-meta-liquida');
+
+      if (progresso) progresso.innerText = `${formatarMoeda(dados.lucroReal)} / ${formatarMoeda(metaLiquida)} • ${Math.max(0, pctLiquido).toFixed(0)}%`;
+      if (barra) barra.style.width = `${Math.max(0, Math.min(100, pctLiquido))}%`;
+      if (rsHoraEl) {
+        rsHoraEl.innerText = `${formatarMoeda(dados.rsHoraLiquidoReal)}/h`;
+        rsHoraEl.style.color = dados.rsHoraLiquidoReal >= 0 ? 'var(--max-cyan)' : 'var(--max-red)';
+      }
+
+      let horasRestantes = null;
+      if (metaLiquida <= 0) {
+        if (status) { status.innerText = 'Defina sua meta líquida real para acompanhar quanto realmente falta sobrar no dia.'; status.style.color = 'var(--texto-secundario)'; }
+        if (previsao) previsao.innerText = '';
+        if (tempoEl) tempoEl.innerText = '—';
+      } else if (dados.lucroReal >= metaLiquida) {
+        const excedente = dados.lucroReal - metaLiquida;
+        if (status) { status.innerText = `🎯 Meta líquida real atingida! ${formatarMoeda(excedente)} acima do objetivo.`; status.style.color = 'var(--max-green)'; }
+        if (previsao) { previsao.innerText = 'Seu objetivo de lucro líquido real do dia já foi alcançado.'; previsao.style.color = 'var(--max-green)'; }
+        if (tempoEl) tempoEl.innerText = 'Meta atingida';
+      } else if (dados.horas <= 0 || dados.rsHoraLiquidoReal <= 0) {
+        const falta = metaLiquida - dados.lucroReal;
+        if (status) { status.innerText = `Falta ${formatarMoeda(falta)} para atingir sua meta líquida real.`; status.style.color = 'var(--max-orange)'; }
+        if (previsao) { previsao.innerText = 'A previsão de tempo será calculada quando houver horas trabalhadas e R$/hora líquido real positivo hoje.'; previsao.style.color = 'var(--texto-secundario)'; }
+        if (tempoEl) tempoEl.innerText = 'Aguardando dados';
+      } else {
+        const falta = metaLiquida - dados.lucroReal;
+        horasRestantes = falta / dados.rsHoraLiquidoReal;
+        if (status) { status.innerText = `Falta ${formatarMoeda(falta)} para atingir sua meta líquida real (${Math.max(0, pctLiquido).toFixed(0)}% atingido).`; status.style.color = 'var(--max-orange)'; }
+        if (previsao) { previsao.innerText = `No seu ritmo atual, faltam aproximadamente ${formatarDuracaoMeta(horasRestantes)} de trabalho. Previsão de atingir o objetivo: ${formatarHorarioEstimadoMeta(horasRestantes)}, se mantiver o ritmo atual.`; previsao.style.color = 'var(--texto-secundario)'; }
+        if (tempoEl) tempoEl.innerText = formatarDuracaoMeta(horasRestantes);
+      }
+
+      if (cenarios) {
+        const jornadas = [4, 6, 8, 10];
+        if (dados.horas <= 0 || !Number.isFinite(dados.rsHoraLiquidoReal) || dados.rsHoraLiquidoReal <= 0) {
+          cenarios.innerHTML = `<div class="item-row"><span style="font-size:12px; color:var(--texto-secundario);">Faça lançamentos e registre suas horas para gerar as projeções.</span></div>`;
+        } else {
+          cenarios.innerHTML = jornadas.map(h => {
+            const projetado = dados.lucroReal + (dados.rsHoraLiquidoReal * h);
+            return `<div class="item-row"><div><span style="font-size:13px; font-weight:700;">+${h}h de trabalho</span><p style="font-size:11px; color:var(--texto-secundario);">mantendo ${formatarMoeda(dados.rsHoraLiquidoReal)}/h líquido real</p></div><span style="font-size:14px; font-weight:800; color:${projetado >= 0 ? 'var(--max-green)' : 'var(--max-red)'};">${formatarMoeda(projetado)}</span></div>`;
+          }).join('');
+        }
+      }
+    }
+
     function renderProgressoMetas() {
       const hoje = getDataHojeISO();
       const entradas = todosLancamentos.filter(l => l.tipo === 'entrada');
@@ -3716,6 +4234,7 @@
         diasRestantes: diasMesRestantes, temDiasConfigurados: !!metas.diasMes
       });
 
+      renderPrevisoesMetasDiarias();
       renderAvisoNovaSemanaMes();
     }
 
@@ -3724,21 +4243,24 @@
     // ==========================================================================
     let chartEvolucaoInstance, chartPlataformasInstance, chartCorridasAppInstance,
         chartFaturamentoMensalInstance, chartHorasMensalInstance, chartAppMensalInstance,
-        chartDiaSemanaInstance, chartSemanaComparativoInstance;
+        chartDiaSemanaInstance, chartSemanaComparativoInstance, chartRentabilidadeDiaInstance,
+        chartMesmoPeriodoMesInstance;
+    let modoGraficoRentabilidade = 'hora';
 
-    function ultimosNDias(n) {
+    function ultimosNDias(n, dataFimISO = getDataHojeISO()) {
       const dias = [];
+      const fim = new Date(dataFimISO + 'T00:00:00');
       for (let i = n - 1; i >= 0; i--) {
-        const d = new Date();
+        const d = new Date(fim);
         d.setDate(d.getDate() - i);
         dias.push(formatarDataLocalISO(d));
       }
       return dias;
     }
 
-    function ultimosNMeses(n) {
+    function ultimosNMeses(n, dataRefISO = getDataHojeISO()) {
       const meses = [];
-      const d = new Date();
+      const d = new Date(dataRefISO + 'T00:00:00');
       d.setDate(1);
       for (let i = n - 1; i >= 0; i--) {
         const dm = new Date(d.getFullYear(), d.getMonth() - i, 1);
@@ -3752,6 +4274,117 @@
       const [ano, mes] = mesAno.split('-');
       const nomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
       return `${nomes[parseInt(mes) - 1]}/${ano.slice(2)}`;
+    }
+
+    function selecionarModoRentabilidade(modo) {
+      modoGraficoRentabilidade = modo === 'km' ? 'km' : 'hora';
+      const chipHora = document.getElementById('chip-rentabilidade-hora');
+      const chipKm = document.getElementById('chip-rentabilidade-km');
+      if (chipHora) chipHora.classList.toggle('ativo', modoGraficoRentabilidade === 'hora');
+      if (chipKm) chipKm.classList.toggle('ativo', modoGraficoRentabilidade === 'km');
+      renderGraficoRentabilidadeDia();
+    }
+
+    function renderGraficoRentabilidadeDia() {
+      if (typeof Chart === 'undefined') return;
+      const referencia = dataReferenciaGraficos || getDataHojeISO();
+      const campo = modoGraficoRentabilidade === 'km' ? 'rsKmBruto' : 'rsHoraBruto';
+      const pontos = rentabilidadeSnapshots
+        .filter(p => p.data === referencia && Number.isFinite(Number(p[campo])))
+        .sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0));
+
+      const aviso = document.getElementById('rentabilidade-sem-dados');
+      if (aviso) aviso.style.display = pontos.length ? 'none' : 'block';
+      const valores = pontos.map(p => Number(p[campo]));
+      const atual = valores.length ? valores[valores.length - 1] : 0;
+      const max = valores.length ? Math.max(...valores) : 0;
+      const min = valores.length ? Math.min(...valores) : 0;
+      const media = valores.length ? valores.reduce((a, v) => a + v, 0) / valores.length : 0;
+      const pMax = pontos[valores.indexOf(max)];
+      const pMin = pontos[valores.indexOf(min)];
+
+      document.getElementById('rent-atual').innerText = formatarMoeda(atual);
+      document.getElementById('rent-pico').innerText = formatarMoeda(max);
+      document.getElementById('rent-minimo').innerText = formatarMoeda(min);
+      document.getElementById('rent-media').innerText = formatarMoeda(media);
+      document.getElementById('rent-pico-hora').innerText = pMax ? pMax.hora : '--:--';
+      document.getElementById('rent-minimo-hora').innerText = pMin ? pMin.hora : '--:--';
+
+      const canvas = document.getElementById('chartRentabilidadeDia');
+      if (!canvas) return;
+      if (chartRentabilidadeDiaInstance) chartRentabilidadeDiaInstance.destroy();
+      chartRentabilidadeDiaInstance = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: pontos.map(p => p.hora),
+          datasets: [{
+            label: modoGraficoRentabilidade === 'km' ? 'R$/km bruto' : 'R$/hora bruto',
+            data: valores,
+            borderColor: '#12B981',
+            backgroundColor: 'rgba(18,185,129,0.08)',
+            pointBackgroundColor: '#12B981',
+            pointRadius: pontos.length > 25 ? 2 : 3,
+            pointHoverRadius: 5,
+            fill: true,
+            tension: 0.25,
+            borderWidth: 2.5
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { intersect: false, mode: 'index' },
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: false } }
+        }
+      });
+    }
+
+    function renderComparativoMesmoPeriodoMes(entradas, referencia) {
+      const [ano, mes, dia] = referencia.split('-').map(Number);
+      const atualInicio = `${ano}-${String(mes).padStart(2,'0')}-01`;
+      const atualFim = referencia;
+      const anteriorDate = new Date(ano, mes - 2, 1);
+      const anoAnt = anteriorDate.getFullYear();
+      const mesAnt = anteriorDate.getMonth() + 1;
+      const ultimoDiaAnt = new Date(anoAnt, mesAnt, 0).getDate();
+      const diaLimiteAnt = Math.min(dia, ultimoDiaAnt);
+      const anteriorInicio = `${anoAnt}-${String(mesAnt).padStart(2,'0')}-01`;
+      const anteriorFim = `${anoAnt}-${String(mesAnt).padStart(2,'0')}-${String(diaLimiteAnt).padStart(2,'0')}`;
+
+      const totalAtual = entradas.filter(l => l.data >= atualInicio && l.data <= atualFim).reduce((a,l)=>a+l.valor,0);
+      const totalAnterior = entradas.filter(l => l.data >= anteriorInicio && l.data <= anteriorFim).reduce((a,l)=>a+l.valor,0);
+      const variacao = totalAnterior > 0 ? ((totalAtual - totalAnterior) / totalAnterior) * 100 : (totalAtual > 0 ? 100 : 0);
+
+      document.getElementById('comp-periodo-atual').innerText = formatarMoeda(totalAtual);
+      document.getElementById('comp-periodo-anterior').innerText = formatarMoeda(totalAnterior);
+      const elVar = document.getElementById('comp-periodo-variacao');
+      elVar.innerText = `${variacao >= 0 ? '+' : ''}${variacao.toFixed(1).replace('.', ',')}%`;
+      elVar.style.color = variacao >= 0 ? 'var(--max-green)' : 'var(--max-red)';
+      const sub = document.getElementById('sub-comparativo-mes-periodo');
+      if (sub) sub.innerText = `Dias 1 a ${dia} do mês de referência x dias 1 a ${diaLimiteAnt} do mês anterior`;
+
+      const labels = Array.from({length: dia}, (_,i)=>String(i+1));
+      const atualVals = labels.map((_,i)=>{
+        const d = `${ano}-${String(mes).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`;
+        return entradas.filter(l=>l.data===d).reduce((a,l)=>a+l.valor,0);
+      });
+      const antVals = labels.map((_,i)=>{
+        if (i+1 > diaLimiteAnt) return 0;
+        const d = `${anoAnt}-${String(mesAnt).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`;
+        return entradas.filter(l=>l.data===d).reduce((a,l)=>a+l.valor,0);
+      });
+
+      const canvas = document.getElementById('chartMesmoPeriodoMes');
+      if (!canvas) return;
+      if (chartMesmoPeriodoMesInstance) chartMesmoPeriodoMesInstance.destroy();
+      chartMesmoPeriodoMesInstance = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: { labels, datasets: [
+          { label: 'Mês anterior', data: antVals, backgroundColor: '#8B92A0', borderRadius: 5 },
+          { label: 'Mês de referência', data: atualVals, backgroundColor: '#12B981', borderRadius: 5 }
+        ]},
+        options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom'}} }
+      });
     }
 
     function renderGraficosAnalise() {
@@ -3770,7 +4403,8 @@
 
       try {
       const entradas = todosLancamentos.filter(l => l.tipo === 'entrada');
-      const mesAtual = getMesAnoAtual();
+      const referencia = dataReferenciaGraficos || getDataHojeISO();
+      const mesAtual = mesAnoDeData(referencia);
       const entradasMesAtual = entradas.filter(l => mesAnoDeData(l.data) === mesAtual);
 
       // --- Stats rápidas ---
@@ -3824,7 +4458,7 @@
         ? formatarMoeda(lucroLiquidoMesComKm / kmMesAcumulado) : 'R$ 0,00';
 
       // --- Gráfico 1: Faturamento últimos 7 dias ---
-      const dias7 = ultimosNDias(7);
+      const dias7 = ultimosNDias(7, referencia);
       const valoresPorDia = dias7.map(d => entradas.filter(l => l.data === d).reduce((a, l) => a + l.valor, 0));
       const labelsDias7 = dias7.map(d => new Date(d + 'T00:00:00').toLocaleDateString('pt-BR', { weekday: 'short' }));
 
@@ -3887,7 +4521,7 @@
       });
 
       // --- Gráfico 4: Faturamento por mês (últimos 6 meses) ---
-      const meses6 = ultimosNMeses(6);
+      const meses6 = ultimosNMeses(6, referencia);
       const valoresPorMes = meses6.map(m => entradas.filter(l => mesAnoDeData(l.data) === m).reduce((a, l) => a + l.valor, 0));
 
       if (chartFaturamentoMensalInstance) chartFaturamentoMensalInstance.destroy();
@@ -3950,13 +4584,14 @@
       const nomesDiasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
       const somaPorDiaSemana = [0, 0, 0, 0, 0, 0, 0];
       const contagemPorDiaSemana = [0, 0, 0, 0, 0, 0, 0];
-      entradas.forEach(l => {
+      const entradasAteReferencia = entradas.filter(l => l.data <= referencia);
+      entradasAteReferencia.forEach(l => {
         const diaSemana = new Date(l.data + 'T00:00:00').getDay();
         somaPorDiaSemana[diaSemana] += l.valor;
       });
       // conta quantas vezes cada dia da semana teve pelo menos um lançamento (pra tirar média por dia, não por lançamento)
       const diasComLancamento = {};
-      entradas.forEach(l => { diasComLancamento[l.data] = new Date(l.data + 'T00:00:00').getDay(); });
+      entradasAteReferencia.forEach(l => { diasComLancamento[l.data] = new Date(l.data + 'T00:00:00').getDay(); });
       Object.values(diasComLancamento).forEach(dow => { contagemPorDiaSemana[dow]++; });
       const mediaPorDiaSemana = somaPorDiaSemana.map((soma, i) => contagemPorDiaSemana[i] > 0 ? soma / contagemPorDiaSemana[i] : 0);
 
@@ -3975,7 +4610,7 @@
       });
 
       // --- Gráfico 8: Esta semana x semana passada (dia a dia) ---
-      const hojeD = new Date();
+      const hojeD = new Date(referencia + 'T00:00:00');
       const dow = hojeD.getDay();
       const offsetSegunda = dow === 0 ? 6 : dow - 1;
       const segundaAtual = new Date(hojeD);
@@ -4006,6 +4641,8 @@
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
       });
 
+      renderGraficoRentabilidadeDia();
+      renderComparativoMesmoPeriodoMes(entradas, referencia);
       renderProgressoMetas();
       renderFechamentoPorPeriodo();
       } catch (e) {
@@ -4791,20 +5428,21 @@
     // carrega os dados DELE (separados por conta) e liga o app.
     async function carregarDadosDoUsuarioEIniciarApp() {
       let lancamentosSalvos = [], contasSalvas = [], servicosSalvos = [], horasSalvas = {},
-          configVeiculoSalva = null, diasFinalizadosSalvos = {}, metasSalvas = { diaria: 0, semanal: 0 },
-          reservaPorDiaSalva = {}, reservaTaxaSalva = 0, kmPorDiaSalvo = {};
+          configVeiculoSalva = null, diasFinalizadosSalvos = {}, metasSalvas = { diaria: 0, liquidaDiaria: 0, semanal: 0 },
+          reservaPorDiaSalva = {}, reservaTaxaSalva = 0, kmPorDiaSalvo = {}, rentabilidadeSnapshotsSalvos = [];
       try {
-        [lancamentosSalvos, contasSalvas, servicosSalvos, horasSalvas, configVeiculoSalva, diasFinalizadosSalvos, metasSalvas, reservaPorDiaSalva, reservaTaxaSalva, kmPorDiaSalvo] = await Promise.all([
+        [lancamentosSalvos, contasSalvas, servicosSalvos, horasSalvas, configVeiculoSalva, diasFinalizadosSalvos, metasSalvas, reservaPorDiaSalva, reservaTaxaSalva, kmPorDiaSalvo, rentabilidadeSnapshotsSalvos] = await Promise.all([
           storageGet('lancamentos', []),
           storageGet('contas', []),
           storageGet('servicos', []),
           storageGet('horas', {}),
           storageGet('config-veiculo', null),
           storageGet('dias-finalizados', {}),
-          storageGet('metas', { diaria: 0, semanal: 0, mensal: 0, diasSemana: 0, diasMes: 0, semanaConfirmada: '', mesConfirmado: '' }),
+          storageGet('metas', { diaria: 0, liquidaDiaria: 0, semanal: 0, mensal: 0, diasSemana: 0, diasMes: 0, semanaConfirmada: '', mesConfirmado: '' }),
           storageGet('reserva-por-dia', {}),
           storageGet('reserva-taxa', 0),
-          storageGet('km-por-dia', {})
+          storageGet('km-por-dia', {}),
+          storageGet('rentabilidade-snapshots', [])
         ]);
       } catch (e) {
         console.error('Falha ao carregar dados salvos:', e);
@@ -4822,8 +5460,10 @@
       servicos = servicosSalvos || [];
       horasPorDia = horasSalvas || {};
       kmPorDia = kmPorDiaSalvo || {};
+      rentabilidadeSnapshots = Array.isArray(rentabilidadeSnapshotsSalvos) ? rentabilidadeSnapshotsSalvos : [];
       diasFinalizados = diasFinalizadosSalvos || {};
-      metas = metasSalvas || { diaria: 0, semanal: 0, mensal: 0, diasSemana: 0, diasMes: 0, semanaConfirmada: '', mesConfirmado: '' };
+      metas = metasSalvas || { diaria: 0, liquidaDiaria: 0, semanal: 0, mensal: 0, diasSemana: 0, diasMes: 0, semanaConfirmada: '', mesConfirmado: '' };
+      if (!Number.isFinite(Number(metas.liquidaDiaria))) metas.liquidaDiaria = 0;
       reservaPorDia = reservaPorDiaSalva || {};
       reservaTaxaMensal = reservaTaxaSalva || 0;
 
@@ -4842,15 +5482,19 @@
 
       tentar('preencher metas na tela', () => {
         document.getElementById('input-meta-diaria').value = formatarParaCampoMoeda(metas.diaria);
+        document.getElementById('input-meta-liquida-diaria').value = formatarParaCampoMoeda(metas.liquidaDiaria || 0);
         document.getElementById('input-meta-semanal').value = formatarParaCampoMoeda(metas.semanal);
         document.getElementById('input-meta-mensal').value = formatarParaCampoMoeda(metas.mensal);
         document.getElementById('input-dias-semana').value = metas.diasSemana || '';
         document.getElementById('input-dias-mes').value = metas.diasMes || '';
         document.getElementById('historico-filtro-mes').value = getMesAnoAtual();
+        const inputGraficos = document.getElementById('input-data-graficos');
+        if (inputGraficos) inputGraficos.value = dataReferenciaGraficos;
       });
 
       tentar('aplicarConfigVeiculoNaTela', () => aplicarConfigVeiculoNaTela(configVeiculoSalva));
       tentar('atualizarPainelHoje', atualizarPainelHoje);
+      try { await registrarSnapshotRentabilidade(false); } catch (e) { console.error('Falha ao registrar ponto inicial de rentabilidade:', e); }
       tentar('renderHistorico', renderHistorico);
       tentar('renderDespesas', renderDespesas);
       tentar('renderReserva', renderReserva);
