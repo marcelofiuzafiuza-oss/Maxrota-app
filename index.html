@@ -1000,11 +1000,11 @@
 
       <!-- META LÍQUIDA REAL DO DIA -->
       <section class="card-standard">
-        <h2 class="section-title">Meta Líquida Real do Dia</h2>
-        <p class="section-sub">Quanto você quer que realmente sobre no dia, depois das despesas lançadas e dos custos do veículo</p>
+        <h2 class="section-title">Meta Líquida do Dia</h2>
+        <p class="section-sub">Quanto você quer que sobre no dia depois das despesas lançadas, sem descontar os custos estruturais do veículo</p>
 
         <div class="form-group">
-          <label class="form-label">Valor da Meta Líquida Real (R$)</label>
+          <label class="form-label">Valor da Meta Líquida (R$)</label>
           <input type="text" inputmode="numeric" id="input-meta-liquida-diaria" class="input-field" placeholder="0,00" oninput="aplicarMascaraMoeda(this)">
         </div>
         <button class="btn btn-primary" onclick="salvarMetas()">
@@ -1013,19 +1013,20 @@
 
         <div style="margin-top: 16px;">
           <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--texto-secundario); margin-bottom: 6px; gap: 8px;">
-            <span>Lucro líquido real de hoje</span>
+            <span>Lucro líquido de hoje</span>
             <span id="texto-progresso-liquido-diario" style="text-align:right;">R$ 0,00 / R$ 0,00</span>
           </div>
           <div style="background: #E4E7EC; border-radius: var(--radius-pill); height: 18px; overflow: hidden;">
             <div id="barra-progresso-liquido-diario" style="background: var(--grad-blue); height: 100%; width: 0%; transition: width 0.4s ease;"></div>
           </div>
           <p id="texto-status-liquido-diario" style="font-size: 12.5px; margin-top: 8px; font-weight: 700;"></p>
+          <p id="texto-liquido-com-veiculo" style="font-size: 11px; margin-top: 5px; color: var(--texto-secundario); font-weight: 600;"></p>
           <p id="texto-previsao-liquida" style="font-size: 11.5px; margin-top: 5px; color: var(--texto-secundario); font-weight: 600;"></p>
         </div>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;">
           <div class="card-small">
-            <span style="font-size:10px; color:var(--texto-secundario); font-weight:600;">R$/hora líquido real atual</span>
+            <span style="font-size:10px; color:var(--texto-secundario); font-weight:600;">R$/hora líquido atual</span>
             <span id="meta-liquida-rs-hora" style="font-size:15px; font-weight:800; color:var(--max-cyan);">R$ 0,00/h</span>
           </div>
           <div class="card-small">
@@ -1036,7 +1037,7 @@
 
         <div style="margin-top:16px;">
           <h3 style="font-size:13px; font-weight:800; margin-bottom:4px;">Projeção no ritmo atual</h3>
-          <p style="font-size:11px; color:var(--texto-secundario); margin-bottom:8px;">Quanto seu lucro líquido real total pode chegar se você continuar trabalhando no mesmo ritmo</p>
+          <p style="font-size:11px; color:var(--texto-secundario); margin-bottom:8px;">Quanto seu lucro líquido total pode chegar se você continuar trabalhando no mesmo ritmo</p>
           <div id="tabela-cenarios-meta-liquida"></div>
         </div>
       </section>
@@ -4260,8 +4261,9 @@
       const lucroOperacional = faturamento - despesasLancadas;
       const lucroReal = lucroOperacional - custoEstrutural;
       const rsHoraBruto = horas > 0 ? faturamento / horas : 0;
+      const rsHoraLiquido = horas > 0 ? lucroOperacional / horas : 0;
       const rsHoraLiquidoReal = horas > 0 ? lucroReal / horas : 0;
-      return { faturamento, despesasLancadas, horas, km, custoEstrutural, lucroOperacional, lucroReal, rsHoraBruto, rsHoraLiquidoReal };
+      return { faturamento, despesasLancadas, horas, km, custoEstrutural, lucroOperacional, lucroReal, rsHoraBruto, rsHoraLiquido, rsHoraLiquidoReal };
     }
 
     function renderPrevisoesMetasDiarias() {
@@ -4292,55 +4294,62 @@
         }
       }
 
-      // Nova Meta Líquida Real.
+      // Meta Líquida do Dia: usa o lucro após as despesas lançadas, sem descontar os custos estruturais do veículo.
+      // O lucro líquido real (com custos do veículo) continua sendo exibido como informação complementar.
       const metaLiquida = Number(metas.liquidaDiaria || 0);
-      const pctLiquido = metaLiquida > 0 ? (dados.lucroReal / metaLiquida) * 100 : 0;
+      const pctLiquido = metaLiquida > 0 ? (dados.lucroOperacional / metaLiquida) * 100 : 0;
       const progresso = document.getElementById('texto-progresso-liquido-diario');
       const barra = document.getElementById('barra-progresso-liquido-diario');
       const status = document.getElementById('texto-status-liquido-diario');
       const previsao = document.getElementById('texto-previsao-liquida');
+      const infoComVeiculo = document.getElementById('texto-liquido-com-veiculo');
       const rsHoraEl = document.getElementById('meta-liquida-rs-hora');
       const tempoEl = document.getElementById('meta-liquida-tempo-restante');
       const cenarios = document.getElementById('tabela-cenarios-meta-liquida');
 
-      if (progresso) progresso.innerText = `${formatarMoeda(dados.lucroReal)} / ${formatarMoeda(metaLiquida)} • ${Math.max(0, pctLiquido).toFixed(0)}%`;
+      if (progresso) progresso.innerText = `${formatarMoeda(dados.lucroOperacional)} / ${formatarMoeda(metaLiquida)} • ${Math.max(0, pctLiquido).toFixed(0)}%`;
       if (barra) barra.style.width = `${Math.max(0, Math.min(100, pctLiquido))}%`;
+      if (infoComVeiculo) {
+        infoComVeiculo.innerText = dados.custoEstrutural > 0
+          ? `Considerando também os custos estruturais do veículo (${formatarMoeda(dados.custoEstrutural)}), seu líquido real seria ${formatarMoeda(dados.lucroReal)}.`
+          : `Considerando os custos estruturais do veículo, seu líquido real hoje é ${formatarMoeda(dados.lucroReal)}.`;
+      }
       if (rsHoraEl) {
-        rsHoraEl.innerText = `${formatarMoeda(dados.rsHoraLiquidoReal)}/h`;
-        rsHoraEl.style.color = dados.rsHoraLiquidoReal >= 0 ? 'var(--max-cyan)' : 'var(--max-red)';
+        rsHoraEl.innerText = `${formatarMoeda(dados.rsHoraLiquido)}/h`;
+        rsHoraEl.style.color = dados.rsHoraLiquido >= 0 ? 'var(--max-cyan)' : 'var(--max-red)';
       }
 
       let horasRestantes = null;
       if (metaLiquida <= 0) {
-        if (status) { status.innerText = 'Defina sua meta líquida real para acompanhar quanto realmente falta sobrar no dia.'; status.style.color = 'var(--texto-secundario)'; }
+        if (status) { status.innerText = 'Defina sua meta líquida para acompanhar quanto falta sobrar no dia.'; status.style.color = 'var(--texto-secundario)'; }
         if (previsao) previsao.innerText = '';
         if (tempoEl) tempoEl.innerText = '—';
-      } else if (dados.lucroReal >= metaLiquida) {
-        const excedente = dados.lucroReal - metaLiquida;
-        if (status) { status.innerText = `🎯 Meta líquida real atingida! ${formatarMoeda(excedente)} acima do objetivo.`; status.style.color = 'var(--max-green)'; }
-        if (previsao) { previsao.innerText = 'Seu objetivo de lucro líquido real do dia já foi alcançado.'; previsao.style.color = 'var(--max-green)'; }
+      } else if (dados.lucroOperacional >= metaLiquida) {
+        const excedente = dados.lucroOperacional - metaLiquida;
+        if (status) { status.innerText = `🎯 Meta líquida atingida! ${formatarMoeda(excedente)} acima do objetivo.`; status.style.color = 'var(--max-green)'; }
+        if (previsao) { previsao.innerText = 'Seu objetivo de lucro líquido do dia já foi alcançado.'; previsao.style.color = 'var(--max-green)'; }
         if (tempoEl) tempoEl.innerText = 'Meta atingida';
-      } else if (dados.horas <= 0 || dados.rsHoraLiquidoReal <= 0) {
-        const falta = metaLiquida - dados.lucroReal;
-        if (status) { status.innerText = `Falta ${formatarMoeda(falta)} para atingir sua meta líquida real.`; status.style.color = 'var(--max-orange)'; }
-        if (previsao) { previsao.innerText = 'A previsão de tempo será calculada quando houver horas trabalhadas e R$/hora líquido real positivo hoje.'; previsao.style.color = 'var(--texto-secundario)'; }
+      } else if (dados.horas <= 0 || dados.rsHoraLiquido <= 0) {
+        const falta = metaLiquida - dados.lucroOperacional;
+        if (status) { status.innerText = `Falta ${formatarMoeda(falta)} para atingir sua meta líquida.`; status.style.color = 'var(--max-orange)'; }
+        if (previsao) { previsao.innerText = 'A previsão de tempo será calculada quando houver horas trabalhadas e R$/hora líquido positivo hoje.'; previsao.style.color = 'var(--texto-secundario)'; }
         if (tempoEl) tempoEl.innerText = 'Aguardando dados';
       } else {
-        const falta = metaLiquida - dados.lucroReal;
-        horasRestantes = falta / dados.rsHoraLiquidoReal;
-        if (status) { status.innerText = `Falta ${formatarMoeda(falta)} para atingir sua meta líquida real (${Math.max(0, pctLiquido).toFixed(0)}% atingido).`; status.style.color = 'var(--max-orange)'; }
+        const falta = metaLiquida - dados.lucroOperacional;
+        horasRestantes = falta / dados.rsHoraLiquido;
+        if (status) { status.innerText = `Falta ${formatarMoeda(falta)} para atingir sua meta líquida (${Math.max(0, pctLiquido).toFixed(0)}% atingido).`; status.style.color = 'var(--max-orange)'; }
         if (previsao) { previsao.innerText = `No seu ritmo atual, faltam aproximadamente ${formatarDuracaoMeta(horasRestantes)} de trabalho. Previsão de atingir o objetivo: ${formatarHorarioEstimadoMeta(horasRestantes)}, se mantiver o ritmo atual.`; previsao.style.color = 'var(--texto-secundario)'; }
         if (tempoEl) tempoEl.innerText = formatarDuracaoMeta(horasRestantes);
       }
 
       if (cenarios) {
         const jornadas = [4, 6, 8, 10];
-        if (dados.horas <= 0 || !Number.isFinite(dados.rsHoraLiquidoReal) || dados.rsHoraLiquidoReal <= 0) {
+        if (dados.horas <= 0 || !Number.isFinite(dados.rsHoraLiquido) || dados.rsHoraLiquido <= 0) {
           cenarios.innerHTML = `<div class="item-row"><span style="font-size:12px; color:var(--texto-secundario);">Faça lançamentos e registre suas horas para gerar as projeções.</span></div>`;
         } else {
           cenarios.innerHTML = jornadas.map(h => {
-            const projetado = dados.lucroReal + (dados.rsHoraLiquidoReal * h);
-            return `<div class="item-row"><div><span style="font-size:13px; font-weight:700;">+${h}h de trabalho</span><p style="font-size:11px; color:var(--texto-secundario);">mantendo ${formatarMoeda(dados.rsHoraLiquidoReal)}/h líquido real</p></div><span style="font-size:14px; font-weight:800; color:${projetado >= 0 ? 'var(--max-green)' : 'var(--max-red)'};">${formatarMoeda(projetado)}</span></div>`;
+            const projetado = dados.lucroOperacional + (dados.rsHoraLiquido * h);
+            return `<div class="item-row"><div><span style="font-size:13px; font-weight:700;">+${h}h de trabalho</span><p style="font-size:11px; color:var(--texto-secundario);">mantendo ${formatarMoeda(dados.rsHoraLiquido)}/h líquido</p></div><span style="font-size:14px; font-weight:800; color:${projetado >= 0 ? 'var(--max-green)' : 'var(--max-red)'};">${formatarMoeda(projetado)}</span></div>`;
           }).join('');
         }
       }
