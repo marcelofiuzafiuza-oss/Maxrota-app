@@ -1340,6 +1340,8 @@
         <button id="btn-finalizar-dia" class="btn btn-primary" style="margin-top: 14px;" onclick="alternarFinalizarDia()">
           <i data-lucide="lock" size="16"></i> Finalizar o Dia
         </button>
+
+        <div id="fechamento-inteligente-dia" style="display:none; margin-top:14px; padding-top:14px; border-top:1px dashed var(--linha);"></div>
       </section>
 
       <!-- 4. LISTA / HISTÓRICO DOS LANÇAMENTOS DO DIA -->
@@ -1447,7 +1449,7 @@
           <button class="chip-periodo-fechamento ativo" id="chip-rentabilidade-hora" onclick="selecionarModoRentabilidade('hora')">R$/hora bruto</button>
           <button class="chip-periodo-fechamento" id="chip-rentabilidade-km" onclick="selecionarModoRentabilidade('km')">R$/km bruto</button>
         </div>
-        <div class="stats-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr; margin-bottom:12px;">
+        <div class="stats-grid" style="grid-template-columns: 1fr 1fr; margin-bottom:12px;">
           <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Atual</span><span style="font-size:14px;font-weight:800;" id="rent-atual">R$ 0,00</span></div>
           <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Pico do dia</span><span style="font-size:14px;font-weight:800;color:var(--max-green);" id="rent-pico">R$ 0,00</span><span style="font-size:9px;color:var(--texto-secundario);" id="rent-pico-hora">--:--</span></div>
           <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Menor ponto</span><span style="font-size:14px;font-weight:800;color:var(--max-red);" id="rent-minimo">R$ 0,00</span><span style="font-size:9px;color:var(--texto-secundario);" id="rent-minimo-hora">--:--</span></div>
@@ -2688,36 +2690,103 @@
       return diasConfiaveis;
     }
 
-    function calcularMelhorHorario() {
-      const diasConfiaveis = calcularDiasConfiaveis();
-      const todasEntradasConfiaveis = diasConfiaveis.flatMap(d => d.lancamentos);
-
-      if (diasConfiaveis.length < INTELIGENCIA_MIN_DIAS_CONFIAVEIS || todasEntradasConfiaveis.length === 0) {
-        return { confiavel: false, diasConfiaveis: diasConfiaveis.length };
-      }
-
-      const somaPorBloco = new Array(12).fill(0);
-      const contagemPorBloco = new Array(12).fill(0);
-      todasEntradasConfiaveis.forEach(l => {
-        const hora = parseInt(l.hora.split(':')[0]);
-        const bloco = Math.floor(hora / 2);
-        somaPorBloco[bloco] += l.valor;
-        contagemPorBloco[bloco]++;
+    function obterSegmentosRentabilidade(dataInicio = null, dataFim = null, excluirData = null) {
+      const porDia = {};
+      normalizarSnapshotsRentabilidade(rentabilidadeSnapshots).forEach(p => {
+        if (!p || !p.data || !Number.isFinite(Number(p.horas)) || !Number.isFinite(Number(p.faturamento))) return;
+        if (dataInicio && p.data < dataInicio) return;
+        if (dataFim && p.data > dataFim) return;
+        if (excluirData && p.data === excluirData) return;
+        porDia[p.data] = porDia[p.data] || [];
+        porDia[p.data].push(p);
       });
 
-      const mediaPorBloco = somaPorBloco.map((soma, i) => contagemPorBloco[i] > 0 ? soma / contagemPorBloco[i] : 0);
-      let melhorBloco = 0;
-      for (let i = 1; i < 12; i++) if (mediaPorBloco[i] > mediaPorBloco[melhorBloco]) melhorBloco = i;
+      const segmentos = [];
+      Object.entries(porDia).forEach(([data, pontos]) => {
+        pontos.sort((a,b) => Number(a.timestamp || 0) - Number(b.timestamp || 0));
+        for (let i = 1; i < pontos.length; i++) {
+          const anterior = pontos[i - 1];
+          const atual = pontos[i];
+          const deltaHoras = Number(atual.horas) - Number(anterior.horas);
+          const deltaFat = Number(atual.faturamento) - Number(anterior.faturamento);
+          if (!(deltaHoras > 0) || deltaHoras > 1.5 || deltaFat < 0) continue;
+          const horaNum = parseInt(String(atual.hora || '00:00').split(':')[0], 10);
+          const bloco = Math.max(0, Math.min(11, Math.floor((Number.isFinite(horaNum) ? horaNum : 0) / 2)));
+          segmentos.push({ data, bloco, deltaHoras, deltaFat, rsHora: deltaFat / deltaHoras });
+        }
+      });
+      return segmentos;
+    }
 
-      if (mediaPorBloco[melhorBloco] === 0) return { confiavel: false, diasConfiaveis: diasConfiaveis.length };
+    function calcularMelhorHorario() {
+      const hoje = getDataHojeISO();
+      const limite = new Date();
+      limite.setDate(limite.getDate() - 30);
+      const inicio = formatarDataLocalISO(limite);
+      const segmentos = obterSegmentosRentabilidade(inicio, hoje, hoje);
+      const dias = [...new Set(segmentos.map(s => s.data))];
+      if (dias.length < INTELIGENCIA_MIN_DIAS_CONFIAVEIS || segmentos.length < 8) {
+        return { confiavel: false, diasConfiaveis: dias.length };
+      }
 
+      const blocos = Array.from({ length: 12 }, () => ({ fat: 0, horas: 0, dias: new Set() }));
+      segmentos.forEach(seg => {
+        blocos[seg.bloco].fat += seg.deltaFat;
+        blocos[seg.bloco].horas += seg.deltaHoras;
+        blocos[seg.bloco].dias.add(seg.data);
+      });
+
+      const candidatos = blocos.map((b, i) => ({
+        bloco: i,
+        media: b.horas > 0 ? b.fat / b.horas : 0,
+        dias: b.dias.size
+      })).filter(b => b.dias >= Math.min(3, INTELIGENCIA_MIN_DIAS_CONFIAVEIS) && b.media >= 0);
+
+      if (!candidatos.length) return { confiavel: false, diasConfiaveis: dias.length };
+      const melhor = [...candidatos].sort((a,b) => b.media - a.media)[0];
+      const pior = [...candidatos].sort((a,b) => a.media - b.media)[0];
       return {
         confiavel: true,
-        diasConfiaveis: diasConfiaveis.length,
-        horaInicio: melhorBloco * 2,
-        horaFim: melhorBloco * 2 + 2,
-        mediaValor: mediaPorBloco[melhorBloco]
+        diasConfiaveis: dias.length,
+        horaInicio: melhor.bloco * 2,
+        horaFim: melhor.bloco * 2 + 2,
+        mediaValor: melhor.media,
+        piorHoraInicio: pior.bloco * 2,
+        piorHoraFim: pior.bloco * 2 + 2,
+        piorMediaValor: pior.media
       };
+    }
+
+    function calcularComparativoHojeMedia30Dias(data = getDataHojeISO()) {
+      const dRef = new Date(data + 'T12:00:00');
+      const inicio = new Date(dRef);
+      inicio.setDate(inicio.getDate() - 30);
+      const inicioISO = formatarDataLocalISO(inicio);
+      const datas = [...new Set(todosLancamentos.filter(l => l.tipo === 'entrada' && l.data >= inicioISO && l.data < data).map(l => l.data))];
+      const taxas = [];
+      datas.forEach(d => {
+        const horas = Number(horasPorDia[d] || 0);
+        if (horas <= 0) return;
+        const fat = todosLancamentos.filter(l => l.tipo === 'entrada' && l.data === d).reduce((a,l) => a + Number(l.valor || 0), 0);
+        if (fat > 0) taxas.push(fat / horas);
+      });
+      const media30 = taxas.length ? taxas.reduce((a,v) => a + v, 0) / taxas.length : 0;
+      const horasHoje = Number(obterHorasTrabalhadasAtuais(data) || 0);
+      const fatHoje = todosLancamentos.filter(l => l.tipo === 'entrada' && l.data === data).reduce((a,l) => a + Number(l.valor || 0), 0);
+      const atual = horasHoje > 0 ? fatHoje / horasHoje : 0;
+      const variacao = media30 > 0 ? ((atual - media30) / media30) * 100 : 0;
+      return { confiavel: taxas.length >= 5 && atual > 0, dias: taxas.length, media30, atual, variacao };
+    }
+
+    function calcularMelhorPeriodoDoDia(data) {
+      const segmentos = obterSegmentosRentabilidade(data, data, null);
+      if (!segmentos.length) return null;
+      const blocos = Array.from({ length: 12 }, () => ({ fat: 0, horas: 0 }));
+      segmentos.forEach(seg => { blocos[seg.bloco].fat += seg.deltaFat; blocos[seg.bloco].horas += seg.deltaHoras; });
+      const candidatos = blocos.map((b,i) => ({ bloco:i, media:b.horas > 0 ? b.fat/b.horas : -1, horas:b.horas })).filter(x => x.horas > 0);
+      if (!candidatos.length) return null;
+      const melhor = candidatos.sort((a,b) => b.media-a.media)[0];
+      return { horaInicio: melhor.bloco*2, horaFim: melhor.bloco*2+2, media: melhor.media };
     }
 
     function calcularMelhorPiorDiaSemana() {
@@ -2757,18 +2826,32 @@
       if (!container) return;
 
       const horario = calcularMelhorHorario();
+      const comparativo = calcularComparativoHojeMedia30Dias();
       const semana = calcularMelhorPiorDiaSemana();
       let html = '';
 
+      if (comparativo.confiavel) {
+        const acima = comparativo.variacao >= 0;
+        html += `<div>
+          <span style="font-size:13px;font-weight:700;">📊 Como está seu ritmo hoje</span>
+          <p style="font-size:11.5px;color:var(--texto-secundario);margin-top:2px;">Você está em <b>${formatarMoeda(comparativo.atual)}/h bruto</b>, <b style="color:${acima ? 'var(--max-green)' : 'var(--max-red)'};">${Math.abs(comparativo.variacao).toFixed(1).replace('.', ',')}% ${acima ? 'acima' : 'abaixo'}</b> da sua média dos últimos ${comparativo.dias} dias trabalhados (${formatarMoeda(comparativo.media30)}/h).</p>
+        </div><hr style="border:none;border-top:1px dashed var(--linha);margin:10px 0;">`;
+      } else {
+        html += `<div>
+          <span style="font-size:13px;font-weight:700;">📊 Como está seu ritmo hoje</span>
+          <p style="font-size:11.5px;color:var(--texto-secundario);margin-top:2px;">Continue registrando suas jornadas. Com pelo menos 5 dias com horas e faturamento, eu comparo automaticamente o ritmo de hoje com sua média recente.</p>
+        </div><hr style="border:none;border-top:1px dashed var(--linha);margin:10px 0;">`;
+      }
+
       if (!horario.confiavel) {
         html += `<div>
-          <span style="font-size:13px;font-weight:700;">⏰ Melhor horário pra rodar</span>
-          <p style="font-size:11.5px;color:var(--texto-secundario);margin-top:2px;">Ainda não tenho dados suficientes em tempo real (${horario.diasConfiaveis}/${INTELIGENCIA_MIN_DIAS_CONFIAVEIS} dias confiáveis). Lance suas corridas assim que finalizar, e eu vou aprendendo seus horários mais lucrativos!</p>
+          <span style="font-size:13px;font-weight:700;">⏰ Melhores horários para trabalhar</span>
+          <p style="font-size:11.5px;color:var(--texto-secundario);margin-top:2px;">Ainda estou formando seu histórico por horário (${horario.diasConfiaveis}/${INTELIGENCIA_MIN_DIAS_CONFIAVEIS} dias). A partir dos pontos de rentabilidade, vou descobrir onde seu <b>R$/hora bruto</b> costuma ser mais forte.</p>
         </div>`;
       } else {
         html += `<div>
-          <span style="font-size:13px;font-weight:700;">⏰ Seu horário mais lucrativo</span>
-          <p style="font-size:11.5px;color:var(--texto-secundario);margin-top:2px;">Entre <b>${String(horario.horaInicio).padStart(2, '0')}h e ${String(horario.horaFim).padStart(2, '0')}h</b> — média de ${formatarMoeda(horario.mediaValor)} por lançamento. <span style="color:var(--max-blue);font-weight:600;">Baseado em ${horario.diasConfiaveis} dias com lançamento em tempo real.</span></p>
+          <span style="font-size:13px;font-weight:700;">⏰ Seus horários de maior e menor rendimento</span>
+          <p style="font-size:11.5px;color:var(--texto-secundario);margin-top:2px;">🏆 Melhor faixa: <b>${String(horario.horaInicio).padStart(2,'0')}h–${String(horario.horaFim).padStart(2,'0')}h</b>, média de <b>${formatarMoeda(horario.mediaValor)}/h</b>. &nbsp; 📉 Faixa mais fraca: <b>${String(horario.piorHoraInicio).padStart(2,'0')}h–${String(horario.piorHoraFim).padStart(2,'0')}h</b>, média de <b>${formatarMoeda(horario.piorMediaValor)}/h</b>. <span style="color:var(--max-blue);font-weight:600;">Baseado nos últimos ${horario.diasConfiaveis} dias com dados suficientes.</span></p>
         </div>`;
       }
 
@@ -2782,19 +2865,17 @@
             <span style="color:var(--texto-principal); font-weight: ${pos === 0 ? '800' : '600'};">${pos + 1}º ${item.dia}</span>
             <span style="font-weight:700;">${formatarMoeda(item.valor)}</span>
           </div>`;
-
         html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div style="background:#F0FDF4;border-radius:10px;padding:10px;">
+          <div style="background:#F0FDF4;border-radius:10px;padding:10px;min-width:0;">
             <div style="font-size:10px;font-weight:700;color:var(--max-green);margin-bottom:4px;">🏆 MELHORES DIAS</div>
             ${semana.rankingMelhores.map(linhaRanking).join('')}
           </div>
-          <div style="background:#FEF2F2;border-radius:10px;padding:10px;">
+          <div style="background:#FEF2F2;border-radius:10px;padding:10px;min-width:0;">
             <div style="font-size:10px;font-weight:700;color:var(--max-red);margin-bottom:4px;">📉 DIAS MAIS FRACOS</div>
             ${semana.rankingPiores.map(linhaRanking).join('')}
           </div>
         </div>`;
       }
-
       container.innerHTML = html;
     }
 
@@ -2858,12 +2939,16 @@
     // ==========================================================================
     // ABA "HOJE" — ENTRADAS / SAÍDAS / RESUMO
     // ==========================================================================
-    async function registrarSnapshotRentabilidade(forcar = false) {
+    async function registrarSnapshotRentabilidade(forcar = false, origem = 'manual') {
       const hoje = getDataHojeISO();
       // O gráfico intradiário registra somente o dia corrente em tempo real.
       if (dataSelecionada !== hoje) return;
 
-      const horas = Number(obterHorasTrabalhadasAtuais(hoje) || 0);
+      // Para o gráfico usamos a duração exata do cronômetro, sem arredondar para décimos.
+      // Isso evita saltos artificiais no R$/hora dos snapshots.
+      const horas = (cronometroExpediente.status !== 'parado' && cronometroExpediente.data === hoje)
+        ? (segundosAcumuladosAtuais() / 3600)
+        : Number(horasPorDia[hoje] || 0);
       const faturamento = todosLancamentos
         .filter(l => l.tipo === 'entrada' && l.data === hoje)
         .reduce((a, l) => a + Number(l.valor || 0), 0);
@@ -2885,7 +2970,8 @@
         horas: horas,
         km: kmAtual,
         rsHoraBruto: faturamento / horas,
-        rsKmBruto: kmAtual > 0 ? faturamento / kmAtual : null
+        rsKmBruto: kmAtual > 0 ? faturamento / kmAtual : null,
+        origem: origem
       };
 
       rentabilidadeSnapshots.push(ponto);
@@ -2924,7 +3010,7 @@
       atualizarPainelHoje();
       graficosDesatualizados = true;
       if (!(await storageSet('lancamentos', todosLancamentos))) avisarFalhaDeSalvamento();
-      await registrarSnapshotRentabilidade(true);
+      await registrarSnapshotRentabilidade(true, 'entrada');
     }
 
     async function registrarSaida(categoria) {
@@ -3039,7 +3125,9 @@
       // Recalcula R$/hora etc. de tempos em tempos, sem pesar rodando toda hora
       intervalCronometroRecalculo = setInterval(() => {
         atualizarPainelHoje();
-        registrarSnapshotRentabilidade(false);
+        // Não gravamos snapshots apenas pela passagem do tempo. O motorista pode
+        // lançar a receita depois da corrida; pontos sem nova receita criavam quedas
+        // artificiais no gráfico intradiário.
       }, 30000);
     }
 
@@ -3165,7 +3253,7 @@
       atualizarPainelHoje();
       graficosDesatualizados = true;
       if (!(await storageSet('km-por-dia', kmPorDia))) avisarFalhaDeSalvamento();
-      await registrarSnapshotRentabilidade(true);
+      await registrarSnapshotRentabilidade(true, 'km');
     }
 
     // Custo por KM baseado na Config. Veículo, SEM o combustível — porque o
@@ -3197,10 +3285,49 @@
       return custoPneuKM + custoOleoKM + custoDepreKM + custoParcelaKM + custoSeguroKM + custoDocKM + custoInternetKM + custoHigienKM;
     }
 
+    function renderFechamentoInteligente(data) {
+      const box = document.getElementById('fechamento-inteligente-dia');
+      if (!box) return;
+      if (!diasFinalizados[data]) { box.style.display = 'none'; box.innerHTML = ''; return; }
+
+      const itens = todosLancamentos.filter(l => l.data === data);
+      const faturamento = itens.filter(l => l.tipo === 'entrada').reduce((a,l) => a + Number(l.valor || 0), 0);
+      const despesas = itens.filter(l => l.tipo === 'saida').reduce((a,l) => a + Number(l.valor || 0), 0);
+      const horas = Number(horasPorDia[data] || obterHorasTrabalhadasAtuais(data) || 0);
+      const km = Number(kmPorDia[data] || 0);
+      const custoEstrutural = km * calcularCustoPorKmSemCombustivel();
+      const lucroReal = faturamento - despesas - custoEstrutural;
+      const rsHoraBruto = horas > 0 ? faturamento / horas : 0;
+      const rsHoraReal = horas > 0 ? lucroReal / horas : 0;
+      const comparativo = calcularComparativoHojeMedia30Dias(data);
+      const melhor = calcularMelhorPeriodoDoDia(data);
+      const pctBruta = metas.diaria > 0 ? (faturamento / metas.diaria) * 100 : null;
+      const pctLiquida = metas.liquidaDiaria > 0 ? (lucroReal / metas.liquidaDiaria) * 100 : null;
+
+      box.style.display = 'block';
+      box.innerHTML = `
+        <h3 style="font-size:14px;font-weight:800;margin-bottom:3px;">🎯 Fechamento Inteligente da Jornada</h3>
+        <p style="font-size:11px;color:var(--texto-secundario);margin-bottom:8px;">Resumo automático com base nos dados registrados neste dia</p>
+        <div class="item-row"><span style="font-size:12px;color:var(--texto-secundario);">Jornada</span><b style="font-size:12px;">${horas.toFixed(1).replace('.', ',')}h • ${Math.round(km)} km</b></div>
+        <div class="item-row"><span style="font-size:12px;color:var(--texto-secundario);">Faturamento</span><b style="font-size:12px;">${formatarMoeda(faturamento)}</b></div>
+        <div class="item-row"><span style="font-size:12px;color:var(--texto-secundario);">R$/hora bruto</span><b style="font-size:12px;">${formatarMoeda(rsHoraBruto)}/h</b></div>
+        <div class="item-row"><span style="font-size:12px;color:var(--texto-secundario);">Lucro líquido real</span><b style="font-size:12px;color:${lucroReal >= 0 ? 'var(--max-green)' : 'var(--max-red)'};">${formatarMoeda(lucroReal)} • ${formatarMoeda(rsHoraReal)}/h</b></div>
+        ${melhor ? `<div class="item-row"><span style="font-size:12px;color:var(--texto-secundario);">🏆 Melhor período</span><b style="font-size:12px;">${String(melhor.horaInicio).padStart(2,'0')}h–${String(melhor.horaFim).padStart(2,'0')}h • ${formatarMoeda(melhor.media)}/h</b></div>` : ''}
+        ${comparativo.confiavel ? `<div class="item-row"><span style="font-size:12px;color:var(--texto-secundario);">📊 Contra sua média recente</span><b style="font-size:12px;color:${comparativo.variacao >= 0 ? 'var(--max-green)' : 'var(--max-red)'};">${comparativo.variacao >= 0 ? '+' : ''}${comparativo.variacao.toFixed(1).replace('.', ',')}%</b></div>` : ''}
+        ${pctBruta !== null ? `<div class="item-row"><span style="font-size:12px;color:var(--texto-secundario);">Meta bruta</span><b style="font-size:12px;">${pctBruta.toFixed(0)}% atingida</b></div>` : ''}
+        ${pctLiquida !== null ? `<div class="item-row"><span style="font-size:12px;color:var(--texto-secundario);">Meta líquida real</span><b style="font-size:12px;">${pctLiquida.toFixed(0)}% atingida</b></div>` : ''}
+      `;
+    }
+
     async function alternarFinalizarDia() {
-      diasFinalizados[dataSelecionada] = !diasFinalizados[dataSelecionada];
+      const estavaFinalizado = !!diasFinalizados[dataSelecionada];
+      diasFinalizados[dataSelecionada] = !estavaFinalizado;
+      if (!estavaFinalizado) {
+        try { await registrarSnapshotRentabilidade(true, 'finalizacao'); } catch (e) { console.error('Falha ao registrar snapshot final:', e); }
+      }
       await storageSet('dias-finalizados', diasFinalizados);
       atualizarPainelHoje();
+      renderFechamentoInteligente(dataSelecionada);
     }
 
     function aplicarBloqueioDia(finalizado) {
@@ -3340,6 +3467,7 @@
       }
 
       aplicarBloqueioDia(!!diasFinalizados[hoje]);
+      renderFechamentoInteligente(hoje);
       atualizarModoHoras();
       renderInteligenciaDados();
       criarIconesSeguro();
@@ -4276,6 +4404,27 @@
       return `${nomes[parseInt(mes) - 1]}/${ano.slice(2)}`;
     }
 
+    function normalizarSnapshotsRentabilidade(lista) {
+      // Versões anteriores registravam pontos automáticos mesmo sem nova receita.
+      // Mantemos o primeiro ponto de cada patamar de faturamento e descartamos os
+      // seguintes com faturamento idêntico, que apenas faziam a média cair até o
+      // próximo lançamento. Pontos com faturamento novo são sempre preservados.
+      const ordenados = [...lista].sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0));
+      const resultado = [];
+      let ultimoFaturamento = null;
+      ordenados.forEach(p => {
+        const fat = Number(p.faturamento || 0);
+        if (!resultado.length || Math.abs(fat - ultimoFaturamento) > 0.0001) {
+          resultado.push(p);
+          ultimoFaturamento = fat;
+        } else if (p.origem && p.origem !== 'automatico' && p.origem !== 'manual') {
+          // Eventos explícitos relevantes (ex.: finalização/KM) podem ser mantidos.
+          resultado.push(p);
+        }
+      });
+      return resultado;
+    }
+
     function selecionarModoRentabilidade(modo) {
       modoGraficoRentabilidade = modo === 'km' ? 'km' : 'hora';
       const chipHora = document.getElementById('chip-rentabilidade-hora');
@@ -4289,9 +4438,9 @@
       if (typeof Chart === 'undefined') return;
       const referencia = dataReferenciaGraficos || getDataHojeISO();
       const campo = modoGraficoRentabilidade === 'km' ? 'rsKmBruto' : 'rsHoraBruto';
-      const pontos = rentabilidadeSnapshots
-        .filter(p => p.data === referencia && Number.isFinite(Number(p[campo])))
-        .sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0));
+      const pontos = normalizarSnapshotsRentabilidade(
+        rentabilidadeSnapshots.filter(p => p.data === referencia && Number.isFinite(Number(p[campo])))
+      );
 
       const aviso = document.getElementById('rentabilidade-sem-dados');
       if (aviso) aviso.style.display = pontos.length ? 'none' : 'block';
@@ -4901,7 +5050,10 @@
       document.querySelectorAll('.tab-item').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
-      if (element) element.classList.add('active');
+      if (element) {
+        element.classList.add('active');
+        try { element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); } catch (e) {}
+      }
       document.getElementById('tab-' + tabId).classList.add('active');
 
       if (tabId === 'analise' && graficosDesatualizados) {
@@ -4913,6 +5065,48 @@
       if (tabId === 'metas') renderProgressoMetas();
       if (tabId === 'cotacao') { preencherValorKmReferenciaCotacao(); calcularCotacao(); }
     }
+
+    // ==========================================================================
+    // NAVEGAÇÃO POR SWIPE ENTRE ABAS
+    // ==========================================================================
+    let swipeInicioX = 0;
+    let swipeInicioY = 0;
+    let swipeIgnorar = false;
+
+    function alvoBloqueiaSwipe(target) {
+      if (!(target instanceof Element)) return false;
+      return !!target.closest('input, textarea, select, button, a, canvas, audio, .tabs-wrapper');
+    }
+
+    function trocarAbaPorSwipe(direcao) {
+      const botoes = Array.from(document.querySelectorAll('.tab-item'));
+      const atual = botoes.findIndex(btn => btn.classList.contains('active'));
+      if (atual < 0) return;
+      const proximo = atual + direcao;
+      if (proximo < 0 || proximo >= botoes.length) return;
+      const btn = botoes[proximo];
+      const onclick = btn.getAttribute('onclick') || '';
+      const match = onclick.match(/switchTab\('([^']+)'/);
+      if (!match) return;
+      switchTab(match[1], btn);
+    }
+
+    document.addEventListener('touchstart', (e) => {
+      if (!e.touches || e.touches.length !== 1) { swipeIgnorar = true; return; }
+      swipeIgnorar = alvoBloqueiaSwipe(e.target);
+      swipeInicioX = e.touches[0].clientX;
+      swipeInicioY = e.touches[0].clientY;
+    }, { passive: true });
+
+    document.addEventListener('touchend', (e) => {
+      if (swipeIgnorar || !e.changedTouches || e.changedTouches.length !== 1) return;
+      const dx = e.changedTouches[0].clientX - swipeInicioX;
+      const dy = e.changedTouches[0].clientY - swipeInicioY;
+      const distanciaMinima = 65;
+      if (Math.abs(dx) < distanciaMinima || Math.abs(dx) < Math.abs(dy) * 1.25) return;
+      // dedo para a esquerda = próxima aba; dedo para a direita = aba anterior
+      trocarAbaPorSwipe(dx < 0 ? 1 : -1);
+    }, { passive: true });
 
     // ==========================================================================
     // RÁDIO — LISTA DE ESTAÇÕES + CONTROLE DE ÁUDIO
