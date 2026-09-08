@@ -1173,6 +1173,29 @@
               <i data-lucide="play" size="16"></i> Iniciar
             </button>
           </div>
+
+          <button type="button" id="btn-ajustar-intervalo" onclick="alternarAjusteIntervalo()" style="width:100%; margin-top:10px; background:none; border:1px solid var(--linha); border-radius:14px; padding:11px 12px; color:var(--texto-secundario); font-size:12.5px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+            <i data-lucide="clock-3" size="15"></i> Ajustar intervalo esquecido
+          </button>
+
+          <div id="bloco-ajuste-intervalo" style="display:none; margin-top:10px; padding:12px; border:1px solid var(--linha); border-radius:16px; background:var(--bg-card);">
+            <div style="font-size:13px; font-weight:800; color:var(--texto-principal); margin-bottom:3px;">Corrigir período parado</div>
+            <div style="font-size:11px; color:var(--texto-secundario); margin-bottom:10px;">Informe o intervalo em que o cronômetro ficou contando sem você estar trabalhando.</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" style="font-size:11px;">Início do período parado</label>
+                <input type="time" id="ajuste-intervalo-inicio" class="input-field">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" style="font-size:11px;">Fim do período parado</label>
+                <input type="time" id="ajuste-intervalo-fim" class="input-field">
+              </div>
+            </div>
+            <button class="btn btn-primary" style="margin-top:10px;" onclick="corrigirIntervaloEsquecido()">
+              <i data-lucide="check" size="16"></i> Corrigir jornada
+            </button>
+            <p id="mensagem-ajuste-intervalo" style="display:none; font-size:11px; font-weight:700; margin-top:8px;"></p>
+          </div>
         </div>
 
         <!-- CAMPO MANUAL / AJUSTE (aparece ao finalizar, ou sempre se a data não for hoje) -->
@@ -3494,6 +3517,146 @@
 
     async function persistirCronometro() {
       await storageSet('cronometro-expediente', cronometroExpediente);
+    }
+
+    function alternarAjusteIntervalo() {
+      const bloco = document.getElementById('bloco-ajuste-intervalo');
+      if (!bloco) return;
+      const abrir = bloco.style.display === 'none' || !bloco.style.display;
+      bloco.style.display = abrir ? 'block' : 'none';
+      if (abrir) {
+        const fim = document.getElementById('ajuste-intervalo-fim');
+        if (fim && !fim.value) {
+          const agora = new Date();
+          fim.value = `${String(agora.getHours()).padStart(2,'0')}:${String(agora.getMinutes()).padStart(2,'0')}`;
+        }
+      }
+      criarIconesSeguro();
+    }
+
+    function timestampLocalDataHora(dataISO, horaHHMM) {
+      const [ano, mes, dia] = String(dataISO).split('-').map(Number);
+      const [hora, minuto] = String(horaHHMM).split(':').map(Number);
+      if (![ano, mes, dia, hora, minuto].every(Number.isFinite)) return NaN;
+      return new Date(ano, mes - 1, dia, hora, minuto, 0, 0).getTime();
+    }
+
+    function corrigirSnapshotsPorIntervalo(data, inicioTs, fimTs) {
+      if (!Array.isArray(rentabilidadeSnapshots)) return;
+      rentabilidadeSnapshots.forEach(ponto => {
+        if (!ponto || ponto.data !== data) return;
+        let ts = Number(ponto.timestamp);
+        if (!Number.isFinite(ts) && ponto.hora) ts = timestampLocalDataHora(data, ponto.hora);
+        if (!Number.isFinite(ts) || ts <= inicioTs) return;
+
+        const fimDesconto = Math.min(ts, fimTs);
+        if (fimDesconto <= inicioTs) return;
+        const horasDesconto = (fimDesconto - inicioTs) / 3600000;
+        const horasOriginais = Number(ponto.horas) || 0;
+        const horasCorrigidas = Math.max(0, horasOriginais - horasDesconto);
+        ponto.horas = Math.round(horasCorrigidas * 10000) / 10000;
+        const faturamento = Number(ponto.faturamento) || 0;
+        ponto.rsHoraBruto = horasCorrigidas > 0 ? faturamento / horasCorrigidas : 0;
+      });
+    }
+
+    async function corrigirIntervaloEsquecido() {
+      const inicioEl = document.getElementById('ajuste-intervalo-inicio');
+      const fimEl = document.getElementById('ajuste-intervalo-fim');
+      const msg = document.getElementById('mensagem-ajuste-intervalo');
+      const inicio = inicioEl ? inicioEl.value : '';
+      const fim = fimEl ? fimEl.value : '';
+      const hoje = getDataHojeISO();
+
+      const mostrarMsg = (texto, erro = false) => {
+        if (!msg) return;
+        msg.style.display = 'block';
+        msg.style.color = erro ? 'var(--max-red)' : 'var(--max-green)';
+        msg.innerText = texto;
+      };
+
+      if (!inicio || !fim) { mostrarMsg('Informe o início e o fim do período parado.', true); return; }
+      const inicioTs = timestampLocalDataHora(hoje, inicio);
+      const fimTs = timestampLocalDataHora(hoje, fim);
+      if (!Number.isFinite(inicioTs) || !Number.isFinite(fimTs) || fimTs <= inicioTs) {
+        mostrarMsg('O fim do intervalo precisa ser depois do início.', true);
+        return;
+      }
+      if (fimTs > Date.now() + 60000) {
+        mostrarMsg('O fim do intervalo não pode estar no futuro.', true);
+        return;
+      }
+
+      const segundosDesconto = Math.round((fimTs - inicioTs) / 1000);
+      if (segundosDesconto <= 0) return;
+
+      let ajustes = [];
+      try { ajustes = await storageGet('ajustes-jornada', []); } catch (e) { ajustes = []; }
+      if (!Array.isArray(ajustes)) ajustes = [];
+      if (ajustes.some(a => a && a.data === hoje && a.inicio === inicio && a.fim === fim)) {
+        mostrarMsg('Esse mesmo intervalo já foi corrigido.', true);
+        return;
+      }
+
+      let totalAtualSegundos;
+      if (cronometroExpediente.status !== 'parado' && cronometroExpediente.data === hoje) {
+        totalAtualSegundos = segundosAcumuladosAtuais();
+      } else {
+        totalAtualSegundos = Math.round((Number(horasPorDia[hoje]) || 0) * 3600);
+      }
+
+      if (segundosDesconto > totalAtualSegundos) {
+        mostrarMsg('Esse intervalo é maior que o tempo registrado na jornada. Confira os horários.', true);
+        return;
+      }
+
+      const totalCorrigido = Math.max(0, totalAtualSegundos - segundosDesconto);
+
+      // Se o cronômetro ainda está ativo/pausado, substitui o acumulado pelo total
+      // corrigido e, se estiver rodando, reinicia o segmento a partir de agora.
+      if (cronometroExpediente.status !== 'parado' && cronometroExpediente.data === hoje) {
+        cronometroExpediente.acumuladoSegundos = totalCorrigido;
+        if (cronometroExpediente.status === 'rodando') cronometroExpediente.inicioTimestamp = Date.now();
+        else cronometroExpediente.inicioTimestamp = null;
+      }
+
+      const horasCorrigidas = Math.round((totalCorrigido / 3600) * 100) / 100;
+      horasPorDia[hoje] = horasCorrigidas;
+
+      // Corrige também os pontos intradiários posteriores ao intervalo, para que
+      // gráficos/inteligência não continuem usando as horas infladas.
+      corrigirSnapshotsPorIntervalo(hoje, inicioTs, fimTs);
+
+      ajustes.push({
+        id: Date.now(), data: hoje, inicio, fim, segundos: segundosDesconto, timestamp: Date.now()
+      });
+
+      const resultados = await Promise.all([
+        storageSet('horas', horasPorDia),
+        storageSet('cronometro-expediente', cronometroExpediente),
+        storageSet('rentabilidade-snapshots', rentabilidadeSnapshots),
+        storageSet('ajustes-jornada', ajustes)
+      ]);
+      if (resultados.some(r => r === false)) avisarFalhaDeSalvamento();
+
+      atualizarDisplayCronometro();
+      atualizarPainelHoje();
+      try { renderProgressoMetas(); } catch (e) {}
+      try { renderRecomendacoesHoje(); } catch (e) {}
+      try { renderInteligenciaDados(); } catch (e) {}
+      graficosDesatualizados = true;
+      if (document.getElementById('tab-analise')?.classList.contains('active')) {
+        try { renderGraficoRentabilidadeDia(); } catch (e) {}
+      }
+      renderBotoesCronometro();
+
+      const minutos = Math.round(segundosDesconto / 60);
+      const hDesc = Math.floor(minutos / 60);
+      const mDesc = minutos % 60;
+      const textoDesc = hDesc > 0 ? `${hDesc}h${mDesc ? ` ${mDesc}min` : ''}` : `${mDesc}min`;
+      mostrarMsg(`Pronto: ${textoDesc} foram retirados da jornada. Agora constam ${horasCorrigidas}h trabalhadas.`);
+      if (inicioEl) inicioEl.value = '';
+      if (fimEl) fimEl.value = '';
     }
 
     function atualizarDisplayCronometro() {
