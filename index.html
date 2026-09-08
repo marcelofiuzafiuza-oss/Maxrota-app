@@ -951,6 +951,23 @@
         </div>
       </div>
 
+      <!-- MAX ROTA RECOMENDA PARA HOJE -->
+      <section class="card-standard" id="card-maxrota-recomenda-hoje">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:10px;">
+          <div style="min-width:0;">
+            <h2 class="section-title" style="display:flex; align-items:center; gap:7px; margin-bottom:3px;">
+              <i data-lucide="sparkles" size="18" style="color:var(--max-blue);"></i> MAX ROTA recomenda para hoje
+            </h2>
+            <p class="section-sub" style="margin-bottom:0;">Um resumo inteligente baseado no seu próprio histórico, metas, contas e veículo.</p>
+          </div>
+          <span id="recomendacoes-hoje-data" style="flex-shrink:0; font-size:10px; font-weight:800; color:var(--max-blue); background:#EFF6FF; padding:5px 8px; border-radius:999px;"></span>
+        </div>
+        <div id="conteudo-recomendacoes-hoje" style="display:flex; flex-direction:column; gap:8px;">
+          <div style="font-size:12px; color:var(--texto-secundario); padding:8px 0;">Carregando suas recomendações...</div>
+        </div>
+        <p style="font-size:10px; color:var(--texto-secundario); margin-top:10px; line-height:1.45;">As recomendações usam apenas o seu histórico no MAX ROTA. Elas ajudam na decisão, mas não garantem demanda futura.</p>
+      </section>
+
       <section class="card-standard">
         <h2 class="section-title">Estações Disponíveis</h2>
         <p class="section-sub">Selecione sua rádio preferida para acompanhar sua jornada</p>
@@ -2930,6 +2947,255 @@
         </div>`;
       }
       container.innerHTML = html;
+    }
+
+    // ==========================================================================
+    // MAX ROTA RECOMENDA PARA HOJE — painel inteligente da tela inicial
+    // Usa somente dados já existentes no app; não depende de IA/API externa.
+    // ==========================================================================
+    function obterFaturamentoDia(data) {
+      return todosLancamentos
+        .filter(l => l.tipo === 'entrada' && l.data === data)
+        .reduce((acc, l) => acc + Number(l.valor || 0), 0);
+    }
+
+    function obterMesmoDiaMesAnterior(dataISO) {
+      const ref = new Date(dataISO + 'T12:00:00');
+      const dia = ref.getDate();
+      const ano = ref.getFullYear();
+      const mesAnterior = ref.getMonth() - 1;
+      const ultimoDiaAnterior = new Date(ano, mesAnterior + 1, 0).getDate();
+      const alvo = new Date(ano, mesAnterior, Math.min(dia, ultimoDiaAnterior), 12, 0, 0);
+      return formatarDataLocalISO(alvo);
+    }
+
+    function obterContextoDiaSemanaHoje() {
+      const hoje = getDataHojeISO();
+      const dowHoje = new Date(hoje + 'T12:00:00').getDay();
+      const nomes = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+      const porDow = Array.from({ length: 7 }, () => ({ total: 0, dias: new Set() }));
+
+      todosLancamentos.filter(l => l.tipo === 'entrada' && l.data < hoje).forEach(l => {
+        const dow = new Date(l.data + 'T12:00:00').getDay();
+        porDow[dow].total += Number(l.valor || 0);
+        porDow[dow].dias.add(l.data);
+      });
+
+      const ranking = porDow.map((x, i) => ({
+        dow: i,
+        nome: nomes[i],
+        media: x.dias.size ? x.total / x.dias.size : 0,
+        dias: x.dias.size
+      })).filter(x => x.dias > 0).sort((a, b) => b.media - a.media);
+
+      const pos = ranking.findIndex(x => x.dow === dowHoje);
+      const atual = pos >= 0 ? ranking[pos] : null;
+      if (!atual) return { confiavel: false, nome: nomes[dowHoje] };
+
+      return {
+        confiavel: ranking.length >= 2 && atual.dias >= 2,
+        nome: nomes[dowHoje],
+        posicao: pos + 1,
+        totalComparados: ranking.length,
+        media: atual.media,
+        dias: atual.dias,
+        ehForte: pos >= 0 && pos <= 1,
+        ehFraco: pos >= Math.max(0, ranking.length - 2)
+      };
+    }
+
+    function criarRecomendacaoHoje(tipo, titulo, texto, prioridade = 50) {
+      const mapa = {
+        urgente: { icone: 'triangle-alert', fundo: '#FFF7ED', borda: '#FED7AA', cor: '#C2410C' },
+        atencao: { icone: 'circle-alert', fundo: '#FFFBEB', borda: '#FDE68A', cor: '#B45309' },
+        oportunidade: { icone: 'trending-up', fundo: '#F0FDF4', borda: '#BBF7D0', cor: '#15803D' },
+        info: { icone: 'sparkles', fundo: '#EFF6FF', borda: '#BFDBFE', cor: '#1D4ED8' }
+      };
+      const visual = mapa[tipo] || mapa.info;
+      return { tipo, titulo, texto, prioridade, visual };
+    }
+
+    function recomendacaoPotencialHoje() {
+      const hoje = getDataHojeISO();
+      const anterior = obterMesmoDiaMesAnterior(hoje);
+      const fatHoje = obterFaturamentoDia(hoje);
+      const fatAnterior = obterFaturamentoDia(anterior);
+      const contextoSemana = obterContextoDiaSemanaHoje();
+      const diaNumero = new Date(hoje + 'T12:00:00').getDate();
+      let titulo = 'Potencial do dia';
+      let texto = '';
+      let tipo = 'info';
+
+      if (fatAnterior > 0) {
+        if (fatHoje > fatAnterior) {
+          const acima = fatHoje - fatAnterior;
+          const pct = (acima / fatAnterior) * 100;
+          titulo = 'Você já superou o mesmo dia do mês passado';
+          texto = `No dia ${diaNumero} do mês passado você faturou <b>${formatarMoeda(fatAnterior)}</b>. Hoje já está em <b>${formatarMoeda(fatHoje)}</b>, ${pct.toFixed(1).replace('.', ',')}% acima.`;
+          tipo = 'oportunidade';
+        } else if (fatHoje > 0) {
+          titulo = 'Dá para superar o mês passado';
+          texto = `No dia ${diaNumero} do mês passado você faturou <b>${formatarMoeda(fatAnterior)}</b>. Hoje faltam <b>${formatarMoeda(fatAnterior - fatHoje)}</b> para superar esse resultado.`;
+          tipo = 'oportunidade';
+        } else {
+          titulo = 'Desafio de hoje';
+          texto = `No dia ${diaNumero} do mês passado você faturou <b>${formatarMoeda(fatAnterior)}</b>. Esse é um bom número de referência para tentar superar hoje.`;
+          tipo = 'info';
+        }
+      } else if (contextoSemana.confiavel) {
+        if (contextoSemana.ehForte) {
+          titulo = 'Hoje costuma ser um dos seus melhores dias';
+          texto = `Seu histórico de ${contextoSemana.nome} tem média de <b>${formatarMoeda(contextoSemana.media)}</b> em ${contextoSemana.dias} dias trabalhados e está entre os mais fortes da semana.`;
+          tipo = 'oportunidade';
+        } else if (contextoSemana.ehFraco) {
+          titulo = 'Hoje costuma render menos no seu histórico';
+          texto = `Seu histórico de ${contextoSemana.nome} tem média de <b>${formatarMoeda(contextoSemana.media)}</b>. Se suas metas estiverem em dia, vale tratar o dia com mais seletividade — ou até como candidato a descanso.`;
+          tipo = 'atencao';
+        } else {
+          texto = `Sua média histórica de ${contextoSemana.nome} é <b>${formatarMoeda(contextoSemana.media)}</b>. Use esse valor como referência para medir o desempenho de hoje.`;
+        }
+      } else {
+        texto = 'Continue registrando suas jornadas. Assim que houver histórico suficiente, vou comparar o dia de hoje com o mesmo dia do mês passado e com seus outros dias da semana.';
+      }
+
+      if (fatAnterior > 0 && contextoSemana.confiavel) {
+        const complemento = contextoSemana.ehForte
+          ? ` Além disso, ${contextoSemana.nome} está entre os seus dias historicamente mais fortes.`
+          : contextoSemana.ehFraco
+            ? ` Pelo seu histórico, ${contextoSemana.nome} está entre os dias mais fracos da semana.`
+            : ` Sua média histórica de ${contextoSemana.nome} é ${formatarMoeda(contextoSemana.media)}.`;
+        texto += complemento;
+      }
+
+      return criarRecomendacaoHoje(tipo, titulo, texto, 100);
+    }
+
+    function recomendacaoHorarioHoje() {
+      const horario = calcularMelhorHorario();
+      if (!horario.confiavel) return null;
+      const ini = String(horario.horaInicio).padStart(2, '0');
+      const fim = String(horario.horaFim).padStart(2, '0');
+      return criarRecomendacaoHoje(
+        'oportunidade',
+        'Melhor faixa para trabalhar',
+        `Pelos seus últimos ${horario.diasConfiaveis} dias com dados suficientes, a faixa de <b>${ini}h às ${fim}h</b> é a que mais rende: média de <b>${formatarMoeda(horario.mediaValor)}/h bruto</b>. Se for escolher um horário para priorizar, seu histórico aponta para essa janela.`,
+        90
+      );
+    }
+
+    function recomendacaoContasHoje() {
+      const agora = new Date();
+      const hojeInicio = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+      const itens = bancoContas.filter(c => !c.pago && c.mesAno).map(c => {
+        const [ano, mes] = String(c.mesAno).split('-').map(Number);
+        if (!ano || !mes) return null;
+        const ultimo = new Date(ano, mes, 0).getDate();
+        const venc = new Date(ano, mes - 1, Math.min(Number(c.vencimento || 1), ultimo));
+        const diff = Math.floor((venc - hojeInicio) / 86400000);
+        return { ...c, diff, venc };
+      }).filter(Boolean).sort((a, b) => a.diff - b.diff);
+
+      const vencidas = itens.filter(x => x.diff < 0);
+      if (vencidas.length) {
+        const total = vencidas.reduce((a, x) => a + Number(x.valor || 0), 0);
+        const nomes = vencidas.slice(0, 2).map(x => escaparHtmlGasto(x.nome || 'Conta')).join(', ');
+        return criarRecomendacaoHoje('urgente', 'Conta pessoal vencida', `Você tem <b>${vencidas.length} ${vencidas.length === 1 ? 'conta pendente' : 'contas pendentes'}</b> já vencida${vencidas.length === 1 ? '' : 's'}, somando <b>${formatarMoeda(total)}</b>${nomes ? ` (${nomes}${vencidas.length > 2 ? '...' : ''})` : ''}.`, 98);
+      }
+
+      const proximas = itens.filter(x => x.diff >= 0 && x.diff <= 3);
+      if (!proximas.length) return null;
+      const total = proximas.reduce((a, x) => a + Number(x.valor || 0), 0);
+      const hoje = proximas.filter(x => x.diff === 0);
+      const amanha = proximas.filter(x => x.diff === 1);
+      let janela = 'nos próximos 3 dias';
+      if (hoje.length) janela = 'hoje'; else if (amanha.length === proximas.length) janela = 'amanhã';
+      const nomes = proximas.slice(0, 2).map(x => escaparHtmlGasto(x.nome || 'Conta')).join(', ');
+      return criarRecomendacaoHoje('atencao', 'Atenção às contas', `Você tem <b>${proximas.length} ${proximas.length === 1 ? 'conta' : 'contas'}</b> vencendo ${janela}, somando <b>${formatarMoeda(total)}</b>${nomes ? ` (${nomes}${proximas.length > 2 ? '...' : ''})` : ''}.`, 88);
+    }
+
+    function recomendacaoManutencaoHoje() {
+      if (!servicos.length) return null;
+      const itens = [
+        { termos: ['óleo', 'oleo'], nome: 'troca de óleo', input: 'input-oleo-km', padrao: 10000 },
+        { termos: ['pneu'], nome: 'troca de pneus', input: 'input-pneu-km', padrao: 50000 }
+      ];
+      const alertas = [];
+
+      itens.forEach(item => {
+        const registros = servicos.filter(s => item.termos.some(t => String(s.nome || '').toLowerCase().includes(t)));
+        if (!registros.length) return;
+        const ultima = [...registros].sort((a, b) => String(b.data || '').localeCompare(String(a.data || '')) || Number(b.id || 0) - Number(a.id || 0))[0];
+        const el = document.getElementById(item.input);
+        const intervalo = Math.max(1, Number(el && el.value) || item.padrao);
+        const kmRodadosDepois = Object.entries(kmPorDia).reduce((acc, [data, km]) => data > String(ultima.data || '') ? acc + Number(km || 0) : acc, 0);
+        const restante = intervalo - kmRodadosDepois;
+        const limiteAlerta = Math.max(1000, intervalo * 0.10);
+        if (restante <= limiteAlerta) alertas.push({ nome: item.nome, restante, intervalo });
+      });
+
+      if (!alertas.length) return null;
+      alertas.sort((a, b) => a.restante - b.restante);
+      const a = alertas[0];
+      if (a.restante <= 0) {
+        return criarRecomendacaoHoje('urgente', 'Manutenção merece atenção', `Pelo KM registrado desde a última manutenção, a <b>${a.nome}</b> já atingiu a previsão de intervalo em aproximadamente <b>${Math.abs(Math.round(a.restante)).toLocaleString('pt-BR')} km</b>. Confira o odômetro e programe o serviço.`, 96);
+      }
+      return criarRecomendacaoHoje('atencao', 'Manutenção se aproximando', `Pelo seu histórico de KM, faltam aproximadamente <b>${Math.round(a.restante).toLocaleString('pt-BR')} km</b> para a próxima <b>${a.nome}</b>.`, 86);
+    }
+
+    function recomendacaoMetaHoje() {
+      const meta = Number(metas.diaria || 0);
+      if (meta <= 0) return null;
+      const hoje = getDataHojeISO();
+      const fat = obterFaturamentoDia(hoje);
+      const pct = Math.min(999, (fat / meta) * 100);
+      if (fat >= meta) {
+        return criarRecomendacaoHoje('oportunidade', 'Meta diária batida', `Você já faturou <b>${formatarMoeda(fat)}</b> e atingiu <b>${pct.toFixed(0)}%</b> da sua meta diária de ${formatarMoeda(meta)}.`, 82);
+      }
+      return criarRecomendacaoHoje('info', 'Alvo financeiro de hoje', `Sua meta diária é <b>${formatarMoeda(meta)}</b>. Você já fez <b>${formatarMoeda(fat)}</b> e faltam <b>${formatarMoeda(meta - fat)}</b> para chegar lá.`, 70);
+    }
+
+    function recomendacaoReservaHoje() {
+      const ano = String(new Date().getFullYear());
+      const entradasAno = todosLancamentos.filter(l => l.tipo === 'entrada' && String(l.data || '').startsWith(ano + '-')).reduce((a, l) => a + Number(l.valor || 0), 0);
+      const ideal = entradasAno * 0.10;
+      const guardado = Object.entries(reservaPorDia).filter(([data]) => String(data).startsWith(ano + '-')).reduce((a, [, v]) => a + Number(v || 0), 0);
+      if (ideal <= 0 || guardado >= ideal) return null;
+      const gap = ideal - guardado;
+      const pct = (guardado / ideal) * 100;
+      if (pct >= 90) return null;
+      return criarRecomendacaoHoje('info', 'Reserva financeira', `Neste ano, sua reserva registrada está em <b>${formatarMoeda(guardado)}</b>. Para acompanhar os 10% ideais do que entrou, faltam <b>${formatarMoeda(gap)}</b>.`, 55);
+    }
+
+    function renderRecomendacoesHoje() {
+      const container = document.getElementById('conteudo-recomendacoes-hoje');
+      if (!container) return;
+      const dataEl = document.getElementById('recomendacoes-hoje-data');
+      const hoje = new Date();
+      if (dataEl) dataEl.textContent = hoje.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '').toUpperCase();
+
+      const potencial = recomendacaoPotencialHoje();
+      const horario = recomendacaoHorarioHoje();
+      const contas = recomendacaoContasHoje();
+      const manutencao = recomendacaoManutencaoHoje();
+      const meta = recomendacaoMetaHoje();
+      const reserva = recomendacaoReservaHoje();
+
+      // Potencial sempre aparece. Depois, prioriza alertas reais e oportunidades.
+      const extras = [contas, manutencao, horario, meta, reserva].filter(Boolean).sort((a, b) => b.prioridade - a.prioridade);
+      const escolhidas = [potencial, ...extras.slice(0, 3)].filter(Boolean);
+
+      container.innerHTML = escolhidas.map((r, i) => `
+        <div style="display:flex; gap:10px; align-items:flex-start; padding:11px 12px; border:1px solid ${r.visual.borda}; background:${r.visual.fundo}; border-radius:12px;">
+          <div style="width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:white; color:${r.visual.cor};">
+            <i data-lucide="${r.visual.icone}" size="16"></i>
+          </div>
+          <div style="min-width:0; flex:1;">
+            <div style="font-size:12.5px; font-weight:800; color:${r.visual.cor}; margin-bottom:2px;">${r.titulo}</div>
+            <div style="font-size:11.5px; color:var(--texto-secundario); line-height:1.45;">${r.texto}</div>
+          </div>
+        </div>
+      `).join('');
+      criarIconesSeguro();
     }
 
     function getMesAnoAtual() {
@@ -5254,6 +5520,7 @@
         renderGraficosAnalise();
       }
       if (tabId === 'historico') renderHistorico();
+      if (tabId === 'radio') renderRecomendacoesHoje();
       if (tabId === 'reserva') renderReserva();
       if (tabId === 'metas') renderProgressoMetas();
       if (tabId === 'cotacao') { preencherValorKmReferenciaCotacao(); calcularCotacao(); }
@@ -5913,6 +6180,7 @@
       tentar('renderReserva', renderReserva);
       tentar('renderProgressoMetas', renderProgressoMetas);
       tentar('renderServicos', renderServicos);
+      tentar('renderRecomendacoesHoje', renderRecomendacoesHoje);
       tentar('calcularCustoPorKM', () => calcularCustoPorKM(false));
 
       // Se o usuário tiver clicado na aba Gráficos antes dos dados chegarem,
