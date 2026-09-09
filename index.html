@@ -4310,6 +4310,27 @@
         const entradasMes = todosLancamentos.filter(l => l.tipo === 'entrada' && mesAnoDeData(l.data) === mesAno);
         const saidasMes = todosLancamentos.filter(l => l.tipo === 'saida' && mesAnoDeData(l.data) === mesAno);
 
+        // Vida pessoal — mantida separada da operação do motorista
+        const contasPessoaisMes = bancoContas
+          .filter(c => c.mesAno === mesAno)
+          .sort((a, b) => Number(a.vencimento || 0) - Number(b.vencimento || 0));
+        const contasPagasMes = contasPessoaisMes.filter(c => !!c.pago);
+        const contasPendentesMes = contasPessoaisMes.filter(c => !c.pago);
+        const totalContasPessoais = contasPessoaisMes.reduce((a, c) => a + Number(c.valor || 0), 0);
+        const totalContasPagas = contasPagasMes.reduce((a, c) => a + Number(c.valor || 0), 0);
+        const totalContasPendentes = contasPendentesMes.reduce((a, c) => a + Number(c.valor || 0), 0);
+        const mediaContaPessoal = contasPessoaisMes.length ? totalContasPessoais / contasPessoaisMes.length : 0;
+        const gastosPessoaisMesPDF = gastosPessoais
+          .filter(g => g.data && mesAnoDeData(g.data) === mesAno)
+          .sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+        const totalGastosPessoaisPDF = gastosPessoaisMesPDF.reduce((a, g) => a + Number(g.valor || 0), 0);
+        const totalVidaPessoalPDF = totalContasPessoais + totalGastosPessoaisPDF;
+        const gastosPessoaisPorCategoriaPDF = Object.entries(gastosPessoaisMesPDF.reduce((acc, g) => {
+          const cat = g.categoria || 'Outros';
+          acc[cat] = (acc[cat] || 0) + Number(g.valor || 0);
+          return acc;
+        }, {})).sort((a, b) => b[1] - a[1]);
+
         const corVerde = [18, 185, 129], corAzul = [40, 120, 232], corRoxo = [124, 77, 255],
           corLaranja = [255, 116, 18], corVermelho = [240, 68, 68], corNavy = [17, 24, 39],
           corCinza = [107, 114, 128], corCinzaClaro = [245, 247, 250], corBorda = [224, 228, 235];
@@ -4608,8 +4629,59 @@
           y += h + 3;
         });
 
+        // PÁGINAS — VIDA PESSOAL
+        novaPagina('Vida Pessoal');
+        tituloSecao('Resumo financeiro pessoal', 'As contas e gastos pessoais ficam separados dos custos da operação como motorista.');
+        kpiCard(margemX, y, w2, 'CONTAS DO MÊS', formatarMoeda(totalContasPessoais), corAzul, `${contasPessoaisMes.length} conta(s) cadastrada(s)`);
+        kpiCard(margemX + w2 + gap, y, w2, 'GASTOS DO DIA A DIA', formatarMoeda(totalGastosPessoaisPDF), corLaranja, `${gastosPessoaisMesPDF.length} lançamento(s) pessoal(is)`);
+        y += 34;
+        kpiCard(margemX, y, w2, 'CONTAS PAGAS', formatarMoeda(totalContasPagas), corVerde, `${contasPagasMes.length} de ${contasPessoaisMes.length} conta(s)`);
+        kpiCard(margemX + w2 + gap, y, w2, 'CONTAS PENDENTES', formatarMoeda(totalContasPendentes), corVermelho, `${contasPendentesMes.length} conta(s) ainda pendente(s)`);
+        y += 34;
+        tituloSecao('Indicadores pessoais');
+        tabelaLinha(['Custo pessoal total do mês', '', formatarMoeda(totalVidaPessoalPDF)], [120, 10, 50], { negrito: true });
+        tabelaLinha(['Média por conta cadastrada', '', formatarMoeda(mediaContaPessoal)], [120, 10, 50]);
+        tabelaLinha(['Percentual das contas já pago', '', contasPessoaisMes.length ? `${((contasPagasMes.length / contasPessoaisMes.length) * 100).toFixed(1).replace('.', ',')}%` : '0,0%'], [120, 10, 50]);
+        tabelaLinha(['Saldo do lucro operacional após custo pessoal', '', formatarMoeda(fechamento.lucro - totalVidaPessoalPDF)], [120, 10, 50], { negrito: true });
+
+        y += 5;
+        tituloSecao('Contas pessoais do mês', 'Situação de cada compromisso cadastrado na aba Despesas Pessoais.');
+        tabelaCabecalho(['Conta / vencimento', 'Situação', 'Valor'], [95, 35, 50]);
+        if (!contasPessoaisMes.length) {
+          tabelaLinha(['Nenhuma conta cadastrada', '', ''], [95, 35, 50]);
+        } else {
+          contasPessoaisMes.forEach(c => {
+            const parcela = Number(c.totalParcelas || 1) > 1 ? ` • ${c.numParcela || 1}/${c.totalParcelas}` : '';
+            tabelaLinha([`${c.nome || 'Conta'} • dia ${c.vencimento || '-'}${parcela}`, c.pago ? 'PAGA' : 'PENDENTE', formatarMoeda(c.valor)], [95, 35, 50], { tituloContinua: 'Vida Pessoal — Contas' });
+          });
+        }
+
+        novaPagina('Vida Pessoal — Gastos do Dia a Dia');
+        tituloSecao('Gastos pessoais por categoria', 'Padaria, mercado, lazer, família e demais gastos variáveis registrados no mês.');
+        tabelaCabecalho(['Categoria', '% dos gastos', 'Total'], [95, 35, 50]);
+        if (!gastosPessoaisPorCategoriaPDF.length) {
+          tabelaLinha(['Nenhum gasto pessoal lançado', '', ''], [95, 35, 50]);
+        } else {
+          gastosPessoaisPorCategoriaPDF.forEach(([cat, total]) => {
+            const pct = totalGastosPessoaisPDF > 0 ? total / totalGastosPessoaisPDF * 100 : 0;
+            tabelaLinha([cat, `${pct.toFixed(1).replace('.', ',')}%`, formatarMoeda(total)], [95, 35, 50], { tituloContinua: 'Vida Pessoal — Gastos' });
+          });
+        }
+        y += 5;
+        tituloSecao('Detalhamento dos gastos pessoais');
+        tabelaCabecalho(['Data / descrição', 'Categoria', 'Valor'], [95, 45, 40]);
+        if (!gastosPessoaisMesPDF.length) {
+          tabelaLinha(['Nenhum gasto pessoal lançado', '', ''], [95, 45, 40]);
+        } else {
+          gastosPessoaisMesPDF.forEach(g => {
+            const desc = String(g.descricao || 'Gasto pessoal');
+            const texto = `${fmtData(g.data)} • ${desc.length > 31 ? desc.slice(0, 29) + '…' : desc}`;
+            tabelaLinha([texto, g.categoria || 'Outros', formatarMoeda(g.valor)], [95, 45, 40], { tituloContinua: 'Vida Pessoal — Gastos' });
+          });
+        }
+
         // Observação metodológica
-        garantirEspaco(24, 'Destaques e Comparativos');
+        garantirEspaco(24, 'Vida Pessoal — Gastos');
         tituloSecao('Como o MAX ROTA calcula os dois lucros');
         doc.setFont('helvetica', 'normal'); doc.setFontSize(7.7); doc.setTextColor(...corCinza);
         const metodologia = doc.splitTextToSize('Lucro Líquido Operacional = faturamento menos todas as saídas lançadas no período (como combustível, passes, alimentação, manutenção e outros gastos). Lucro Líquido Real = lucro operacional menos os custos estruturais do veículo calculados pela aba Config. Veículo. O custo estrutural usado aqui não inclui combustível, evitando desconto em duplicidade.', larguraUtil);
@@ -5225,7 +5297,25 @@
       const aviso = document.getElementById('rentabilidade-sem-dados');
       if (aviso) aviso.style.display = pontos.length ? 'none' : 'block';
       const valores = pontos.map(p => Number(p[campo]));
-      const atual = valores.length ? valores[valores.length - 1] : 0;
+
+      // O card "Atual" deve representar a rentabilidade AO VIVO, e não apenas
+      // o último snapshot criado por uma corrida. A linha do gráfico continua
+      // intacta: cada lançamento de receita gera um ponto.
+      let atual = valores.length ? valores[valores.length - 1] : 0;
+      if (referencia === getDataHojeISO()) {
+        const entradasHoje = todosLancamentos
+          .filter(l => l.data === referencia && l.tipo === 'entrada')
+          .reduce((s, l) => s + (parseFloat(l.valor) || 0), 0);
+
+        if (modoGraficoRentabilidade === 'hora') {
+          const horasAoVivo = obterHorasTrabalhadasAtuais(referencia);
+          atual = horasAoVivo > 0 ? entradasHoje / horasAoVivo : 0;
+        } else {
+          const kmAoVivo = parseFloat(kmPorDia[referencia]) || 0;
+          atual = kmAoVivo > 0 ? entradasHoje / kmAoVivo : 0;
+        }
+      }
+
       const max = valores.length ? Math.max(...valores) : 0;
       const min = valores.length ? Math.min(...valores) : 0;
       const media = valores.length ? valores.reduce((a, v) => a + v, 0) / valores.length : 0;
@@ -6508,6 +6598,84 @@
     }
 
     // ==========================================================================
+    // SINCRONIZAÇÃO SILENCIOSA ENTRE DISPOSITIVOS
+    // Atualiza somente dados em memória/tela. NÃO recarrega a página e, por isso,
+    // não reinicia nem interrompe a rádio que estiver tocando.
+    // ==========================================================================
+    let intervaloSincronizacaoSilenciosa = null;
+    let sincronizacaoSilenciosaEmAndamento = false;
+    const INTERVALO_SYNC_MS = 3 * 60 * 1000;
+
+    function aplicarRenderizacaoAposSync() {
+      tentar('sync atualizarPainelHoje', atualizarPainelHoje);
+      tentar('sync renderProgressoMetas', renderProgressoMetas);
+      tentar('sync renderRecomendacoesHoje', renderRecomendacoesHoje);
+      const ativa = document.querySelector('.tab-content.active');
+      if (!ativa) return;
+      if (ativa.id === 'tab-historico') tentar('sync renderHistorico', renderHistorico);
+      if (ativa.id === 'tab-despesas') tentar('sync renderDespesas', renderDespesas);
+      if (ativa.id === 'tab-reserva') tentar('sync renderReserva', renderReserva);
+      if (ativa.id === 'tab-servicos') tentar('sync renderServicos', renderServicos);
+      if (ativa.id === 'tab-analise') {
+        graficosDesatualizados = true;
+        tentar('sync renderGraficosAnalise', renderGraficosAnalise);
+        if (typeof Chart !== 'undefined') graficosDesatualizados = false;
+      }
+      criarIconesSeguro();
+    }
+
+    async function sincronizarDadosSilenciosamente() {
+      if (!usuarioAtual || !firestoreDB || sincronizacaoSilenciosaEmAndamento) return;
+      sincronizacaoSilenciosaEmAndamento = true;
+      try {
+        const [lanc, contas, gastos, serv, horas, config, finalizados, metasNuvem, reserva, taxa, km, snapshots] = await Promise.all([
+          storageGet('lancamentos', todosLancamentos),
+          storageGet('contas', bancoContas),
+          storageGet('gastos-pessoais', gastosPessoais),
+          storageGet('servicos', servicos),
+          storageGet('horas', horasPorDia),
+          storageGet('config-veiculo', null),
+          storageGet('dias-finalizados', diasFinalizados),
+          storageGet('metas', metas),
+          storageGet('reserva-por-dia', reservaPorDia),
+          storageGet('reserva-taxa', reservaTaxaMensal),
+          storageGet('km-por-dia', kmPorDia),
+          storageGet('rentabilidade-snapshots', rentabilidadeSnapshots)
+        ]);
+        todosLancamentos = Array.isArray(lanc) ? lanc : todosLancamentos;
+        bancoContas = Array.isArray(contas) ? contas : bancoContas;
+        gastosPessoais = Array.isArray(gastos) ? gastos : gastosPessoais;
+        servicos = Array.isArray(serv) ? serv : servicos;
+        horasPorDia = horas && typeof horas === 'object' ? horas : horasPorDia;
+        diasFinalizados = finalizados && typeof finalizados === 'object' ? finalizados : diasFinalizados;
+        metas = metasNuvem && typeof metasNuvem === 'object' ? metasNuvem : metas;
+        if (!Number.isFinite(Number(metas.liquidaDiaria))) metas.liquidaDiaria = 0;
+        reservaPorDia = reserva && typeof reserva === 'object' ? reserva : reservaPorDia;
+        reservaTaxaMensal = Number(taxa || 0);
+        kmPorDia = km && typeof km === 'object' ? km : kmPorDia;
+        rentabilidadeSnapshots = Array.isArray(snapshots) ? snapshots : rentabilidadeSnapshots;
+        if (config) tentar('sync config veículo', () => aplicarConfigVeiculoNaTela(config));
+        aplicarRenderizacaoAposSync();
+        console.info('MAX ROTA: sincronização silenciosa concluída', new Date().toLocaleTimeString('pt-BR'));
+      } catch (e) {
+        // Silencioso de propósito: uma oscilação de internet não interrompe o uso nem a rádio.
+        console.warn('MAX ROTA: sincronização silenciosa não concluída', e);
+      } finally {
+        sincronizacaoSilenciosaEmAndamento = false;
+      }
+    }
+
+    function iniciarSincronizacaoSilenciosa() {
+      if (intervaloSincronizacaoSilenciosa) clearInterval(intervaloSincronizacaoSilenciosa);
+      intervaloSincronizacaoSilenciosa = setInterval(sincronizarDadosSilenciosamente, INTERVALO_SYNC_MS);
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') sincronizarDadosSilenciosamente();
+    });
+    window.addEventListener('focus', () => sincronizarDadosSilenciosamente());
+
+    // ==========================================================================
     // CARREGAMENTO INICIAL (assíncrono — busca tudo do storage real)
     // ==========================================================================
     // Função global reutilizável: roda uma etapa isolada — se uma falhar, as
@@ -6610,6 +6778,7 @@
       tentar('renderServicos', renderServicos);
       tentar('renderRecomendacoesHoje', renderRecomendacoesHoje);
       tentar('calcularCustoPorKM', () => calcularCustoPorKM(false));
+      iniciarSincronizacaoSilenciosa();
 
       // Se o usuário tiver clicado na aba Gráficos antes dos dados chegarem,
       // os gráficos podem ter sido montados com a tela ainda vazia — então
