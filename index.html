@@ -768,18 +768,6 @@
       .stats-grid { grid-template-columns: repeat(3, 1fr); }
     }
   </style>
-
-<!-- PWA MAX ROTA -->
-<meta name="theme-color" content="#0B1220">
-<meta name="application-name" content="MAX ROTA">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="MAX ROTA">
-<link rel="manifest" href="./manifest.webmanifest">
-<link rel="apple-touch-icon" href="./apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
-
 </head>
 <body>
 
@@ -962,23 +950,6 @@
           </button>
         </div>
       </div>
-
-      <!-- MAX ROTA RECOMENDA PARA HOJE -->
-      <section class="card-standard" id="card-maxrota-recomenda-hoje">
-        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:10px;">
-          <div style="min-width:0;">
-            <h2 class="section-title" style="display:flex; align-items:center; gap:7px; margin-bottom:3px;">
-              <i data-lucide="sparkles" size="18" style="color:var(--max-blue);"></i> MAX ROTA recomenda para hoje
-            </h2>
-            <p class="section-sub" style="margin-bottom:0;">Um resumo inteligente baseado no seu próprio histórico, metas, contas e veículo.</p>
-          </div>
-          <span id="recomendacoes-hoje-data" style="flex-shrink:0; font-size:10px; font-weight:800; color:var(--max-blue); background:#EFF6FF; padding:5px 8px; border-radius:999px;"></span>
-        </div>
-        <div id="conteudo-recomendacoes-hoje" style="display:flex; flex-direction:column; gap:8px;">
-          <div style="font-size:12px; color:var(--texto-secundario); padding:8px 0;">Carregando suas recomendações...</div>
-        </div>
-        <p style="font-size:10px; color:var(--texto-secundario); margin-top:10px; line-height:1.45;">As recomendações usam apenas o seu histórico no MAX ROTA. Elas ajudam na decisão, mas não garantem demanda futura.</p>
-      </section>
 
       <section class="card-standard">
         <h2 class="section-title">Estações Disponíveis</h2>
@@ -1184,29 +1155,6 @@
             <button class="btn btn-primary" style="flex: 1;" onclick="iniciarCronometro()" id="btn-crono-iniciar">
               <i data-lucide="play" size="16"></i> Iniciar
             </button>
-          </div>
-
-          <button type="button" id="btn-ajustar-intervalo" onclick="alternarAjusteIntervalo()" style="width:100%; margin-top:10px; background:none; border:1px solid var(--linha); border-radius:14px; padding:11px 12px; color:var(--texto-secundario); font-size:12.5px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
-            <i data-lucide="clock-3" size="15"></i> Ajustar intervalo esquecido
-          </button>
-
-          <div id="bloco-ajuste-intervalo" style="display:none; margin-top:10px; padding:12px; border:1px solid var(--linha); border-radius:16px; background:var(--bg-card);">
-            <div style="font-size:13px; font-weight:800; color:var(--texto-principal); margin-bottom:3px;">Corrigir período parado</div>
-            <div style="font-size:11px; color:var(--texto-secundario); margin-bottom:10px;">Informe o intervalo em que o cronômetro ficou contando sem você estar trabalhando.</div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-              <div class="form-group" style="margin-bottom:0;">
-                <label class="form-label" style="font-size:11px;">Início do período parado</label>
-                <input type="time" id="ajuste-intervalo-inicio" class="input-field">
-              </div>
-              <div class="form-group" style="margin-bottom:0;">
-                <label class="form-label" style="font-size:11px;">Fim do período parado</label>
-                <input type="time" id="ajuste-intervalo-fim" class="input-field">
-              </div>
-            </div>
-            <button class="btn btn-primary" style="margin-top:10px;" onclick="corrigirIntervaloEsquecido()">
-              <i data-lucide="check" size="16"></i> Corrigir jornada
-            </button>
-            <p id="mensagem-ajuste-intervalo" style="display:none; font-size:11px; font-weight:700; margin-top:8px;"></p>
           </div>
         </div>
 
@@ -1656,55 +1604,6 @@
         </button>
       </section>
 
-      <section class="card-standard" id="card-diagnostico-maxrota">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px;">
-          <div>
-            <h2 class="section-title" style="margin-bottom:3px;">🧠 Diagnóstico MAX ROTA</h2>
-            <p class="section-sub" style="margin-top:0;">Leitura matemática da sua operação usando faturamento, horas, KM, custos, combustível, passes e lucro.</p>
-          </div>
-          <div id="diagnostico-indice-badge" style="flex:0 0 auto;text-align:center;border-radius:12px;padding:8px 10px;background:var(--fundo-card-secundario);min-width:78px;">
-            <div style="font-size:9px;color:var(--texto-secundario);font-weight:700;text-transform:uppercase;">Índice</div>
-            <div id="diagnostico-indice" style="font-size:22px;font-weight:900;line-height:1.1;">--</div>
-            <div id="diagnostico-status" style="font-size:9px;font-weight:700;color:var(--texto-secundario);">Analisando</div>
-          </div>
-        </div>
-
-        <div id="diagnostico-resumo" style="margin-bottom:12px;"></div>
-
-        <div class="stats-grid" style="margin-bottom:12px;">
-          <div class="card-small">
-            <span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Eficiência por hora</span>
-            <span id="diagnostico-hora" style="font-size:16px;font-weight:800;">--</span>
-            <span id="diagnostico-hora-var" style="font-size:9.5px;color:var(--texto-secundario);">Sem comparação</span>
-          </div>
-          <div class="card-small">
-            <span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Eficiência por KM</span>
-            <span id="diagnostico-km" style="font-size:16px;font-weight:800;">--</span>
-            <span id="diagnostico-km-var" style="font-size:9.5px;color:var(--texto-secundario);">Sem comparação</span>
-          </div>
-          <div class="card-small">
-            <span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Custos / faturamento</span>
-            <span id="diagnostico-custos" style="font-size:16px;font-weight:800;">--</span>
-            <span id="diagnostico-custos-var" style="font-size:9.5px;color:var(--texto-secundario);">Sem comparação</span>
-          </div>
-          <div class="card-small">
-            <span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Lucro real / hora</span>
-            <span id="diagnostico-lucro-hora" style="font-size:16px;font-weight:800;">--</span>
-            <span id="diagnostico-lucro-hora-var" style="font-size:9.5px;color:var(--texto-secundario);">Sem comparação</span>
-          </div>
-        </div>
-
-        <div id="diagnostico-custos-detalhe" style="margin-bottom:12px;"></div>
-
-        <div style="display:grid;grid-template-columns:1fr;gap:8px;">
-          <div id="diagnostico-ponto-forte" class="item-row" style="align-items:flex-start;"></div>
-          <div id="diagnostico-ponto-atencao" class="item-row" style="align-items:flex-start;"></div>
-          <div id="diagnostico-prioridade" class="item-row" style="align-items:flex-start;"></div>
-        </div>
-
-        <p id="diagnostico-metodologia" style="font-size:9.5px;color:var(--texto-secundario);line-height:1.4;margin-top:12px;">O índice compara seu desempenho com o seu próprio histórico. 50 representa desempenho semelhante ao período comparável; acima de 50 indica evolução e abaixo de 50 indica perda de eficiência.</p>
-      </section>
-
       <section class="card-hero">
         <h2 class="section-title" style="margin-bottom: 12px;">Fechamento do Mês</h2>
         <div class="stats-grid">
@@ -1853,54 +1752,6 @@
       <!-- RESUMO DAS MÉTRICAS DO MÊS SELECIONADO -->
       <section class="card-standard" style="padding: 0; overflow: hidden;" id="card-metricas-despesas">
         <!-- Inserido dinamicamente via renderDespesas() -->
-      </section>
-
-      <!-- GASTOS PESSOAIS VARIÁVEIS DO DIA A DIA -->
-      <section class="card-standard">
-        <h2 class="section-title">Gastos Pessoais do Dia a Dia</h2>
-        <p class="section-sub">Café, mercado, jantar, lazer, compras e outros gastos pessoais. Estes valores não entram nas despesas do trabalho.</p>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <div class="form-group">
-            <label class="form-label">Data</label>
-            <input type="date" id="input-gasto-pessoal-data" class="input-field">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Categoria</label>
-            <select id="input-gasto-pessoal-categoria" class="input-field">
-              <option value="Mercado">Mercado</option>
-              <option value="Alimentação">Alimentação</option>
-              <option value="Lazer">Lazer</option>
-              <option value="Família">Família</option>
-              <option value="Saúde">Saúde</option>
-              <option value="Educação">Educação</option>
-              <option value="Compras">Compras</option>
-              <option value="Transporte">Transporte</option>
-              <option value="Outros">Outros</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Descrição</label>
-          <input type="text" id="input-gasto-pessoal-descricao" class="input-field" placeholder="Ex: Padaria com a família, mercado, jantar...">
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Valor (R$)</label>
-          <input type="text" inputmode="numeric" id="input-gasto-pessoal-valor" class="input-field" placeholder="0,00" oninput="aplicarMascaraMoeda(this)">
-        </div>
-
-        <button class="btn btn-primary" style="background: var(--grad-sunset);" onclick="cadastrarGastoPessoal()">
-          <i data-lucide="shopping-bag" size="18"></i> Lançar Gasto Pessoal
-        </button>
-      </section>
-
-      <section class="card-standard">
-        <h2 class="section-title">Gastos do Dia a Dia no Mês</h2>
-        <p class="section-sub">Histórico separado das despesas do trabalho</p>
-        <div id="resumo-gastos-pessoais-mes"></div>
-        <div id="lista-gastos-pessoais-mes"></div>
       </section>
 
       <!-- LISTA DE CONTAS PARTICULARES DO MÊS SELECIONADO -->
@@ -3033,255 +2884,6 @@
       container.innerHTML = html;
     }
 
-    // ==========================================================================
-    // MAX ROTA RECOMENDA PARA HOJE — painel inteligente da tela inicial
-    // Usa somente dados já existentes no app; não depende de IA/API externa.
-    // ==========================================================================
-    function obterFaturamentoDia(data) {
-      return todosLancamentos
-        .filter(l => l.tipo === 'entrada' && l.data === data)
-        .reduce((acc, l) => acc + Number(l.valor || 0), 0);
-    }
-
-    function obterMesmoDiaMesAnterior(dataISO) {
-      const ref = new Date(dataISO + 'T12:00:00');
-      const dia = ref.getDate();
-      const ano = ref.getFullYear();
-      const mesAnterior = ref.getMonth() - 1;
-      const ultimoDiaAnterior = new Date(ano, mesAnterior + 1, 0).getDate();
-      const alvo = new Date(ano, mesAnterior, Math.min(dia, ultimoDiaAnterior), 12, 0, 0);
-      return formatarDataLocalISO(alvo);
-    }
-
-    function obterContextoDiaSemanaHoje() {
-      const hoje = getDataHojeISO();
-      const dowHoje = new Date(hoje + 'T12:00:00').getDay();
-      const nomes = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
-      const porDow = Array.from({ length: 7 }, () => ({ total: 0, dias: new Set() }));
-
-      todosLancamentos.filter(l => l.tipo === 'entrada' && l.data < hoje).forEach(l => {
-        const dow = new Date(l.data + 'T12:00:00').getDay();
-        porDow[dow].total += Number(l.valor || 0);
-        porDow[dow].dias.add(l.data);
-      });
-
-      const ranking = porDow.map((x, i) => ({
-        dow: i,
-        nome: nomes[i],
-        media: x.dias.size ? x.total / x.dias.size : 0,
-        dias: x.dias.size
-      })).filter(x => x.dias > 0).sort((a, b) => b.media - a.media);
-
-      const pos = ranking.findIndex(x => x.dow === dowHoje);
-      const atual = pos >= 0 ? ranking[pos] : null;
-      if (!atual) return { confiavel: false, nome: nomes[dowHoje] };
-
-      return {
-        confiavel: ranking.length >= 2 && atual.dias >= 2,
-        nome: nomes[dowHoje],
-        posicao: pos + 1,
-        totalComparados: ranking.length,
-        media: atual.media,
-        dias: atual.dias,
-        ehForte: pos >= 0 && pos <= 1,
-        ehFraco: pos >= Math.max(0, ranking.length - 2)
-      };
-    }
-
-    function criarRecomendacaoHoje(tipo, titulo, texto, prioridade = 50) {
-      const mapa = {
-        urgente: { icone: 'triangle-alert', fundo: '#FFF7ED', borda: '#FED7AA', cor: '#C2410C' },
-        atencao: { icone: 'circle-alert', fundo: '#FFFBEB', borda: '#FDE68A', cor: '#B45309' },
-        oportunidade: { icone: 'trending-up', fundo: '#F0FDF4', borda: '#BBF7D0', cor: '#15803D' },
-        info: { icone: 'sparkles', fundo: '#EFF6FF', borda: '#BFDBFE', cor: '#1D4ED8' }
-      };
-      const visual = mapa[tipo] || mapa.info;
-      return { tipo, titulo, texto, prioridade, visual };
-    }
-
-    function recomendacaoPotencialHoje() {
-      const hoje = getDataHojeISO();
-      const anterior = obterMesmoDiaMesAnterior(hoje);
-      const fatHoje = obterFaturamentoDia(hoje);
-      const fatAnterior = obterFaturamentoDia(anterior);
-      const contextoSemana = obterContextoDiaSemanaHoje();
-      const diaNumero = new Date(hoje + 'T12:00:00').getDate();
-      let titulo = 'Potencial do dia';
-      let texto = '';
-      let tipo = 'info';
-
-      if (fatAnterior > 0) {
-        if (fatHoje > fatAnterior) {
-          const acima = fatHoje - fatAnterior;
-          const pct = (acima / fatAnterior) * 100;
-          titulo = 'Você já superou o mesmo dia do mês passado';
-          texto = `No dia ${diaNumero} do mês passado você faturou <b>${formatarMoeda(fatAnterior)}</b>. Hoje já está em <b>${formatarMoeda(fatHoje)}</b>, ${pct.toFixed(1).replace('.', ',')}% acima.`;
-          tipo = 'oportunidade';
-        } else if (fatHoje > 0) {
-          titulo = 'Dá para superar o mês passado';
-          texto = `No dia ${diaNumero} do mês passado você faturou <b>${formatarMoeda(fatAnterior)}</b>. Hoje faltam <b>${formatarMoeda(fatAnterior - fatHoje)}</b> para superar esse resultado.`;
-          tipo = 'oportunidade';
-        } else {
-          titulo = 'Desafio de hoje';
-          texto = `No dia ${diaNumero} do mês passado você faturou <b>${formatarMoeda(fatAnterior)}</b>. Esse é um bom número de referência para tentar superar hoje.`;
-          tipo = 'info';
-        }
-      } else if (contextoSemana.confiavel) {
-        if (contextoSemana.ehForte) {
-          titulo = 'Hoje costuma ser um dos seus melhores dias';
-          texto = `Seu histórico de ${contextoSemana.nome} tem média de <b>${formatarMoeda(contextoSemana.media)}</b> em ${contextoSemana.dias} dias trabalhados e está entre os mais fortes da semana.`;
-          tipo = 'oportunidade';
-        } else if (contextoSemana.ehFraco) {
-          titulo = 'Hoje costuma render menos no seu histórico';
-          texto = `Seu histórico de ${contextoSemana.nome} tem média de <b>${formatarMoeda(contextoSemana.media)}</b>. Se suas metas estiverem em dia, vale tratar o dia com mais seletividade — ou até como candidato a descanso.`;
-          tipo = 'atencao';
-        } else {
-          texto = `Sua média histórica de ${contextoSemana.nome} é <b>${formatarMoeda(contextoSemana.media)}</b>. Use esse valor como referência para medir o desempenho de hoje.`;
-        }
-      } else {
-        texto = 'Continue registrando suas jornadas. Assim que houver histórico suficiente, vou comparar o dia de hoje com o mesmo dia do mês passado e com seus outros dias da semana.';
-      }
-
-      if (fatAnterior > 0 && contextoSemana.confiavel) {
-        const complemento = contextoSemana.ehForte
-          ? ` Além disso, ${contextoSemana.nome} está entre os seus dias historicamente mais fortes.`
-          : contextoSemana.ehFraco
-            ? ` Pelo seu histórico, ${contextoSemana.nome} está entre os dias mais fracos da semana.`
-            : ` Sua média histórica de ${contextoSemana.nome} é ${formatarMoeda(contextoSemana.media)}.`;
-        texto += complemento;
-      }
-
-      return criarRecomendacaoHoje(tipo, titulo, texto, 100);
-    }
-
-    function recomendacaoHorarioHoje() {
-      const horario = calcularMelhorHorario();
-      if (!horario.confiavel) return null;
-      const ini = String(horario.horaInicio).padStart(2, '0');
-      const fim = String(horario.horaFim).padStart(2, '0');
-      return criarRecomendacaoHoje(
-        'oportunidade',
-        'Melhor faixa para trabalhar',
-        `Pelos seus últimos ${horario.diasConfiaveis} dias com dados suficientes, a faixa de <b>${ini}h às ${fim}h</b> é a que mais rende: média de <b>${formatarMoeda(horario.mediaValor)}/h bruto</b>. Se for escolher um horário para priorizar, seu histórico aponta para essa janela.`,
-        90
-      );
-    }
-
-    function recomendacaoContasHoje() {
-      const agora = new Date();
-      const hojeInicio = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
-      const itens = bancoContas.filter(c => !c.pago && c.mesAno).map(c => {
-        const [ano, mes] = String(c.mesAno).split('-').map(Number);
-        if (!ano || !mes) return null;
-        const ultimo = new Date(ano, mes, 0).getDate();
-        const venc = new Date(ano, mes - 1, Math.min(Number(c.vencimento || 1), ultimo));
-        const diff = Math.floor((venc - hojeInicio) / 86400000);
-        return { ...c, diff, venc };
-      }).filter(Boolean).sort((a, b) => a.diff - b.diff);
-
-      const vencidas = itens.filter(x => x.diff < 0);
-      if (vencidas.length) {
-        const total = vencidas.reduce((a, x) => a + Number(x.valor || 0), 0);
-        const nomes = vencidas.slice(0, 2).map(x => escaparHtmlGasto(x.nome || 'Conta')).join(', ');
-        return criarRecomendacaoHoje('urgente', 'Conta pessoal vencida', `Você tem <b>${vencidas.length} ${vencidas.length === 1 ? 'conta pendente' : 'contas pendentes'}</b> já vencida${vencidas.length === 1 ? '' : 's'}, somando <b>${formatarMoeda(total)}</b>${nomes ? ` (${nomes}${vencidas.length > 2 ? '...' : ''})` : ''}.`, 98);
-      }
-
-      const proximas = itens.filter(x => x.diff >= 0 && x.diff <= 3);
-      if (!proximas.length) return null;
-      const total = proximas.reduce((a, x) => a + Number(x.valor || 0), 0);
-      const hoje = proximas.filter(x => x.diff === 0);
-      const amanha = proximas.filter(x => x.diff === 1);
-      let janela = 'nos próximos 3 dias';
-      if (hoje.length) janela = 'hoje'; else if (amanha.length === proximas.length) janela = 'amanhã';
-      const nomes = proximas.slice(0, 2).map(x => escaparHtmlGasto(x.nome || 'Conta')).join(', ');
-      return criarRecomendacaoHoje('atencao', 'Atenção às contas', `Você tem <b>${proximas.length} ${proximas.length === 1 ? 'conta' : 'contas'}</b> vencendo ${janela}, somando <b>${formatarMoeda(total)}</b>${nomes ? ` (${nomes}${proximas.length > 2 ? '...' : ''})` : ''}.`, 88);
-    }
-
-    function recomendacaoManutencaoHoje() {
-      if (!servicos.length) return null;
-      const itens = [
-        { termos: ['óleo', 'oleo'], nome: 'troca de óleo', input: 'input-oleo-km', padrao: 10000 },
-        { termos: ['pneu'], nome: 'troca de pneus', input: 'input-pneu-km', padrao: 50000 }
-      ];
-      const alertas = [];
-
-      itens.forEach(item => {
-        const registros = servicos.filter(s => item.termos.some(t => String(s.nome || '').toLowerCase().includes(t)));
-        if (!registros.length) return;
-        const ultima = [...registros].sort((a, b) => String(b.data || '').localeCompare(String(a.data || '')) || Number(b.id || 0) - Number(a.id || 0))[0];
-        const el = document.getElementById(item.input);
-        const intervalo = Math.max(1, Number(el && el.value) || item.padrao);
-        const kmRodadosDepois = Object.entries(kmPorDia).reduce((acc, [data, km]) => data > String(ultima.data || '') ? acc + Number(km || 0) : acc, 0);
-        const restante = intervalo - kmRodadosDepois;
-        const limiteAlerta = Math.max(1000, intervalo * 0.10);
-        if (restante <= limiteAlerta) alertas.push({ nome: item.nome, restante, intervalo });
-      });
-
-      if (!alertas.length) return null;
-      alertas.sort((a, b) => a.restante - b.restante);
-      const a = alertas[0];
-      if (a.restante <= 0) {
-        return criarRecomendacaoHoje('urgente', 'Manutenção merece atenção', `Pelo KM registrado desde a última manutenção, a <b>${a.nome}</b> já atingiu a previsão de intervalo em aproximadamente <b>${Math.abs(Math.round(a.restante)).toLocaleString('pt-BR')} km</b>. Confira o odômetro e programe o serviço.`, 96);
-      }
-      return criarRecomendacaoHoje('atencao', 'Manutenção se aproximando', `Pelo seu histórico de KM, faltam aproximadamente <b>${Math.round(a.restante).toLocaleString('pt-BR')} km</b> para a próxima <b>${a.nome}</b>.`, 86);
-    }
-
-    function recomendacaoMetaHoje() {
-      const meta = Number(metas.diaria || 0);
-      if (meta <= 0) return null;
-      const hoje = getDataHojeISO();
-      const fat = obterFaturamentoDia(hoje);
-      const pct = Math.min(999, (fat / meta) * 100);
-      if (fat >= meta) {
-        return criarRecomendacaoHoje('oportunidade', 'Meta diária batida', `Você já faturou <b>${formatarMoeda(fat)}</b> e atingiu <b>${pct.toFixed(0)}%</b> da sua meta diária de ${formatarMoeda(meta)}.`, 82);
-      }
-      return criarRecomendacaoHoje('info', 'Alvo financeiro de hoje', `Sua meta diária é <b>${formatarMoeda(meta)}</b>. Você já fez <b>${formatarMoeda(fat)}</b> e faltam <b>${formatarMoeda(meta - fat)}</b> para chegar lá.`, 70);
-    }
-
-    function recomendacaoReservaHoje() {
-      const ano = String(new Date().getFullYear());
-      const entradasAno = todosLancamentos.filter(l => l.tipo === 'entrada' && String(l.data || '').startsWith(ano + '-')).reduce((a, l) => a + Number(l.valor || 0), 0);
-      const ideal = entradasAno * 0.10;
-      const guardado = Object.entries(reservaPorDia).filter(([data]) => String(data).startsWith(ano + '-')).reduce((a, [, v]) => a + Number(v || 0), 0);
-      if (ideal <= 0 || guardado >= ideal) return null;
-      const gap = ideal - guardado;
-      const pct = (guardado / ideal) * 100;
-      if (pct >= 90) return null;
-      return criarRecomendacaoHoje('info', 'Reserva financeira', `Neste ano, sua reserva registrada está em <b>${formatarMoeda(guardado)}</b>. Para acompanhar os 10% ideais do que entrou, faltam <b>${formatarMoeda(gap)}</b>.`, 55);
-    }
-
-    function renderRecomendacoesHoje() {
-      const container = document.getElementById('conteudo-recomendacoes-hoje');
-      if (!container) return;
-      const dataEl = document.getElementById('recomendacoes-hoje-data');
-      const hoje = new Date();
-      if (dataEl) dataEl.textContent = hoje.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '').toUpperCase();
-
-      const potencial = recomendacaoPotencialHoje();
-      const horario = recomendacaoHorarioHoje();
-      const contas = recomendacaoContasHoje();
-      const manutencao = recomendacaoManutencaoHoje();
-      const meta = recomendacaoMetaHoje();
-      const reserva = recomendacaoReservaHoje();
-
-      // Potencial sempre aparece. Depois, prioriza alertas reais e oportunidades.
-      const extras = [contas, manutencao, horario, meta, reserva].filter(Boolean).sort((a, b) => b.prioridade - a.prioridade);
-      const escolhidas = [potencial, ...extras.slice(0, 3)].filter(Boolean);
-
-      container.innerHTML = escolhidas.map((r, i) => `
-        <div style="display:flex; gap:10px; align-items:flex-start; padding:11px 12px; border:1px solid ${r.visual.borda}; background:${r.visual.fundo}; border-radius:12px;">
-          <div style="width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:white; color:${r.visual.cor};">
-            <i data-lucide="${r.visual.icone}" size="16"></i>
-          </div>
-          <div style="min-width:0; flex:1;">
-            <div style="font-size:12.5px; font-weight:800; color:${r.visual.cor}; margin-bottom:2px;">${r.titulo}</div>
-            <div style="font-size:11.5px; color:var(--texto-secundario); line-height:1.45;">${r.texto}</div>
-          </div>
-        </div>
-      `).join('');
-      criarIconesSeguro();
-    }
-
     function getMesAnoAtual() {
       const d = new Date();
       const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -3298,7 +2900,6 @@
     let todosLancamentos = [];   // {id, tipo, categoria, valor, corridas, data}
     let rentabilidadeSnapshots = []; // pontos históricos de R$/hora e R$/km ao longo da jornada
     let bancoContas = [];
-    let gastosPessoais = [];     // {id, data, categoria, descricao, valor} — não afeta o lucro do trabalho
     let servicos = [];           // {id, nome, km, valor, data}
     let horasPorDia = {};        // { 'YYYY-MM-DD': horasNumero }
     let kmPorDia = {};           // { 'YYYY-MM-DD': kmNumero }
@@ -3529,146 +3130,6 @@
 
     async function persistirCronometro() {
       await storageSet('cronometro-expediente', cronometroExpediente);
-    }
-
-    function alternarAjusteIntervalo() {
-      const bloco = document.getElementById('bloco-ajuste-intervalo');
-      if (!bloco) return;
-      const abrir = bloco.style.display === 'none' || !bloco.style.display;
-      bloco.style.display = abrir ? 'block' : 'none';
-      if (abrir) {
-        const fim = document.getElementById('ajuste-intervalo-fim');
-        if (fim && !fim.value) {
-          const agora = new Date();
-          fim.value = `${String(agora.getHours()).padStart(2,'0')}:${String(agora.getMinutes()).padStart(2,'0')}`;
-        }
-      }
-      criarIconesSeguro();
-    }
-
-    function timestampLocalDataHora(dataISO, horaHHMM) {
-      const [ano, mes, dia] = String(dataISO).split('-').map(Number);
-      const [hora, minuto] = String(horaHHMM).split(':').map(Number);
-      if (![ano, mes, dia, hora, minuto].every(Number.isFinite)) return NaN;
-      return new Date(ano, mes - 1, dia, hora, minuto, 0, 0).getTime();
-    }
-
-    function corrigirSnapshotsPorIntervalo(data, inicioTs, fimTs) {
-      if (!Array.isArray(rentabilidadeSnapshots)) return;
-      rentabilidadeSnapshots.forEach(ponto => {
-        if (!ponto || ponto.data !== data) return;
-        let ts = Number(ponto.timestamp);
-        if (!Number.isFinite(ts) && ponto.hora) ts = timestampLocalDataHora(data, ponto.hora);
-        if (!Number.isFinite(ts) || ts <= inicioTs) return;
-
-        const fimDesconto = Math.min(ts, fimTs);
-        if (fimDesconto <= inicioTs) return;
-        const horasDesconto = (fimDesconto - inicioTs) / 3600000;
-        const horasOriginais = Number(ponto.horas) || 0;
-        const horasCorrigidas = Math.max(0, horasOriginais - horasDesconto);
-        ponto.horas = Math.round(horasCorrigidas * 10000) / 10000;
-        const faturamento = Number(ponto.faturamento) || 0;
-        ponto.rsHoraBruto = horasCorrigidas > 0 ? faturamento / horasCorrigidas : 0;
-      });
-    }
-
-    async function corrigirIntervaloEsquecido() {
-      const inicioEl = document.getElementById('ajuste-intervalo-inicio');
-      const fimEl = document.getElementById('ajuste-intervalo-fim');
-      const msg = document.getElementById('mensagem-ajuste-intervalo');
-      const inicio = inicioEl ? inicioEl.value : '';
-      const fim = fimEl ? fimEl.value : '';
-      const hoje = getDataHojeISO();
-
-      const mostrarMsg = (texto, erro = false) => {
-        if (!msg) return;
-        msg.style.display = 'block';
-        msg.style.color = erro ? 'var(--max-red)' : 'var(--max-green)';
-        msg.innerText = texto;
-      };
-
-      if (!inicio || !fim) { mostrarMsg('Informe o início e o fim do período parado.', true); return; }
-      const inicioTs = timestampLocalDataHora(hoje, inicio);
-      const fimTs = timestampLocalDataHora(hoje, fim);
-      if (!Number.isFinite(inicioTs) || !Number.isFinite(fimTs) || fimTs <= inicioTs) {
-        mostrarMsg('O fim do intervalo precisa ser depois do início.', true);
-        return;
-      }
-      if (fimTs > Date.now() + 60000) {
-        mostrarMsg('O fim do intervalo não pode estar no futuro.', true);
-        return;
-      }
-
-      const segundosDesconto = Math.round((fimTs - inicioTs) / 1000);
-      if (segundosDesconto <= 0) return;
-
-      let ajustes = [];
-      try { ajustes = await storageGet('ajustes-jornada', []); } catch (e) { ajustes = []; }
-      if (!Array.isArray(ajustes)) ajustes = [];
-      if (ajustes.some(a => a && a.data === hoje && a.inicio === inicio && a.fim === fim)) {
-        mostrarMsg('Esse mesmo intervalo já foi corrigido.', true);
-        return;
-      }
-
-      let totalAtualSegundos;
-      if (cronometroExpediente.status !== 'parado' && cronometroExpediente.data === hoje) {
-        totalAtualSegundos = segundosAcumuladosAtuais();
-      } else {
-        totalAtualSegundos = Math.round((Number(horasPorDia[hoje]) || 0) * 3600);
-      }
-
-      if (segundosDesconto > totalAtualSegundos) {
-        mostrarMsg('Esse intervalo é maior que o tempo registrado na jornada. Confira os horários.', true);
-        return;
-      }
-
-      const totalCorrigido = Math.max(0, totalAtualSegundos - segundosDesconto);
-
-      // Se o cronômetro ainda está ativo/pausado, substitui o acumulado pelo total
-      // corrigido e, se estiver rodando, reinicia o segmento a partir de agora.
-      if (cronometroExpediente.status !== 'parado' && cronometroExpediente.data === hoje) {
-        cronometroExpediente.acumuladoSegundos = totalCorrigido;
-        if (cronometroExpediente.status === 'rodando') cronometroExpediente.inicioTimestamp = Date.now();
-        else cronometroExpediente.inicioTimestamp = null;
-      }
-
-      const horasCorrigidas = Math.round((totalCorrigido / 3600) * 100) / 100;
-      horasPorDia[hoje] = horasCorrigidas;
-
-      // Corrige também os pontos intradiários posteriores ao intervalo, para que
-      // gráficos/inteligência não continuem usando as horas infladas.
-      corrigirSnapshotsPorIntervalo(hoje, inicioTs, fimTs);
-
-      ajustes.push({
-        id: Date.now(), data: hoje, inicio, fim, segundos: segundosDesconto, timestamp: Date.now()
-      });
-
-      const resultados = await Promise.all([
-        storageSet('horas', horasPorDia),
-        storageSet('cronometro-expediente', cronometroExpediente),
-        storageSet('rentabilidade-snapshots', rentabilidadeSnapshots),
-        storageSet('ajustes-jornada', ajustes)
-      ]);
-      if (resultados.some(r => r === false)) avisarFalhaDeSalvamento();
-
-      atualizarDisplayCronometro();
-      atualizarPainelHoje();
-      try { renderProgressoMetas(); } catch (e) {}
-      try { renderRecomendacoesHoje(); } catch (e) {}
-      try { renderInteligenciaDados(); } catch (e) {}
-      graficosDesatualizados = true;
-      if (document.getElementById('tab-analise')?.classList.contains('active')) {
-        try { renderGraficoRentabilidadeDia(); } catch (e) {}
-      }
-      renderBotoesCronometro();
-
-      const minutos = Math.round(segundosDesconto / 60);
-      const hDesc = Math.floor(minutos / 60);
-      const mDesc = minutos % 60;
-      const textoDesc = hDesc > 0 ? `${hDesc}h${mDesc ? ` ${mDesc}min` : ''}` : `${mDesc}min`;
-      mostrarMsg(`Pronto: ${textoDesc} foram retirados da jornada. Agora constam ${horasCorrigidas}h trabalhadas.`);
-      if (inicioEl) inicioEl.value = '';
-      if (fimEl) fimEl.value = '';
     }
 
     function atualizarDisplayCronometro() {
@@ -4093,214 +3554,6 @@
     }
 
     // ==========================================================================
-    // DIAGNÓSTICO MAX ROTA — LEITURA MATEMÁTICA DA OPERAÇÃO
-    // ==========================================================================
-    function diagnosticoClamp(v, min, max) {
-      return Math.max(min, Math.min(max, v));
-    }
-
-    function diagnosticoVariacao(atual, anterior) {
-      if (!Number.isFinite(atual) || !Number.isFinite(anterior) || anterior === 0) return null;
-      return ((atual - anterior) / Math.abs(anterior)) * 100;
-    }
-
-    function diagnosticoFmtPct(v, casas = 1) {
-      if (v === null || !Number.isFinite(v)) return 'sem histórico';
-      return `${v >= 0 ? '+' : ''}${v.toFixed(casas).replace('.', ',')}%`;
-    }
-
-    function diagnosticoCorVariacao(v, inverter = false) {
-      if (v === null || !Number.isFinite(v) || Math.abs(v) < 0.05) return 'var(--texto-secundario)';
-      const melhorou = inverter ? v < 0 : v > 0;
-      return melhorou ? 'var(--max-green)' : 'var(--max-red)';
-    }
-
-    function diagnosticoNormalizarCategoria(txt) {
-      return String(txt || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-    }
-
-    function calcularPeriodoDiagnostico(mesAno, diaLimite = null) {
-      const [ano, mes] = mesAno.split('-').map(Number);
-      const ultimoDia = new Date(ano, mes, 0).getDate();
-      const limite = diagnosticoClamp(Number(diaLimite || ultimoDia), 1, ultimoDia);
-      const inicio = `${ano}-${String(mes).padStart(2, '0')}-01`;
-      const fim = `${ano}-${String(mes).padStart(2, '0')}-${String(limite).padStart(2, '0')}`;
-      const dentro = d => d && d >= inicio && d <= fim;
-
-      const entradas = todosLancamentos.filter(l => l.tipo === 'entrada' && dentro(l.data));
-      const saidas = todosLancamentos.filter(l => l.tipo === 'saida' && dentro(l.data));
-      const faturamento = entradas.reduce((a,l) => a + Number(l.valor || 0), 0);
-      const custos = saidas.reduce((a,l) => a + Number(l.valor || 0), 0);
-      const corridas = entradas.reduce((a,l) => a + Number(l.corridas || 0), 0);
-      const horas = Object.keys(horasPorDia).filter(dentro).reduce((a,d) => a + Number(horasPorDia[d] || 0), 0);
-      const km = Object.keys(kmPorDia).filter(dentro).reduce((a,d) => a + Number(kmPorDia[d] || 0), 0);
-      const diasTrabalhados = new Set(entradas.map(l => l.data)).size;
-      const custoEstrutural = km * calcularCustoPorKmSemCombustivel();
-      const lucroOperacional = faturamento - custos;
-      const lucroReal = lucroOperacional - custoEstrutural;
-
-      let combustivel = 0, passes = 0, outros = 0;
-      saidas.forEach(l => {
-        const cat = diagnosticoNormalizarCategoria(l.categoria);
-        const valor = Number(l.valor || 0);
-        if (cat.includes('combustivel')) combustivel += valor;
-        else if (cat.startsWith('passe')) passes += valor;
-        else outros += valor;
-      });
-
-      return {
-        inicio, fim, limite, entradas, saidas, faturamento, custos, corridas, horas, km,
-        diasTrabalhados, custoEstrutural, lucroOperacional, lucroReal, combustivel, passes, outros,
-        rsHora: horas > 0 ? faturamento / horas : 0,
-        rsKm: km > 0 ? faturamento / km : 0,
-        lucroRealHora: horas > 0 ? lucroReal / horas : 0,
-        lucroRealKm: km > 0 ? lucroReal / km : 0,
-        custoPct: faturamento > 0 ? (custos / faturamento) * 100 : 0,
-        combustivelPct: faturamento > 0 ? (combustivel / faturamento) * 100 : 0,
-        passesPct: faturamento > 0 ? (passes / faturamento) * 100 : 0,
-        margemReal: faturamento > 0 ? (lucroReal / faturamento) * 100 : 0
-      };
-    }
-
-    function pontuarEvolucaoDiagnostico(atual, anterior, inverter = false) {
-      if (!(atual > 0) || !(anterior > 0)) return null;
-      const razao = inverter ? anterior / atual : atual / anterior;
-      return diagnosticoClamp(50 * razao, 0, 100);
-    }
-
-    function calcularDiagnosticoMaxRota(mesAno) {
-      const hoje = getDataHojeISO();
-      const mesAtual = hoje.slice(0, 7);
-      const [ano, mes] = mesAno.split('-').map(Number);
-      const ultimoDiaMes = new Date(ano, mes, 0).getDate();
-      const diaLimite = mesAno === mesAtual ? Number(hoje.slice(8, 10)) : ultimoDiaMes;
-      const atual = calcularPeriodoDiagnostico(mesAno, diaLimite);
-
-      const dataAnt = new Date(ano, mes - 2, 1);
-      const mesAnterior = `${dataAnt.getFullYear()}-${String(dataAnt.getMonth() + 1).padStart(2, '0')}`;
-      const ultimoDiaAnterior = new Date(dataAnt.getFullYear(), dataAnt.getMonth() + 1, 0).getDate();
-      const anterior = calcularPeriodoDiagnostico(mesAnterior, Math.min(diaLimite, ultimoDiaAnterior));
-
-      const variacoes = {
-        faturamento: diagnosticoVariacao(atual.faturamento, anterior.faturamento),
-        horas: diagnosticoVariacao(atual.horas, anterior.horas),
-        km: diagnosticoVariacao(atual.km, anterior.km),
-        rsHora: diagnosticoVariacao(atual.rsHora, anterior.rsHora),
-        rsKm: diagnosticoVariacao(atual.rsKm, anterior.rsKm),
-        custoPct: diagnosticoVariacao(atual.custoPct, anterior.custoPct),
-        lucroRealHora: diagnosticoVariacao(atual.lucroRealHora, anterior.lucroRealHora),
-        combustivelPct: diagnosticoVariacao(atual.combustivelPct, anterior.combustivelPct),
-        passesPct: diagnosticoVariacao(atual.passesPct, anterior.passesPct),
-        margemReal: anterior.margemReal !== 0 ? atual.margemReal - anterior.margemReal : null
-      };
-
-      const componentes = [
-        { nome:'hora', peso:0.30, score:pontuarEvolucaoDiagnostico(atual.rsHora, anterior.rsHora) },
-        { nome:'km', peso:0.30, score:pontuarEvolucaoDiagnostico(atual.rsKm, anterior.rsKm) },
-        { nome:'custos', peso:0.20, score:pontuarEvolucaoDiagnostico(atual.custoPct, anterior.custoPct, true) },
-        { nome:'lucro', peso:0.20, score:pontuarEvolucaoDiagnostico(atual.lucroRealHora, anterior.lucroRealHora) }
-      ].filter(c => c.score !== null);
-      const pesoTotal = componentes.reduce((a,c) => a + c.peso, 0);
-      const indice = pesoTotal > 0 ? componentes.reduce((a,c) => a + c.score*c.peso, 0) / pesoTotal : null;
-
-      const insights = [];
-      if (variacoes.faturamento !== null) {
-        if (variacoes.faturamento > 0 && ((variacoes.rsHora !== null && variacoes.rsHora < 0) || (variacoes.rsKm !== null && variacoes.rsKm < 0))) {
-          insights.push({tipo:'atencao', peso:95, texto:`Seu faturamento cresceu ${diagnosticoFmtPct(variacoes.faturamento)}, mas a eficiência não acompanhou. Você está ganhando mais principalmente por volume de trabalho/rodagem, não necessariamente por corridas melhores.`});
-        } else if (variacoes.faturamento > 0 && (variacoes.rsHora || 0) > 0 && (variacoes.rsKm || 0) > 0) {
-          insights.push({tipo:'forte', peso:95, texto:`Crescimento saudável: faturamento ${diagnosticoFmtPct(variacoes.faturamento)}, R$/hora ${diagnosticoFmtPct(variacoes.rsHora)} e R$/km ${diagnosticoFmtPct(variacoes.rsKm)} contra o mesmo período comparável.`});
-        } else if (variacoes.faturamento < 0 && (variacoes.rsHora || 0) < 0) {
-          insights.push({tipo:'atencao', peso:90, texto:`Faturamento e produtividade por hora recuaram juntos. O principal sinal agora é recuperar a qualidade dos horários e das corridas aceitas.`});
-        }
-      }
-
-      if (variacoes.rsHora !== null) insights.push({tipo:variacoes.rsHora >= 0 ? 'forte':'atencao', peso:70 + Math.min(20,Math.abs(variacoes.rsHora)), texto:`Seu faturamento por hora está ${Math.abs(variacoes.rsHora).toFixed(1).replace('.', ',')}% ${variacoes.rsHora >= 0 ? 'acima':'abaixo'} do período comparável (${formatarMoeda(atual.rsHora)}/h agora).`});
-      if (variacoes.rsKm !== null) insights.push({tipo:variacoes.rsKm >= 0 ? 'forte':'atencao', peso:70 + Math.min(20,Math.abs(variacoes.rsKm)), texto:`Sua eficiência por KM está ${Math.abs(variacoes.rsKm).toFixed(1).replace('.', ',')}% ${variacoes.rsKm >= 0 ? 'melhor':'pior'}, em ${formatarMoeda(atual.rsKm)}/km.`});
-      if (variacoes.custoPct !== null) insights.push({tipo:variacoes.custoPct <= 0 ? 'forte':'atencao', peso:68 + Math.min(20,Math.abs(variacoes.custoPct)), texto:`As despesas lançadas consomem ${atual.custoPct.toFixed(1).replace('.', ',')}% do faturamento, ${variacoes.custoPct <= 0 ? 'uma melhora':'uma piora'} de ${Math.abs(variacoes.custoPct).toFixed(1).replace('.', ',')}% na relação custo/faturamento.`});
-      if (variacoes.combustivelPct !== null && Math.abs(variacoes.combustivelPct) >= 5) insights.push({tipo:variacoes.combustivelPct <= 0 ? 'forte':'atencao', peso:66, texto:`O peso do combustível no faturamento ${variacoes.combustivelPct <= 0 ? 'caiu':'subiu'} ${Math.abs(variacoes.combustivelPct).toFixed(1).replace('.', ',')}% em relação ao período anterior.`});
-      if (variacoes.passesPct !== null && Math.abs(variacoes.passesPct) >= 5) insights.push({tipo:variacoes.passesPct <= 0 ? 'forte':'atencao', peso:64, texto:`O peso dos passes no faturamento ${variacoes.passesPct <= 0 ? 'caiu':'subiu'} ${Math.abs(variacoes.passesPct).toFixed(1).replace('.', ',')}% no comparativo.`});
-      if (variacoes.lucroRealHora !== null) insights.push({tipo:variacoes.lucroRealHora >= 0 ? 'forte':'atencao', peso:80 + Math.min(15,Math.abs(variacoes.lucroRealHora)), texto:`O lucro real por hora está ${diagnosticoFmtPct(variacoes.lucroRealHora)} versus o período comparável, atualmente em ${formatarMoeda(atual.lucroRealHora)}/h.`});
-
-      const fortes = insights.filter(i=>i.tipo==='forte').sort((a,b)=>b.peso-a.peso);
-      const atencoes = insights.filter(i=>i.tipo==='atencao').sort((a,b)=>b.peso-a.peso);
-      const pontoForte = fortes[0]?.texto || (atual.faturamento > 0 ? `Você faturou ${formatarMoeda(atual.faturamento)} em ${atual.diasTrabalhados} dia(s) trabalhado(s). Ainda falta histórico comparável suficiente para apontar sua principal evolução.` : 'Ainda não há lançamentos suficientes para identificar um ponto forte.');
-      const pontoAtencao = atencoes[0]?.texto || (anterior.faturamento > 0 ? 'Nenhum sinal de deterioração relevante apareceu nos indicadores principais deste comparativo.' : 'Continue lançando horas, KM e despesas para o diagnóstico ganhar precisão.');
-
-      let prioridade = 'Continue alimentando horas, KM, combustível, passes e demais saídas. Quanto mais completos os lançamentos, mais preciso fica o diagnóstico.';
-      if (atencoes.length) {
-        const pior = atencoes[0].texto.toLowerCase();
-        if (pior.includes('por hora') || pior.includes('horários')) prioridade = 'Prioridade: melhorar R$/hora. Observe os horários mais produtivos e reduza tempo parado ou corridas que prendem muito tempo para pouco retorno.';
-        else if (pior.includes('por km') || pior.includes('rodagem')) prioridade = 'Prioridade: melhorar R$/km. Reduza deslocamentos improdutivos e proteja seu valor mínimo por KM.';
-        else if (pior.includes('combust')) prioridade = 'Prioridade: revisar o peso do combustível. Compare abastecimentos, consumo e KM rodados para identificar aumento de custo ou queda de eficiência.';
-        else if (pior.includes('passe')) prioridade = 'Prioridade: conferir se o custo dos passes está sendo compensado pelo faturamento gerado nos aplicativos em que eles são pagos.';
-        else if (pior.includes('despesas') || pior.includes('custo')) prioridade = 'Prioridade: controlar custos. Seu faturamento pode estar sendo preservado, mas uma parcela maior está sendo consumida pelas saídas.';
-        else if (pior.includes('lucro real')) prioridade = 'Prioridade: recuperar lucro real por hora, equilibrando faturamento, KM rodados e custos da operação.';
-      } else if (fortes.length) {
-        prioridade = 'Prioridade: preservar o padrão atual. Os principais indicadores estão estáveis ou em evolução; tente repetir os horários e critérios de corrida que produziram esse resultado.';
-      }
-
-      return { atual, anterior, variacoes, indice, componentes, pontoForte, pontoAtencao, prioridade, mesAnterior, diaLimite };
-    }
-
-    function renderDiagnosticoMaxRota(mesAno) {
-      const elIndice = document.getElementById('diagnostico-indice');
-      if (!elIndice) return;
-      const d = calcularDiagnosticoMaxRota(mesAno);
-      const a = d.atual, p = d.anterior, v = d.variacoes;
-
-      const temBaseAtual = a.faturamento > 0 && (a.horas > 0 || a.km > 0);
-      const temComparacao = p.faturamento > 0 && d.indice !== null;
-      let status = 'Base em construção';
-      let corStatus = 'var(--texto-secundario)';
-      if (temComparacao) {
-        if (d.indice >= 65) { status = 'Em evolução'; corStatus = 'var(--max-green)'; }
-        else if (d.indice >= 45) { status = 'Estável'; corStatus = 'var(--max-blue)'; }
-        else if (d.indice >= 30) { status = 'Atenção'; corStatus = 'var(--max-orange)'; }
-        else { status = 'Em queda'; corStatus = 'var(--max-red)'; }
-      }
-      elIndice.textContent = temComparacao ? Math.round(d.indice) : '--';
-      elIndice.style.color = corStatus;
-      const statusEl = document.getElementById('diagnostico-status');
-      statusEl.textContent = status;
-      statusEl.style.color = corStatus;
-
-      const periodoAtualTxt = `${new Date(a.inicio+'T00:00:00').toLocaleDateString('pt-BR')} a ${new Date(a.fim+'T00:00:00').toLocaleDateString('pt-BR')}`;
-      const periodoAntTxt = `${new Date(p.inicio+'T00:00:00').toLocaleDateString('pt-BR')} a ${new Date(p.fim+'T00:00:00').toLocaleDateString('pt-BR')}`;
-      document.getElementById('diagnostico-resumo').innerHTML = temBaseAtual ? `
-        <div style="padding:10px 12px;border-radius:12px;background:var(--fundo-card-secundario);font-size:12px;line-height:1.5;">
-          <strong>${status}.</strong> Analisando ${periodoAtualTxt}${p.faturamento > 0 ? ` contra ${periodoAntTxt}` : ''}.<br>
-          <span style="color:var(--texto-secundario);">Faturamento ${formatarMoeda(a.faturamento)} • ${a.horas.toFixed(1).replace('.', ',')}h • ${a.km.toLocaleString('pt-BR')} km • ${a.diasTrabalhados} dia(s) trabalhado(s).</span>
-        </div>` : `<div style="padding:10px 12px;border-radius:12px;background:var(--fundo-card-secundario);font-size:12px;color:var(--texto-secundario);">Ainda não há dados suficientes neste período. Lance faturamento, horas e KM para gerar o diagnóstico.</div>`;
-
-      const setMetrica = (idValor, idVar, valor, variacao, sufixo, inverter=false) => {
-        document.getElementById(idValor).textContent = valor;
-        const el = document.getElementById(idVar);
-        el.textContent = variacao === null ? 'Sem histórico comparável' : `${diagnosticoFmtPct(variacao)} vs. período anterior${sufixo || ''}`;
-        el.style.color = diagnosticoCorVariacao(variacao, inverter);
-      };
-      setMetrica('diagnostico-hora','diagnostico-hora-var', a.horas > 0 ? `${formatarMoeda(a.rsHora)}/h` : '--', v.rsHora, '');
-      setMetrica('diagnostico-km','diagnostico-km-var', a.km > 0 ? `${formatarMoeda(a.rsKm)}/km` : '--', v.rsKm, '');
-      setMetrica('diagnostico-custos','diagnostico-custos-var', a.faturamento > 0 ? `${a.custoPct.toFixed(1).replace('.', ',')}%` : '--', v.custoPct, '', true);
-      setMetrica('diagnostico-lucro-hora','diagnostico-lucro-hora-var', a.horas > 0 ? `${formatarMoeda(a.lucroRealHora)}/h` : '--', v.lucroRealHora, '');
-
-      const detalheCustos = document.getElementById('diagnostico-custos-detalhe');
-      detalheCustos.innerHTML = `
-        <div class="item-row"><span style="font-size:12px;font-weight:600;">⛽ Combustível</span><span style="font-size:12px;font-weight:800;">${formatarMoeda(a.combustivel)} <span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">(${a.combustivelPct.toFixed(1).replace('.', ',')}% do faturamento)</span></span></div>
-        <div class="item-row"><span style="font-size:12px;font-weight:600;">🎟️ Passes</span><span style="font-size:12px;font-weight:800;">${formatarMoeda(a.passes)} <span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">(${a.passesPct.toFixed(1).replace('.', ',')}%)</span></span></div>
-        <div class="item-row"><span style="font-size:12px;font-weight:600;">💸 Outras saídas lançadas</span><span style="font-size:12px;font-weight:800;">${formatarMoeda(a.outros)}</span></div>
-        <div class="item-row"><span style="font-size:12px;font-weight:600;">🚗 Custo estrutural estimado do veículo</span><span style="font-size:12px;font-weight:800;">${formatarMoeda(a.custoEstrutural)}</span></div>`;
-
-      document.getElementById('diagnostico-ponto-forte').innerHTML = `<div style="flex:1;"><div style="font-size:11px;font-weight:800;color:var(--max-green);margin-bottom:3px;">✅ PRINCIPAL PONTO FORTE</div><div style="font-size:12px;line-height:1.45;">${d.pontoForte}</div></div>`;
-      document.getElementById('diagnostico-ponto-atencao').innerHTML = `<div style="flex:1;"><div style="font-size:11px;font-weight:800;color:var(--max-orange);margin-bottom:3px;">⚠️ PRINCIPAL PONTO DE ATENÇÃO</div><div style="font-size:12px;line-height:1.45;">${d.pontoAtencao}</div></div>`;
-      document.getElementById('diagnostico-prioridade').innerHTML = `<div style="flex:1;"><div style="font-size:11px;font-weight:800;color:var(--max-blue);margin-bottom:3px;">🎯 PRIORIDADE RECOMENDADA</div><div style="font-size:12px;line-height:1.45;">${d.prioridade}</div></div>`;
-
-      const metodologia = document.getElementById('diagnostico-metodologia');
-      metodologia.textContent = temComparacao
-        ? `Índice de evolução baseado no seu próprio histórico: R$/hora (30%), R$/km (30%), relação despesas/faturamento (20%) e lucro real/hora (20%). 50 = desempenho equivalente ao período comparável; não usa uma tabela universal de “motorista bom ou ruim”.`
-        : `O diagnóstico já mostra seus números atuais, mas o índice 0–100 só aparece quando existe um período anterior comparável com dados suficientes. Continue lançando horas, KM e despesas normalmente.`;
-    }
-
-    // ==========================================================================
     // RELATÓRIO MENSAL EM PDF
     // ==========================================================================
     function gerarRelatorioPDF() {
@@ -4321,27 +3574,6 @@
         const nomeUsuario = (usuarioAtual && (usuarioAtual.displayName || usuarioAtual.email)) || 'Motorista';
         const entradasMes = todosLancamentos.filter(l => l.tipo === 'entrada' && mesAnoDeData(l.data) === mesAno);
         const saidasMes = todosLancamentos.filter(l => l.tipo === 'saida' && mesAnoDeData(l.data) === mesAno);
-
-        // Vida pessoal — mantida separada da operação do motorista
-        const contasPessoaisMes = bancoContas
-          .filter(c => c.mesAno === mesAno)
-          .sort((a, b) => Number(a.vencimento || 0) - Number(b.vencimento || 0));
-        const contasPagasMes = contasPessoaisMes.filter(c => !!c.pago);
-        const contasPendentesMes = contasPessoaisMes.filter(c => !c.pago);
-        const totalContasPessoais = contasPessoaisMes.reduce((a, c) => a + Number(c.valor || 0), 0);
-        const totalContasPagas = contasPagasMes.reduce((a, c) => a + Number(c.valor || 0), 0);
-        const totalContasPendentes = contasPendentesMes.reduce((a, c) => a + Number(c.valor || 0), 0);
-        const mediaContaPessoal = contasPessoaisMes.length ? totalContasPessoais / contasPessoaisMes.length : 0;
-        const gastosPessoaisMesPDF = gastosPessoais
-          .filter(g => g.data && mesAnoDeData(g.data) === mesAno)
-          .sort((a, b) => (a.data || '').localeCompare(b.data || ''));
-        const totalGastosPessoaisPDF = gastosPessoaisMesPDF.reduce((a, g) => a + Number(g.valor || 0), 0);
-        const totalVidaPessoalPDF = totalContasPessoais + totalGastosPessoaisPDF;
-        const gastosPessoaisPorCategoriaPDF = Object.entries(gastosPessoaisMesPDF.reduce((acc, g) => {
-          const cat = g.categoria || 'Outros';
-          acc[cat] = (acc[cat] || 0) + Number(g.valor || 0);
-          return acc;
-        }, {})).sort((a, b) => b[1] - a[1]);
 
         const corVerde = [18, 185, 129], corAzul = [40, 120, 232], corRoxo = [124, 77, 255],
           corLaranja = [255, 116, 18], corVermelho = [240, 68, 68], corNavy = [17, 24, 39],
@@ -4641,59 +3873,8 @@
           y += h + 3;
         });
 
-        // PÁGINAS — VIDA PESSOAL
-        novaPagina('Vida Pessoal');
-        tituloSecao('Resumo financeiro pessoal', 'As contas e gastos pessoais ficam separados dos custos da operação como motorista.');
-        kpiCard(margemX, y, w2, 'CONTAS DO MÊS', formatarMoeda(totalContasPessoais), corAzul, `${contasPessoaisMes.length} conta(s) cadastrada(s)`);
-        kpiCard(margemX + w2 + gap, y, w2, 'GASTOS DO DIA A DIA', formatarMoeda(totalGastosPessoaisPDF), corLaranja, `${gastosPessoaisMesPDF.length} lançamento(s) pessoal(is)`);
-        y += 34;
-        kpiCard(margemX, y, w2, 'CONTAS PAGAS', formatarMoeda(totalContasPagas), corVerde, `${contasPagasMes.length} de ${contasPessoaisMes.length} conta(s)`);
-        kpiCard(margemX + w2 + gap, y, w2, 'CONTAS PENDENTES', formatarMoeda(totalContasPendentes), corVermelho, `${contasPendentesMes.length} conta(s) ainda pendente(s)`);
-        y += 34;
-        tituloSecao('Indicadores pessoais');
-        tabelaLinha(['Custo pessoal total do mês', '', formatarMoeda(totalVidaPessoalPDF)], [120, 10, 50], { negrito: true });
-        tabelaLinha(['Média por conta cadastrada', '', formatarMoeda(mediaContaPessoal)], [120, 10, 50]);
-        tabelaLinha(['Percentual das contas já pago', '', contasPessoaisMes.length ? `${((contasPagasMes.length / contasPessoaisMes.length) * 100).toFixed(1).replace('.', ',')}%` : '0,0%'], [120, 10, 50]);
-        tabelaLinha(['Saldo do lucro operacional após custo pessoal', '', formatarMoeda(fechamento.lucro - totalVidaPessoalPDF)], [120, 10, 50], { negrito: true });
-
-        y += 5;
-        tituloSecao('Contas pessoais do mês', 'Situação de cada compromisso cadastrado na aba Despesas Pessoais.');
-        tabelaCabecalho(['Conta / vencimento', 'Situação', 'Valor'], [95, 35, 50]);
-        if (!contasPessoaisMes.length) {
-          tabelaLinha(['Nenhuma conta cadastrada', '', ''], [95, 35, 50]);
-        } else {
-          contasPessoaisMes.forEach(c => {
-            const parcela = Number(c.totalParcelas || 1) > 1 ? ` • ${c.numParcela || 1}/${c.totalParcelas}` : '';
-            tabelaLinha([`${c.nome || 'Conta'} • dia ${c.vencimento || '-'}${parcela}`, c.pago ? 'PAGA' : 'PENDENTE', formatarMoeda(c.valor)], [95, 35, 50], { tituloContinua: 'Vida Pessoal — Contas' });
-          });
-        }
-
-        novaPagina('Vida Pessoal — Gastos do Dia a Dia');
-        tituloSecao('Gastos pessoais por categoria', 'Padaria, mercado, lazer, família e demais gastos variáveis registrados no mês.');
-        tabelaCabecalho(['Categoria', '% dos gastos', 'Total'], [95, 35, 50]);
-        if (!gastosPessoaisPorCategoriaPDF.length) {
-          tabelaLinha(['Nenhum gasto pessoal lançado', '', ''], [95, 35, 50]);
-        } else {
-          gastosPessoaisPorCategoriaPDF.forEach(([cat, total]) => {
-            const pct = totalGastosPessoaisPDF > 0 ? total / totalGastosPessoaisPDF * 100 : 0;
-            tabelaLinha([cat, `${pct.toFixed(1).replace('.', ',')}%`, formatarMoeda(total)], [95, 35, 50], { tituloContinua: 'Vida Pessoal — Gastos' });
-          });
-        }
-        y += 5;
-        tituloSecao('Detalhamento dos gastos pessoais');
-        tabelaCabecalho(['Data / descrição', 'Categoria', 'Valor'], [95, 45, 40]);
-        if (!gastosPessoaisMesPDF.length) {
-          tabelaLinha(['Nenhum gasto pessoal lançado', '', ''], [95, 45, 40]);
-        } else {
-          gastosPessoaisMesPDF.forEach(g => {
-            const desc = String(g.descricao || 'Gasto pessoal');
-            const texto = `${fmtData(g.data)} • ${desc.length > 31 ? desc.slice(0, 29) + '…' : desc}`;
-            tabelaLinha([texto, g.categoria || 'Outros', formatarMoeda(g.valor)], [95, 45, 40], { tituloContinua: 'Vida Pessoal — Gastos' });
-          });
-        }
-
         // Observação metodológica
-        garantirEspaco(24, 'Vida Pessoal — Gastos');
+        garantirEspaco(24, 'Destaques e Comparativos');
         tituloSecao('Como o MAX ROTA calcula os dois lucros');
         doc.setFont('helvetica', 'normal'); doc.setFontSize(7.7); doc.setTextColor(...corCinza);
         const metodologia = doc.splitTextToSize('Lucro Líquido Operacional = faturamento menos todas as saídas lançadas no período (como combustível, passes, alimentação, manutenção e outros gastos). Lucro Líquido Real = lucro operacional menos os custos estruturais do veículo calculados pela aba Config. Veículo. O custo estrutural usado aqui não inclui combustível, evitando desconto em duplicidade.', larguraUtil);
@@ -5309,25 +4490,7 @@
       const aviso = document.getElementById('rentabilidade-sem-dados');
       if (aviso) aviso.style.display = pontos.length ? 'none' : 'block';
       const valores = pontos.map(p => Number(p[campo]));
-
-      // O card "Atual" deve representar a rentabilidade AO VIVO, e não apenas
-      // o último snapshot criado por uma corrida. A linha do gráfico continua
-      // intacta: cada lançamento de receita gera um ponto.
-      let atual = valores.length ? valores[valores.length - 1] : 0;
-      if (referencia === getDataHojeISO()) {
-        const entradasHoje = todosLancamentos
-          .filter(l => l.data === referencia && l.tipo === 'entrada')
-          .reduce((s, l) => s + (parseFloat(l.valor) || 0), 0);
-
-        if (modoGraficoRentabilidade === 'hora') {
-          const horasAoVivo = obterHorasTrabalhadasAtuais(referencia);
-          atual = horasAoVivo > 0 ? entradasHoje / horasAoVivo : 0;
-        } else {
-          const kmAoVivo = parseFloat(kmPorDia[referencia]) || 0;
-          atual = kmAoVivo > 0 ? entradasHoje / kmAoVivo : 0;
-        }
-      }
-
+      const atual = valores.length ? valores[valores.length - 1] : 0;
       const max = valores.length ? Math.max(...valores) : 0;
       const min = valores.length ? Math.min(...valores) : 0;
       const media = valores.length ? valores.reduce((a, v) => a + v, 0) / valores.length : 0;
@@ -5705,13 +4868,8 @@
       lucroLiquidoAcumuladoMes = entradasMes - saidasMes;
 
       const contasDoMes = bancoContas.filter(c => c.mesAno === mesSelecionado);
-      const totalDespesasMes = contasDoMes.reduce((acc, c) => acc + Number(c.valor || 0), 0);
-      const jaPago = contasDoMes.filter(c => c.pago).reduce((acc, c) => acc + Number(c.valor || 0), 0);
-      const gastosPessoaisDoMes = gastosPessoais
-        .filter(g => g.data && mesAnoDeData(g.data) === mesSelecionado)
-        .sort((a, b) => (b.data || '').localeCompare(a.data || '') || Number(b.id || 0) - Number(a.id || 0));
-      const totalGastosPessoais = gastosPessoaisDoMes.reduce((acc, g) => acc + Number(g.valor || 0), 0);
-      const totalVidaPessoal = totalDespesasMes + totalGastosPessoais;
+      const totalDespesasMes = contasDoMes.reduce((acc, c) => acc + c.valor, 0);
+      const jaPago = contasDoMes.filter(c => c.pago).reduce((acc, c) => acc + c.valor, 0);
 
       const [anoStr, mesStr] = mesSelecionado.split('-');
       const anoInt = parseInt(anoStr);
@@ -5746,18 +4904,16 @@
 
       const faltaPagar = Math.max(0, totalDespesasMes - jaPago);
       const faltaPagarPorDia = faltaPagar / diasRestantes;
-      const saldo = lucroLiquidoAcumuladoMes - totalVidaPessoal;
-      const precisaLucrarPorDia = Math.max(0, totalVidaPessoal - lucroLiquidoAcumuladoMes) / diasRestantes;
+      const saldo = lucroLiquidoAcumuladoMes - totalDespesasMes;
+      const precisaLucrarPorDia = Math.max(0, totalDespesasMes - lucroLiquidoAcumuladoMes) / diasRestantes;
 
       const linhasDespesas = [
-        { label: 'Contas planejadas do mês', valor: formatarMoeda(totalDespesasMes), corValor: 'var(--texto-principal)', negritoLabel: false },
-        { label: 'Gastos pessoais do dia a dia', valor: formatarMoeda(totalGastosPessoais), corValor: 'var(--max-orange)', negritoLabel: false },
-        { label: 'Custo pessoal total do mês', valor: formatarMoeda(totalVidaPessoal), corValor: 'var(--texto-principal)', negritoLabel: true },
-        { label: 'Contas já pagas', valor: formatarMoeda(jaPago), corValor: 'var(--max-green)', negritoLabel: false },
-        { label: 'Contas que faltam pagar', valor: formatarMoeda(faltaPagar), corValor: 'var(--max-yellow)', negritoLabel: false },
+        { label: 'Total de despesas do mês', valor: formatarMoeda(totalDespesasMes), corValor: 'var(--texto-principal)', negritoLabel: false },
+        { label: 'Já pago', valor: formatarMoeda(jaPago), corValor: 'var(--max-green)', negritoLabel: false },
+        { label: 'Falta pagar', valor: formatarMoeda(faltaPagar), corValor: 'var(--max-yellow)', negritoLabel: false },
         { label: 'Falta pagar / dia restante', valor: formatarMoeda(faltaPagarPorDia), corValor: 'var(--max-orange)', negritoLabel: false },
-        { label: 'Lucro líquido do trabalho no mês', valor: formatarMoeda(lucroLiquidoAcumuladoMes), corValor: 'var(--max-green)', negritoLabel: false },
-        { label: 'Saldo após vida pessoal', valor: formatarMoeda(saldo), corValor: saldo >= 0 ? 'var(--max-green)' : 'var(--max-red)', negritoLabel: true },
+        { label: 'Lucro líquido do mês (entradas - saídas do dia a dia)', valor: formatarMoeda(lucroLiquidoAcumuladoMes), corValor: 'var(--max-green)', negritoLabel: false },
+        { label: 'Saldo (lucro - despesas totais)', valor: formatarMoeda(saldo), corValor: saldo >= 0 ? 'var(--max-green)' : 'var(--max-red)', negritoLabel: false },
         { label: 'Precisa lucrar / dia p/ cobrir tudo', valor: formatarMoeda(precisaLucrarPorDia), corValor: 'var(--max-orange)', negritoLabel: true }
       ];
 
@@ -5772,46 +4928,6 @@
           </span>
         </div>
       `).join('');
-
-      const resumoGastos = document.getElementById('resumo-gastos-pessoais-mes');
-      const listaGastos = document.getElementById('lista-gastos-pessoais-mes');
-      if (resumoGastos) {
-        const porCategoria = gastosPessoaisDoMes.reduce((acc, g) => {
-          const cat = g.categoria || 'Outros';
-          acc[cat] = (acc[cat] || 0) + Number(g.valor || 0);
-          return acc;
-        }, {});
-        const categoriasOrdenadas = Object.entries(porCategoria).sort((a, b) => b[1] - a[1]);
-        resumoGastos.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items:center; padding: 10px 0 12px; border-bottom:1px solid var(--linha); margin-bottom:4px;">
-            <span style="font-size:13px; color:var(--texto-secundario);">Total variável no mês</span>
-            <strong style="font-size:16px; color:var(--max-orange);">${formatarMoeda(totalGastosPessoais)}</strong>
-          </div>
-          ${categoriasOrdenadas.length ? `<div style="display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 10px;">${categoriasOrdenadas.map(([cat, valor]) => `<span style="font-size:11px; padding:5px 8px; border-radius:999px; background:var(--fundo-input); color:var(--texto-secundario);">${escaparHtmlGasto(cat)}: <b style="color:var(--texto-principal);">${formatarMoeda(valor)}</b></span>`).join('')}</div>` : ''}
-        `;
-      }
-
-      if (listaGastos) {
-        if (gastosPessoaisDoMes.length === 0) {
-          listaGastos.innerHTML = `<p style="font-size:13px; color:var(--texto-secundario); text-align:center; padding:12px 0;">Nenhum gasto pessoal do dia a dia lançado neste mês.</p>`;
-        } else {
-          listaGastos.innerHTML = gastosPessoaisDoMes.map(g => `
-            <div class="item-row">
-              <div style="min-width:0; padding-right:8px;">
-                <h4 style="font-size:14px; font-weight:700; color:var(--texto-principal); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escaparHtmlGasto(g.descricao || g.categoria || 'Gasto pessoal')}</h4>
-                <p style="font-size:12px; color:var(--texto-secundario);">${escaparHtmlGasto(g.categoria || 'Outros')} • ${formatarDataBR(g.data)}</p>
-              </div>
-              <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
-                <span style="font-size:14px; font-weight:800; color:var(--max-orange);">${formatarMoeda(Number(g.valor || 0))}</span>
-                <button class="btn-status-pago ${g.pago ? 'pago' : 'pendente'}" onclick="alternarStatusPagoGasto('${g.id}')">
-                  ${g.pago ? '✓ PAGO' : '• PENDENTE'}
-                </button>
-                <button class="btn-delete-row" onclick="excluirGastoPessoal('${g.id}')" title="Excluir gasto pessoal"><i data-lucide="trash-2" size="14"></i></button>
-              </div>
-            </div>
-          `).join('');
-        }
-      }
 
       const containerLista = document.getElementById('lista-contas-mes');
       if (contasDoMes.length === 0) {
@@ -5842,83 +4958,11 @@
       criarIconesSeguro();
     }
 
-    function escaparHtmlGasto(valor) {
-      return String(valor ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-
-    async function cadastrarGastoPessoal() {
-      const inputData = document.getElementById('input-gasto-pessoal-data');
-      const inputCategoria = document.getElementById('input-gasto-pessoal-categoria');
-      const inputDescricao = document.getElementById('input-gasto-pessoal-descricao');
-      const inputValor = document.getElementById('input-gasto-pessoal-valor');
-
-      const data = inputData.value || getDataHojeISO();
-      const categoria = inputCategoria.value || 'Outros';
-      const descricao = inputDescricao.value.trim();
-      const valor = moedaParaNumero(inputValor.value);
-
-      if (!data || !Number.isFinite(valor) || valor <= 0) {
-        alert('Informe a data e um valor válido para o gasto pessoal.');
-        return;
-      }
-
-      gastosPessoais.push({
-        id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-        data,
-        categoria,
-        descricao: descricao || categoria,
-        valor,
-        pago: false
-      });
-
-      if (!(await storageSet('gastos-pessoais', gastosPessoais))) {
-        avisarFalhaDeSalvamento();
-        return;
-      }
-
-      mesDespesasSelecionado = mesAnoDeData(data);
-      document.getElementById('despesas-filtro-mes').value = mesDespesasSelecionado;
-      inputDescricao.value = '';
-      inputValor.value = '';
-      inputData.value = getDataHojeISO();
-      renderDespesas();
-    }
-
-    async function excluirGastoPessoal(id) {
-      gastosPessoais = gastosPessoais.filter(g => String(g.id) !== String(id));
-      if (!(await storageSet('gastos-pessoais', gastosPessoais))) {
-        avisarFalhaDeSalvamento();
-        return;
-      }
-      renderDespesas();
-    }
-
-    async function alternarStatusPagoGasto(id) {
-      const idx = gastosPessoais.findIndex(g => String(g.id) === String(id));
-      if (idx === -1) return;
-      gastosPessoais[idx].pago = !gastosPessoais[idx].pago;
-      if (!(await storageSet('gastos-pessoais', gastosPessoais))) {
-        gastosPessoais[idx].pago = !gastosPessoais[idx].pago;
-        avisarFalhaDeSalvamento();
-        return;
-      }
-      renderDespesas();
-    }
-
     async function alternarStatusPago(id) {
       const idx = bancoContas.findIndex(c => c.id === id);
       if (idx !== -1) {
         bancoContas[idx].pago = !bancoContas[idx].pago;
-        if (!(await storageSet('contas', bancoContas))) {
-          bancoContas[idx].pago = !bancoContas[idx].pago;
-          avisarFalhaDeSalvamento();
-          return;
-        }
+        await storageSet('contas', bancoContas);
         renderDespesas();
       }
     }
@@ -5942,13 +4986,8 @@
     }
 
     async function excluirConta(id) {
-      const contasAntes = bancoContas;
       bancoContas = bancoContas.filter(c => c.id !== id);
-      if (!(await storageSet('contas', bancoContas))) {
-        bancoContas = contasAntes;
-        avisarFalhaDeSalvamento();
-        return;
-      }
+      await storageSet('contas', bancoContas);
       renderDespesas();
     }
 
@@ -5978,7 +5017,7 @@
         const mesAnoChave = `${anoAtual}-${mesFormatted}`;
 
         const novaConta = {
-          id: `${Date.now()}_${p}_${Math.random().toString(36).slice(2, 7)}`,
+          id: Date.now().toString() + '_' + p,
           nome: nome,
           valor: valor,
           vencimento: vencimento,
@@ -5997,11 +5036,7 @@
         }
       }
 
-      if (!(await storageSet('contas', bancoContas))) {
-        bancoContas = bancoContas.slice(0, bancoContas.length - qtdParcelas);
-        avisarFalhaDeSalvamento();
-        return;
-      }
+      await storageSet('contas', bancoContas);
       renderDespesas();
 
       inputNome.value = '';
@@ -6070,16 +5105,7 @@
         if (typeof Chart !== 'undefined') graficosDesatualizados = false; // só marca como "em dia" se realmente conseguiu desenhar
         renderGraficosAnalise();
       }
-      if (tabId === 'historico') {
-        renderHistorico();
-        try {
-          const mesDiag = document.getElementById('historico-filtro-mes')?.value || mesHistoricoSelecionado || getMesAnoAtual();
-          renderDiagnosticoMaxRota(mesDiag);
-        } catch (e) {
-          console.error('Falha isolada no Diagnóstico MAX ROTA:', e);
-        }
-      }
-      if (tabId === 'radio') renderRecomendacoesHoje();
+      if (tabId === 'historico') renderHistorico();
       if (tabId === 'reserva') renderReserva();
       if (tabId === 'metas') renderProgressoMetas();
       if (tabId === 'cotacao') { preencherValorKmReferenciaCotacao(); calcularCotacao(); }
@@ -6639,84 +5665,6 @@
     }
 
     // ==========================================================================
-    // SINCRONIZAÇÃO SILENCIOSA ENTRE DISPOSITIVOS
-    // Atualiza somente dados em memória/tela. NÃO recarrega a página e, por isso,
-    // não reinicia nem interrompe a rádio que estiver tocando.
-    // ==========================================================================
-    let intervaloSincronizacaoSilenciosa = null;
-    let sincronizacaoSilenciosaEmAndamento = false;
-    const INTERVALO_SYNC_MS = 3 * 60 * 1000;
-
-    function aplicarRenderizacaoAposSync() {
-      tentar('sync atualizarPainelHoje', atualizarPainelHoje);
-      tentar('sync renderProgressoMetas', renderProgressoMetas);
-      tentar('sync renderRecomendacoesHoje', renderRecomendacoesHoje);
-      const ativa = document.querySelector('.tab-content.active');
-      if (!ativa) return;
-      if (ativa.id === 'tab-historico') tentar('sync renderHistorico', renderHistorico);
-      if (ativa.id === 'tab-despesas') tentar('sync renderDespesas', renderDespesas);
-      if (ativa.id === 'tab-reserva') tentar('sync renderReserva', renderReserva);
-      if (ativa.id === 'tab-servicos') tentar('sync renderServicos', renderServicos);
-      if (ativa.id === 'tab-analise') {
-        graficosDesatualizados = true;
-        tentar('sync renderGraficosAnalise', renderGraficosAnalise);
-        if (typeof Chart !== 'undefined') graficosDesatualizados = false;
-      }
-      criarIconesSeguro();
-    }
-
-    async function sincronizarDadosSilenciosamente() {
-      if (!usuarioAtual || !firestoreDB || sincronizacaoSilenciosaEmAndamento) return;
-      sincronizacaoSilenciosaEmAndamento = true;
-      try {
-        const [lanc, contas, gastos, serv, horas, config, finalizados, metasNuvem, reserva, taxa, km, snapshots] = await Promise.all([
-          storageGet('lancamentos', todosLancamentos),
-          storageGet('contas', bancoContas),
-          storageGet('gastos-pessoais', gastosPessoais),
-          storageGet('servicos', servicos),
-          storageGet('horas', horasPorDia),
-          storageGet('config-veiculo', null),
-          storageGet('dias-finalizados', diasFinalizados),
-          storageGet('metas', metas),
-          storageGet('reserva-por-dia', reservaPorDia),
-          storageGet('reserva-taxa', reservaTaxaMensal),
-          storageGet('km-por-dia', kmPorDia),
-          storageGet('rentabilidade-snapshots', rentabilidadeSnapshots)
-        ]);
-        todosLancamentos = Array.isArray(lanc) ? lanc : todosLancamentos;
-        bancoContas = Array.isArray(contas) ? contas : bancoContas;
-        gastosPessoais = Array.isArray(gastos) ? gastos : gastosPessoais;
-        servicos = Array.isArray(serv) ? serv : servicos;
-        horasPorDia = horas && typeof horas === 'object' ? horas : horasPorDia;
-        diasFinalizados = finalizados && typeof finalizados === 'object' ? finalizados : diasFinalizados;
-        metas = metasNuvem && typeof metasNuvem === 'object' ? metasNuvem : metas;
-        if (!Number.isFinite(Number(metas.liquidaDiaria))) metas.liquidaDiaria = 0;
-        reservaPorDia = reserva && typeof reserva === 'object' ? reserva : reservaPorDia;
-        reservaTaxaMensal = Number(taxa || 0);
-        kmPorDia = km && typeof km === 'object' ? km : kmPorDia;
-        rentabilidadeSnapshots = Array.isArray(snapshots) ? snapshots : rentabilidadeSnapshots;
-        if (config) tentar('sync config veículo', () => aplicarConfigVeiculoNaTela(config));
-        aplicarRenderizacaoAposSync();
-        console.info('MAX ROTA: sincronização silenciosa concluída', new Date().toLocaleTimeString('pt-BR'));
-      } catch (e) {
-        // Silencioso de propósito: uma oscilação de internet não interrompe o uso nem a rádio.
-        console.warn('MAX ROTA: sincronização silenciosa não concluída', e);
-      } finally {
-        sincronizacaoSilenciosaEmAndamento = false;
-      }
-    }
-
-    function iniciarSincronizacaoSilenciosa() {
-      if (intervaloSincronizacaoSilenciosa) clearInterval(intervaloSincronizacaoSilenciosa);
-      intervaloSincronizacaoSilenciosa = setInterval(sincronizarDadosSilenciosamente, INTERVALO_SYNC_MS);
-    }
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') sincronizarDadosSilenciosamente();
-    });
-    window.addEventListener('focus', () => sincronizarDadosSilenciosamente());
-
-    // ==========================================================================
     // CARREGAMENTO INICIAL (assíncrono — busca tudo do storage real)
     // ==========================================================================
     // Função global reutilizável: roda uma etapa isolada — se uma falhar, as
@@ -6731,7 +5679,6 @@
       tentar('data-selecionada', () => { document.getElementById('input-data-selecionada').value = dataSelecionada; });
       tentar('data-servico', () => { document.getElementById('input-servico-data').value = getDataHojeISO(); });
       tentar('data-reserva', () => { document.getElementById('input-data-reserva').value = dataSelecionadaReserva; });
-      tentar('data-gasto-pessoal', () => { document.getElementById('input-gasto-pessoal-data').value = getDataHojeISO(); });
       criarIconesSeguro();
 
       // A partir daqui, espera o login pra saber se mostra a tela de entrar
@@ -6742,14 +5689,13 @@
     // Chamada depois que o Firebase confirma quem é o usuário logado —
     // carrega os dados DELE (separados por conta) e liga o app.
     async function carregarDadosDoUsuarioEIniciarApp() {
-      let lancamentosSalvos = [], contasSalvas = [], gastosPessoaisSalvos = [], servicosSalvos = [], horasSalvas = {},
+      let lancamentosSalvos = [], contasSalvas = [], servicosSalvos = [], horasSalvas = {},
           configVeiculoSalva = null, diasFinalizadosSalvos = {}, metasSalvas = { diaria: 0, liquidaDiaria: 0, semanal: 0 },
           reservaPorDiaSalva = {}, reservaTaxaSalva = 0, kmPorDiaSalvo = {}, rentabilidadeSnapshotsSalvos = [];
       try {
-        [lancamentosSalvos, contasSalvas, gastosPessoaisSalvos, servicosSalvos, horasSalvas, configVeiculoSalva, diasFinalizadosSalvos, metasSalvas, reservaPorDiaSalva, reservaTaxaSalva, kmPorDiaSalvo, rentabilidadeSnapshotsSalvos] = await Promise.all([
+        [lancamentosSalvos, contasSalvas, servicosSalvos, horasSalvas, configVeiculoSalva, diasFinalizadosSalvos, metasSalvas, reservaPorDiaSalva, reservaTaxaSalva, kmPorDiaSalvo, rentabilidadeSnapshotsSalvos] = await Promise.all([
           storageGet('lancamentos', []),
           storageGet('contas', []),
-          storageGet('gastos-pessoais', []),
           storageGet('servicos', []),
           storageGet('horas', {}),
           storageGet('config-veiculo', null),
@@ -6773,7 +5719,6 @@
 
       todosLancamentos = lancamentosSalvos || [];
       bancoContas = contasSalvas || [];
-      gastosPessoais = Array.isArray(gastosPessoaisSalvos) ? gastosPessoaisSalvos : [];
       servicos = servicosSalvos || [];
       horasPorDia = horasSalvas || {};
       kmPorDia = kmPorDiaSalvo || {};
@@ -6817,9 +5762,7 @@
       tentar('renderReserva', renderReserva);
       tentar('renderProgressoMetas', renderProgressoMetas);
       tentar('renderServicos', renderServicos);
-      tentar('renderRecomendacoesHoje', renderRecomendacoesHoje);
       tentar('calcularCustoPorKM', () => calcularCustoPorKM(false));
-      iniciarSincronizacaoSilenciosa();
 
       // Se o usuário tiver clicado na aba Gráficos antes dos dados chegarem,
       // os gráficos podem ter sido montados com a tela ainda vazia — então
@@ -6833,16 +5776,5 @@
       criarIconesSeguro();
     }
   </script>
-
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => {
-      console.warn('MAX ROTA: service worker não pôde ser registrado.', err);
-    });
-  });
-}
-</script>
-
 </body>
 </html>
