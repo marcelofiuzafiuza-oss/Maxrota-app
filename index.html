@@ -5711,11 +5711,9 @@
       const saidasMes = todosLancamentos.filter(l => l.tipo === 'saida' && mesAnoDeData(l.data) === mesSelecionado).reduce((a, l) => a + l.valor, 0);
       lucroLiquidoAcumuladoMes = entradasMes - saidasMes;
 
-      const contasDoMes = bancoContas
-        .map((conta, indiceBanco) => ({ conta, indiceBanco }))
-        .filter(item => item.conta.mesAno === mesSelecionado);
-      const totalDespesasMes = contasDoMes.reduce((acc, item) => acc + Number(item.conta.valor || 0), 0);
-      const jaPago = contasDoMes.filter(item => contaEstaPaga(item.conta.pago)).reduce((acc, item) => acc + Number(item.conta.valor || 0), 0);
+      const contasDoMes = bancoContas.filter(c => c.mesAno === mesSelecionado);
+      const totalDespesasMes = contasDoMes.reduce((acc, c) => acc + Number(c.valor || 0), 0);
+      const jaPago = contasDoMes.filter(c => contaEstaPaga(c.pago)).reduce((acc, c) => acc + Number(c.valor || 0), 0);
       const gastosPessoaisDoMes = gastosPessoais
         .filter(g => g.data && mesAnoDeData(g.data) === mesSelecionado)
         .sort((a, b) => (b.data || '').localeCompare(a.data || '') || Number(b.id || 0) - Number(a.id || 0));
@@ -5738,14 +5736,14 @@
       const alertasContainer = document.getElementById('alertas-despesas');
       if (hoje.getFullYear() === anoInt && (hoje.getMonth() + 1) === mesInt) {
         const diaHoje = hoje.getDate();
-        const vencendoHoje = contasDoMes.filter(item => !contaEstaPaga(item.conta.pago) && Number(item.conta.vencimento) === diaHoje);
-        const vencendoAmanha = contasDoMes.filter(item => !contaEstaPaga(item.conta.pago) && Number(item.conta.vencimento) === diaHoje + 1);
+        const vencendoHoje = contasDoMes.filter(c => !contaEstaPaga(c.pago) && Number(c.vencimento) === diaHoje);
+        const vencendoAmanha = contasDoMes.filter(c => !contaEstaPaga(c.pago) && Number(c.vencimento) === diaHoje + 1);
         let htmlAlertas = '';
         if (vencendoHoje.length > 0) {
-          htmlAlertas += `<div class="alerta-despesa"><i data-lucide="alert-triangle" size="20" style="color:#D97706;"></i><div><h4 style="font-size:13px; font-weight:700; color:#92400E;">Vencendo hoje</h4><p style="font-size:12px; color:#B45309;">${vencendoHoje.map(item => item.conta.nome).join(', ')}</p></div></div>`;
+          htmlAlertas += `<div class="alerta-despesa"><i data-lucide="alert-triangle" size="20" style="color:#D97706;"></i><div><h4 style="font-size:13px; font-weight:700; color:#92400E;">Vencendo hoje</h4><p style="font-size:12px; color:#B45309;">${vencendoHoje.map(c => c.nome).join(', ')}</p></div></div>`;
         }
         if (vencendoAmanha.length > 0) {
-          htmlAlertas += `<div class="alerta-despesa"><i data-lucide="bell-ring" size="20" style="color:#D97706;"></i><div><h4 style="font-size:13px; font-weight:700; color:#92400E;">Vencendo amanhã</h4><p style="font-size:12px; color:#B45309;">${vencendoAmanha.map(item => item.conta.nome).join(', ')}</p></div></div>`;
+          htmlAlertas += `<div class="alerta-despesa"><i data-lucide="bell-ring" size="20" style="color:#D97706;"></i><div><h4 style="font-size:13px; font-weight:700; color:#92400E;">Vencendo amanhã</h4><p style="font-size:12px; color:#B45309;">${vencendoAmanha.map(c => c.nome).join(', ')}</p></div></div>`;
         }
         alertasContainer.innerHTML = htmlAlertas;
         criarIconesSeguro();
@@ -5823,7 +5821,7 @@
       if (contasDoMes.length === 0) {
         containerLista.innerHTML = `<p style="font-size: 13px; color: var(--texto-secundario); text-align: center; padding: 12px 0;">Nenhuma conta lançada para este mês.</p>`;
       } else {
-        containerLista.innerHTML = contasDoMes.map(({ conta, indiceBanco }) => `
+        containerLista.innerHTML = contasDoMes.map(conta => `
           <div class="item-row">
             <div>
               <h4 style="font-size: 14px; font-weight: 700; color: var(--texto-principal);">
@@ -5834,19 +5832,11 @@
             <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
               <span style="font-size: 14px; font-weight: 800; color: var(--texto-principal);">${formatarMoeda(conta.valor)}</span>
               <div style="display: flex; align-items: center; gap: 6px;">
-                <button type="button"
-                        class="btn-status-pago ${contaEstaPaga(conta.pago) ? 'pago' : 'pendente'}"
-                        data-conta-action="status"
-                        data-conta-index="${indiceBanco}">
+                <button type="button" class="btn-status-pago ${contaEstaPaga(conta.pago) ? 'pago' : 'pendente'}" onclick="alternarStatusPago('${String(conta.id).replace(/'/g, "\'")}')">
                   ${contaEstaPaga(conta.pago) ? '✓ PAGO' : '• PENDENTE'}
                 </button>
-                <button type="button"
-                        class="btn-delete-row"
-                        data-conta-action="excluir"
-                        data-conta-index="${indiceBanco}"
-                        title="Excluir conta"
-                        style="${contaParaConfirmarExclusao !== null && Number(indiceBanco) === Number(contaParaConfirmarExclusao) ? 'background: var(--max-red); color: white; width: auto; padding: 0 10px; font-size: 10px; font-weight: 800; border-radius: 8px;' : ''}">
-                  ${contaParaConfirmarExclusao !== null && Number(indiceBanco) === Number(contaParaConfirmarExclusao) ? 'CONFIRMAR?' : '<i data-lucide="trash-2" size="14"></i>'}
+                <button type="button" class="btn-delete-row" onclick="pedirConfirmacaoExclusaoConta('${String(conta.id).replace(/'/g, "\'")}')" title="Excluir conta" style="${String(conta.id) === String(contaParaConfirmarExclusao) ? 'background: var(--max-red); color: white; width: auto; padding: 0 10px; font-size: 10px; font-weight: 800; border-radius: 8px;' : ''}">
+                  ${String(conta.id) === String(contaParaConfirmarExclusao) ? 'CONFIRMAR?' : '<i data-lucide="trash-2" size="14"></i>'}
                 </button>
               </div>
             </div>
@@ -5911,50 +5901,15 @@
       renderDespesas();
     }
 
-    function normalizarContaPessoalParaSalvar(conta, indice = 0) {
-      const agora = Date.now();
-      const mesAno = /^\d{4}-\d{2}$/.test(String(conta && conta.mesAno || ''))
-        ? String(conta.mesAno)
-        : mesDespesasSelecionado || getMesAnoAtual();
-
-      const valorNumero = Number(conta && conta.valor);
-      const vencNumero = parseInt(conta && conta.vencimento);
-      const qtdNumero = Math.max(1, parseInt(conta && conta.totalParcelas) || 1);
-      const parcelaNumero = Math.max(1, parseInt(conta && conta.numParcela) || 1);
-
-      return {
-        id: String(conta && conta.id != null && conta.id !== ''
-          ? conta.id
-          : `${agora}_${indice}_${Math.random().toString(36).slice(2, 8)}`),
-        nome: String(conta && conta.nome != null ? conta.nome : 'Conta').trim() || 'Conta',
-        valor: Number.isFinite(valorNumero) ? valorNumero : 0,
-        vencimento: Number.isFinite(vencNumero) ? Math.min(31, Math.max(1, vencNumero)) : 1,
-        mesAno,
-        pago: contaEstaPaga(conta && conta.pago),
-        numParcela: parcelaNumero,
-        totalParcelas: qtdNumero
-      };
-    }
-
-    async function salvarContasPessoaisSeguro(lista) {
-      // Regrava somente o documento "contas", limpando formatos antigos
-      // que possam impedir qualquer nova gravação no Firestore.
-      const limpa = (Array.isArray(lista) ? lista : [])
-        .map((c, i) => normalizarContaPessoalParaSalvar(c, i));
-
-      const salvou = await storageSet('contas', limpa);
-      if (salvou) {
-        bancoContas = limpa;
-        return true;
-      }
-      return false;
-    }
-
     async function alternarStatusPago(id) {
       const idx = bancoContas.findIndex(c => String(c.id) === String(id));
       if (idx !== -1) {
-        bancoContas[idx].pago = !bancoContas[idx].pago;
-        await storageSet('contas', bancoContas);
+        bancoContas[idx].pago = !contaEstaPaga(bancoContas[idx].pago);
+        const salvou = await storageSet('contas', bancoContas);
+        if (!salvou) {
+          bancoContas[idx].pago = !contaEstaPaga(bancoContas[idx].pago);
+          avisarFalhaDeSalvamento();
+        }
         renderDespesas();
       }
     }
@@ -5962,7 +5917,7 @@
     let contaParaConfirmarExclusao = null;
 
     function pedirConfirmacaoExclusaoConta(id) {
-      if (String(contaParaConfirmarExclusao) === String(id)) {
+      if (String(contaParaConfirmarExclusao) === String(id) && contaParaConfirmarExclusao !== null) {
         contaParaConfirmarExclusao = null;
         excluirConta(id);
       } else {
@@ -5978,107 +5933,15 @@
     }
 
     async function excluirConta(id) {
+      const anterior = bancoContas.slice();
       bancoContas = bancoContas.filter(c => String(c.id) !== String(id));
-      await storageSet('contas', bancoContas);
-      renderDespesas();
-    }
-
-    async function alternarStatusPagoPorIndice(indice) {
-      if (!Number.isInteger(indice) || indice < 0 || indice >= bancoContas.length) return;
-
-      const anterior = bancoContas.map(c => ({ ...c }));
-      bancoContas[indice].pago = !contaEstaPaga(bancoContas[indice].pago);
-      renderDespesas();
-
-      const salvou = await salvarContasPessoaisSeguro(bancoContas);
+      const salvou = await storageSet('contas', bancoContas);
       if (!salvou) {
         bancoContas = anterior;
-        renderDespesas();
         avisarFalhaDeSalvamento();
-        return;
       }
-
       renderDespesas();
     }
-
-    let contaIndiceParaConfirmarExclusao = null;
-    let timerConfirmacaoExclusaoConta = null;
-
-    function limparConfirmacaoExclusaoConta() {
-      contaIndiceParaConfirmarExclusao = null;
-      contaParaConfirmarExclusao = null;
-      if (timerConfirmacaoExclusaoConta) {
-        clearTimeout(timerConfirmacaoExclusaoConta);
-        timerConfirmacaoExclusaoConta = null;
-      }
-    }
-
-    function pedirConfirmacaoExclusaoContaPorIndice(indice) {
-      if (!Number.isInteger(indice) || indice < 0 || indice >= bancoContas.length) return;
-
-      const mesmaConta = contaIndiceParaConfirmarExclusao !== null &&
-        Number(contaIndiceParaConfirmarExclusao) === Number(indice);
-
-      if (mesmaConta) {
-        limparConfirmacaoExclusaoConta();
-        excluirContaPorIndice(indice);
-        return;
-      }
-
-      limparConfirmacaoExclusaoConta();
-      contaIndiceParaConfirmarExclusao = indice;
-      contaParaConfirmarExclusao = indice;
-      renderDespesas();
-
-      timerConfirmacaoExclusaoConta = setTimeout(() => {
-        const aindaMesma = contaIndiceParaConfirmarExclusao !== null &&
-          Number(contaIndiceParaConfirmarExclusao) === Number(indice);
-        if (aindaMesma) {
-          limparConfirmacaoExclusaoConta();
-          renderDespesas();
-        }
-      }, 3000);
-    }
-
-    async function excluirContaPorIndice(indice) {
-      if (!Number.isInteger(indice) || indice < 0 || indice >= bancoContas.length) return;
-
-      const anterior = bancoContas.map(c => ({ ...c }));
-      bancoContas.splice(indice, 1);
-      limparConfirmacaoExclusaoConta();
-      renderDespesas();
-
-      const salvou = await salvarContasPessoaisSeguro(bancoContas);
-      if (!salvou) {
-        bancoContas = anterior;
-        renderDespesas();
-        avisarFalhaDeSalvamento();
-        return;
-      }
-
-      renderDespesas();
-    }
-
-    // Controles das Contas Pessoais usam delegação de eventos.
-    // Isso continua funcionando mesmo quando a lista é recriada após sincronização.
-    document.addEventListener('click', function(event) {
-      const botao = event.target.closest('[data-conta-action]');
-      if (!botao) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      const indice = Number(botao.getAttribute('data-conta-index'));
-      const acao = botao.getAttribute('data-conta-action');
-
-      if (!Number.isInteger(indice) || indice < 0 || indice >= bancoContas.length) return;
-
-      if (acao === 'status') {
-        alternarStatusPagoPorIndice(indice);
-      } else if (acao === 'excluir') {
-        pedirConfirmacaoExclusaoContaPorIndice(indice);
-      }
-    });
 
     async function cadastrarNovaConta() {
       const inputNome = document.getElementById('input-conta-nome');
@@ -6086,40 +5949,38 @@
       const inputVencimento = document.getElementById('input-conta-vencimento');
       const inputQtdParcelas = document.getElementById('input-conta-qtd-parcelas');
 
-      const nome = String(inputNome.value || '').trim();
+      const nome = inputNome.value.trim();
       const valor = moedaParaNumero(inputValor.value);
-      const vencimento = parseInt(inputVencimento.value, 10);
-      const qtdParcelas = Math.max(1, parseInt(inputQtdParcelas.value, 10) || 1);
+      const vencimento = parseInt(inputVencimento.value);
+      const qtdParcelas = parseInt(inputQtdParcelas.value) || 1;
 
-      if (!nome || !Number.isFinite(valor) || valor <= 0 ||
-          !Number.isFinite(vencimento) || vencimento < 1 || vencimento > 31) {
-        alert('Preencha todos os campos da conta corretamente!');
+      if (!nome || isNaN(valor) || valor <= 0 || isNaN(vencimento) || vencimento < 1 || vencimento > 31) {
+        alert("Preencha todos os campos da conta corretamente!");
         return;
       }
 
-      const mesInicialStr = /^\d{4}-\d{2}$/.test(String(mesDespesasSelecionado || ''))
-        ? mesDespesasSelecionado
-        : getMesAnoAtual();
-
+      const mesInicialStr = mesDespesasSelecionado;
       const [anoStr, mesStr] = mesInicialStr.split('-');
-      let anoAtual = parseInt(anoStr, 10);
-      let mesAtual = parseInt(mesStr, 10);
-
-      const anterior = bancoContas.map(c => ({ ...c }));
-      const novas = [];
+      let anoAtual = parseInt(anoStr);
+      let mesAtual = parseInt(mesStr);
+      const anterior = bancoContas.slice();
 
       for (let p = 1; p <= qtdParcelas; p++) {
         const mesFormatted = String(mesAtual).padStart(2, '0');
-        novas.push({
-          id: `${Date.now()}_${p}_${Math.random().toString(36).slice(2, 7)}`,
-          nome,
-          valor,
-          vencimento,
-          mesAno: `${anoAtual}-${mesFormatted}`,
+        const mesAnoChave = `${anoAtual}-${mesFormatted}`;
+
+        const novaConta = {
+          id: Date.now().toString() + '_' + p,
+          nome: nome,
+          valor: valor,
+          vencimento: vencimento,
+          mesAno: mesAnoChave,
           pago: false,
           numParcela: p,
           totalParcelas: qtdParcelas
-        });
+        };
+
+        bancoContas.push(novaConta);
 
         mesAtual++;
         if (mesAtual > 12) {
@@ -6128,10 +5989,7 @@
         }
       }
 
-      bancoContas = [...bancoContas, ...novas];
-      renderDespesas();
-
-      const salvou = await salvarContasPessoaisSeguro(bancoContas);
+      const salvou = await storageSet('contas', bancoContas);
       if (!salvou) {
         bancoContas = anterior;
         renderDespesas();
@@ -6143,8 +6001,8 @@
       inputValor.value = '';
       inputVencimento.value = '';
       inputQtdParcelas.value = '1';
-
       renderDespesas();
+
       alert(qtdParcelas > 1
         ? `${qtdParcelas} parcelas lançadas com sucesso!`
         : 'Conta lançada com sucesso!');
