@@ -5828,8 +5828,8 @@
                 <button class="btn-status-pago ${conta.pago ? 'pago' : 'pendente'}" onclick="alternarStatusPago('${conta.id}')">
                   ${conta.pago ? '✓ PAGO' : '• PENDENTE'}
                 </button>
-                <button class="btn-delete-row" onclick="pedirConfirmacaoExclusaoConta('${conta.id}')" title="Excluir conta" style="${conta.id === contaParaConfirmarExclusao ? 'background: var(--max-red); color: white; width: auto; padding: 0 10px; font-size: 10px; font-weight: 800; border-radius: 8px;' : ''}">
-                  ${conta.id === contaParaConfirmarExclusao ? 'CONFIRMAR?' : '<i data-lucide="trash-2" size="14"></i>'}
+                <button class="btn-delete-row" onclick="pedirConfirmacaoExclusaoConta('${conta.id}')" title="Excluir conta" style="${String(conta.id) === String(contaParaConfirmarExclusao) ? 'background: var(--max-red); color: white; width: auto; padding: 0 10px; font-size: 10px; font-weight: 800; border-radius: 8px;' : ''}">
+                  ${String(conta.id) === String(contaParaConfirmarExclusao) ? 'CONFIRMAR?' : '<i data-lucide="trash-2" size="14"></i>'}
                 </button>
               </div>
             </div>
@@ -5895,7 +5895,7 @@
     }
 
     async function alternarStatusPago(id) {
-      const idx = bancoContas.findIndex(c => c.id === id);
+      const idx = bancoContas.findIndex(c => String(c.id) === String(id));
       if (idx !== -1) {
         bancoContas[idx].pago = !bancoContas[idx].pago;
         await storageSet('contas', bancoContas);
@@ -5906,14 +5906,14 @@
     let contaParaConfirmarExclusao = null;
 
     function pedirConfirmacaoExclusaoConta(id) {
-      if (contaParaConfirmarExclusao === id) {
+      if (String(contaParaConfirmarExclusao) === String(id)) {
         contaParaConfirmarExclusao = null;
         excluirConta(id);
       } else {
         contaParaConfirmarExclusao = id;
         renderDespesas();
         setTimeout(() => {
-          if (contaParaConfirmarExclusao === id) {
+          if (String(contaParaConfirmarExclusao) === String(id)) {
             contaParaConfirmarExclusao = null;
             renderDespesas();
           }
@@ -5922,7 +5922,7 @@
     }
 
     async function excluirConta(id) {
-      bancoContas = bancoContas.filter(c => c.id !== id);
+      bancoContas = bancoContas.filter(c => String(c.id) !== String(id));
       await storageSet('contas', bancoContas);
       renderDespesas();
     }
@@ -6663,6 +6663,12 @@
         ]);
         todosLancamentos = Array.isArray(lanc) ? lanc : todosLancamentos;
         bancoContas = Array.isArray(contas) ? contas : bancoContas;
+        // Atualiza contas pessoais imediatamente após a sincronização silenciosa.
+        try {
+          renderDespesas();
+        } catch (e) {
+          console.warn('MAX ROTA: falha ao redesenhar Despesas Pessoais na sincronização.', e);
+        }
         gastosPessoais = Array.isArray(gastos) ? gastos : gastosPessoais;
         servicos = Array.isArray(serv) ? serv : servicos;
         horasPorDia = horas && typeof horas === 'object' ? horas : horasPorDia;
@@ -6751,6 +6757,18 @@
 
       todosLancamentos = lancamentosSalvos || [];
       bancoContas = contasSalvas || [];
+      // As contas já chegaram do Firebase: redesenha a aba pessoal agora,
+      // evitando que o mês atual fique vazio até mexer no seletor.
+      try {
+        const filtroMes = document.getElementById('despesas-filtro-mes');
+        if (filtroMes) {
+          if (!mesDespesasSelecionado) mesDespesasSelecionado = getMesAnoAtual();
+          filtroMes.value = mesDespesasSelecionado;
+        }
+        renderDespesas();
+      } catch (e) {
+        console.warn('MAX ROTA: não foi possível atualizar Despesas Pessoais após o carregamento.', e);
+      }
       gastosPessoais = Array.isArray(gastosPessoaisSalvos) ? gastosPessoaisSalvos : [];
       servicos = servicosSalvos || [];
       horasPorDia = horasSalvas || {};
