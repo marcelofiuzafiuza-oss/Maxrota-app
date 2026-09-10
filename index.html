@@ -5734,23 +5734,41 @@
         diasRestantes = Math.max(1, ultimoDiaDoMes - hoje.getDate() + 1);
       }
 
-      // Alerta de contas vencendo hoje/amanhã (só faz sentido pro mês atual)
-      const alertasContainer = document.getElementById('alertas-despesas');
-      if (hoje.getFullYear() === anoInt && (hoje.getMonth() + 1) === mesInt) {
-        const diaHoje = hoje.getDate();
-        const vencendoHoje = contasDoMes.filter(c => !contaEstaPaga(c.pago) && Number(c.vencimento) === diaHoje);
-        const vencendoAmanha = contasDoMes.filter(c => !contaEstaPaga(c.pago) && Number(c.vencimento) === diaHoje + 1);
-        let htmlAlertas = '';
-        if (vencendoHoje.length > 0) {
-          htmlAlertas += `<div class="alerta-despesa"><i data-lucide="alert-triangle" size="20" style="color:#D97706;"></i><div><h4 style="font-size:13px; font-weight:700; color:#92400E;">Vencendo hoje</h4><p style="font-size:12px; color:#B45309;">${vencendoHoje.map(c => c.nome).join(', ')}</p></div></div>`;
+      // V12: alertas do mês atual são auxiliares e nunca podem interromper renderDespesas().
+      // A lista/CRUD das contas precisa continuar renderizando mesmo se houver dado legado
+      // inesperado ou qualquer falha visual neste bloco.
+      try {
+        const alertasContainer = document.getElementById('alertas-despesas');
+
+        if (alertasContainer) {
+          if (hoje.getFullYear() === anoInt && (hoje.getMonth() + 1) === mesInt) {
+            const diaHoje = hoje.getDate();
+            const vencendoHoje = contasDoMes.filter(c =>
+              !contaEstaPaga(c && c.pago) &&
+              Number(c && c.vencimento) === diaHoje
+            );
+            const vencendoAmanha = contasDoMes.filter(c =>
+              !contaEstaPaga(c && c.pago) &&
+              Number(c && c.vencimento) === diaHoje + 1
+            );
+
+            let htmlAlertas = '';
+
+            if (vencendoHoje.length > 0) {
+              htmlAlertas += `<div class="alerta-despesa"><i data-lucide="alert-triangle" size="20" style="color:#D97706;"></i><div><h4 style="font-size:13px; font-weight:700; color:#92400E;">Vencendo hoje</h4><p style="font-size:12px; color:#B45309;">${vencendoHoje.map(c => String(c && c.nome != null ? c.nome : 'Conta')).join(', ')}</p></div></div>`;
+            }
+
+            if (vencendoAmanha.length > 0) {
+              htmlAlertas += `<div class="alerta-despesa"><i data-lucide="bell-ring" size="20" style="color:#D97706;"></i><div><h4 style="font-size:13px; font-weight:700; color:#92400E;">Vencendo amanhã</h4><p style="font-size:12px; color:#B45309;">${vencendoAmanha.map(c => String(c && c.nome != null ? c.nome : 'Conta')).join(', ')}</p></div></div>`;
+            }
+
+            alertasContainer.innerHTML = htmlAlertas;
+          } else {
+            alertasContainer.innerHTML = '';
+          }
         }
-        if (vencendoAmanha.length > 0) {
-          htmlAlertas += `<div class="alerta-despesa"><i data-lucide="bell-ring" size="20" style="color:#D97706;"></i><div><h4 style="font-size:13px; font-weight:700; color:#92400E;">Vencendo amanhã</h4><p style="font-size:12px; color:#B45309;">${vencendoAmanha.map(c => c.nome).join(', ')}</p></div></div>`;
-        }
-        alertasContainer.innerHTML = htmlAlertas;
-        criarIconesSeguro();
-      } else {
-        alertasContainer.innerHTML = '';
+      } catch (erroAlertasDespesas) {
+        console.error('Erro não bloqueante nos alertas de despesas:', erroAlertasDespesas);
       }
 
       const faltaPagar = Math.max(0, totalDespesasMes - jaPago);

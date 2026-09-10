@@ -1,4 +1,4 @@
-const CACHE_NAME = 'maxrota-pwa-v11-contas-id-mes';
+const CACHE_NAME = 'maxrota-pwa-v12-render-setembro';
 const APP_SHELL = [
   './',
   './index.html',
