@@ -6051,6 +6051,13 @@
         }
       }
       if (tabId === 'radio') renderRecomendacoesHoje();
+      if (tabId === 'despesas') {
+        const filtroMesDespesas = document.getElementById('despesas-filtro-mes');
+        if (filtroMesDespesas && filtroMesDespesas.value) {
+          mesDespesasSelecionado = filtroMesDespesas.value;
+        }
+        renderDespesas();
+      }
       if (tabId === 'reserva') renderReserva();
       if (tabId === 'metas') renderProgressoMetas();
       if (tabId === 'cotacao') { preencherValorKmReferenciaCotacao(); calcularCotacao(); }
