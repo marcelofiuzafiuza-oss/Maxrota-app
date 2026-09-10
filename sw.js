@@ -1,4 +1,4 @@
-const CACHE_NAME = 'maxrota-pwa-v1';
+const CACHE_NAME = 'maxrota-pwa-v4';
 const APP_SHELL = [
   './',
   './index.html',
@@ -26,13 +26,9 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET') return;
-
   const url = new URL(request.url);
-
-  // Não interfere em Firebase, rádio ou qualquer recurso externo.
   if (url.origin !== self.location.origin) return;
 
-  // Para o HTML, usa rede primeiro para receber atualizações novas.
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
@@ -46,13 +42,9 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Cache somente dos arquivos estáticos do PWA.
   const staticFiles = [
-    'manifest.webmanifest',
-    'icon-192.png',
-    'icon-512.png',
-    'icon-maskable-512.png',
-    'apple-touch-icon.png'
+    'manifest.webmanifest','icon-192.png','icon-512.png',
+    'icon-maskable-512.png','apple-touch-icon.png'
   ];
 
   if (staticFiles.some(name => url.pathname.endsWith('/' + name) || url.pathname.endsWith(name))) {

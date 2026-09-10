@@ -5825,10 +5825,18 @@
             <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
               <span style="font-size: 14px; font-weight: 800; color: var(--texto-principal);">${formatarMoeda(conta.valor)}</span>
               <div style="display: flex; align-items: center; gap: 6px;">
-                <button class="btn-status-pago ${conta.pago ? 'pago' : 'pendente'}" onclick="alternarStatusPago('${conta.id}')">
+                <button type="button"
+                        class="btn-status-pago ${conta.pago ? 'pago' : 'pendente'}"
+                        data-conta-action="status"
+                        data-conta-id="${String(conta.id).replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">
                   ${conta.pago ? '✓ PAGO' : '• PENDENTE'}
                 </button>
-                <button class="btn-delete-row" onclick="pedirConfirmacaoExclusaoConta('${conta.id}')" title="Excluir conta" style="${String(conta.id) === String(contaParaConfirmarExclusao) ? 'background: var(--max-red); color: white; width: auto; padding: 0 10px; font-size: 10px; font-weight: 800; border-radius: 8px;' : ''}">
+                <button type="button"
+                        class="btn-delete-row"
+                        data-conta-action="excluir"
+                        data-conta-id="${String(conta.id).replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"
+                        title="Excluir conta"
+                        style="${String(conta.id) === String(contaParaConfirmarExclusao) ? 'background: var(--max-red); color: white; width: auto; padding: 0 10px; font-size: 10px; font-weight: 800; border-radius: 8px;' : ''}">
                   ${String(conta.id) === String(contaParaConfirmarExclusao) ? 'CONFIRMAR?' : '<i data-lucide="trash-2" size="14"></i>'}
                 </button>
               </div>
@@ -5926,6 +5934,25 @@
       await storageSet('contas', bancoContas);
       renderDespesas();
     }
+
+    // Controles das Contas Pessoais usam delegação de eventos.
+    // Isso continua funcionando mesmo quando a lista é recriada após sincronização.
+    document.addEventListener('click', function(event) {
+      const botao = event.target.closest('[data-conta-action]');
+      if (!botao) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const id = botao.getAttribute('data-conta-id');
+      const acao = botao.getAttribute('data-conta-action');
+
+      if (acao === 'status') {
+        alternarStatusPago(id);
+      } else if (acao === 'excluir') {
+        pedirConfirmacaoExclusaoConta(id);
+      }
+    });
 
     async function cadastrarNovaConta() {
       const inputNome = document.getElementById('input-conta-nome');
