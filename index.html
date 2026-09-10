@@ -1754,6 +1754,54 @@
         <!-- Inserido dinamicamente via renderDespesas() -->
       </section>
 
+      <!-- GASTOS PESSOAIS VARIÁVEIS DO DIA A DIA -->
+      <section class="card-standard">
+        <h2 class="section-title">Gastos Pessoais do Dia a Dia</h2>
+        <p class="section-sub">Café, mercado, jantar, lazer, compras e outros gastos pessoais. Estes valores não entram nas despesas do trabalho.</p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label class="form-label">Data</label>
+            <input type="date" id="input-gasto-pessoal-data" class="input-field">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Categoria</label>
+            <select id="input-gasto-pessoal-categoria" class="input-field">
+              <option value="Mercado">Mercado</option>
+              <option value="Alimentação">Alimentação</option>
+              <option value="Lazer">Lazer</option>
+              <option value="Família">Família</option>
+              <option value="Saúde">Saúde</option>
+              <option value="Educação">Educação</option>
+              <option value="Compras">Compras</option>
+              <option value="Transporte">Transporte</option>
+              <option value="Outros">Outros</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Descrição</label>
+          <input type="text" id="input-gasto-pessoal-descricao" class="input-field" placeholder="Ex: Padaria com a família, mercado, jantar...">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Valor (R$)</label>
+          <input type="text" inputmode="numeric" id="input-gasto-pessoal-valor" class="input-field" placeholder="0,00" oninput="aplicarMascaraMoeda(this)">
+        </div>
+
+        <button class="btn btn-primary" style="background: var(--grad-sunset);" onclick="cadastrarGastoPessoal()">
+          <i data-lucide="shopping-bag" size="18"></i> Lançar Gasto Pessoal
+        </button>
+      </section>
+
+      <section class="card-standard">
+        <h2 class="section-title">Gastos do Dia a Dia no Mês</h2>
+        <p class="section-sub">Histórico separado das despesas do trabalho</p>
+        <div id="resumo-gastos-pessoais-mes"></div>
+        <div id="lista-gastos-pessoais-mes"></div>
+      </section>
+
       <!-- LISTA DE CONTAS PARTICULARES DO MÊS SELECIONADO -->
       <section class="card-standard">
         <h2 class="section-title">Contas Pessoais do Mês</h2>
@@ -2900,6 +2948,7 @@
     let todosLancamentos = [];   // {id, tipo, categoria, valor, corridas, data}
     let rentabilidadeSnapshots = []; // pontos históricos de R$/hora e R$/km ao longo da jornada
     let bancoContas = [];
+    let gastosPessoais = [];     // {id, data, categoria, descricao, valor} — não afeta o lucro do trabalho
     let servicos = [];           // {id, nome, km, valor, data}
     let horasPorDia = {};        // { 'YYYY-MM-DD': horasNumero }
     let kmPorDia = {};           // { 'YYYY-MM-DD': kmNumero }
@@ -4868,8 +4917,13 @@
       lucroLiquidoAcumuladoMes = entradasMes - saidasMes;
 
       const contasDoMes = bancoContas.filter(c => c.mesAno === mesSelecionado);
-      const totalDespesasMes = contasDoMes.reduce((acc, c) => acc + c.valor, 0);
-      const jaPago = contasDoMes.filter(c => c.pago).reduce((acc, c) => acc + c.valor, 0);
+      const totalDespesasMes = contasDoMes.reduce((acc, c) => acc + Number(c.valor || 0), 0);
+      const jaPago = contasDoMes.filter(c => c.pago).reduce((acc, c) => acc + Number(c.valor || 0), 0);
+      const gastosPessoaisDoMes = gastosPessoais
+        .filter(g => g.data && mesAnoDeData(g.data) === mesSelecionado)
+        .sort((a, b) => (b.data || '').localeCompare(a.data || '') || Number(b.id || 0) - Number(a.id || 0));
+      const totalGastosPessoais = gastosPessoaisDoMes.reduce((acc, g) => acc + Number(g.valor || 0), 0);
+      const totalVidaPessoal = totalDespesasMes + totalGastosPessoais;
 
       const [anoStr, mesStr] = mesSelecionado.split('-');
       const anoInt = parseInt(anoStr);
@@ -4904,16 +4958,18 @@
 
       const faltaPagar = Math.max(0, totalDespesasMes - jaPago);
       const faltaPagarPorDia = faltaPagar / diasRestantes;
-      const saldo = lucroLiquidoAcumuladoMes - totalDespesasMes;
-      const precisaLucrarPorDia = Math.max(0, totalDespesasMes - lucroLiquidoAcumuladoMes) / diasRestantes;
+      const saldo = lucroLiquidoAcumuladoMes - totalVidaPessoal;
+      const precisaLucrarPorDia = Math.max(0, totalVidaPessoal - lucroLiquidoAcumuladoMes) / diasRestantes;
 
       const linhasDespesas = [
-        { label: 'Total de despesas do mês', valor: formatarMoeda(totalDespesasMes), corValor: 'var(--texto-principal)', negritoLabel: false },
-        { label: 'Já pago', valor: formatarMoeda(jaPago), corValor: 'var(--max-green)', negritoLabel: false },
-        { label: 'Falta pagar', valor: formatarMoeda(faltaPagar), corValor: 'var(--max-yellow)', negritoLabel: false },
+        { label: 'Contas planejadas do mês', valor: formatarMoeda(totalDespesasMes), corValor: 'var(--texto-principal)', negritoLabel: false },
+        { label: 'Gastos pessoais do dia a dia', valor: formatarMoeda(totalGastosPessoais), corValor: 'var(--max-orange)', negritoLabel: false },
+        { label: 'Custo pessoal total do mês', valor: formatarMoeda(totalVidaPessoal), corValor: 'var(--texto-principal)', negritoLabel: true },
+        { label: 'Contas já pagas', valor: formatarMoeda(jaPago), corValor: 'var(--max-green)', negritoLabel: false },
+        { label: 'Contas que faltam pagar', valor: formatarMoeda(faltaPagar), corValor: 'var(--max-yellow)', negritoLabel: false },
         { label: 'Falta pagar / dia restante', valor: formatarMoeda(faltaPagarPorDia), corValor: 'var(--max-orange)', negritoLabel: false },
-        { label: 'Lucro líquido do mês (entradas - saídas do dia a dia)', valor: formatarMoeda(lucroLiquidoAcumuladoMes), corValor: 'var(--max-green)', negritoLabel: false },
-        { label: 'Saldo (lucro - despesas totais)', valor: formatarMoeda(saldo), corValor: saldo >= 0 ? 'var(--max-green)' : 'var(--max-red)', negritoLabel: false },
+        { label: 'Lucro líquido do trabalho no mês', valor: formatarMoeda(lucroLiquidoAcumuladoMes), corValor: 'var(--max-green)', negritoLabel: false },
+        { label: 'Saldo após vida pessoal', valor: formatarMoeda(saldo), corValor: saldo >= 0 ? 'var(--max-green)' : 'var(--max-red)', negritoLabel: true },
         { label: 'Precisa lucrar / dia p/ cobrir tudo', valor: formatarMoeda(precisaLucrarPorDia), corValor: 'var(--max-orange)', negritoLabel: true }
       ];
 
@@ -4928,6 +4984,43 @@
           </span>
         </div>
       `).join('');
+
+      const resumoGastos = document.getElementById('resumo-gastos-pessoais-mes');
+      const listaGastos = document.getElementById('lista-gastos-pessoais-mes');
+      if (resumoGastos) {
+        const porCategoria = gastosPessoaisDoMes.reduce((acc, g) => {
+          const cat = g.categoria || 'Outros';
+          acc[cat] = (acc[cat] || 0) + Number(g.valor || 0);
+          return acc;
+        }, {});
+        const categoriasOrdenadas = Object.entries(porCategoria).sort((a, b) => b[1] - a[1]);
+        resumoGastos.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding: 10px 0 12px; border-bottom:1px solid var(--linha); margin-bottom:4px;">
+            <span style="font-size:13px; color:var(--texto-secundario);">Total variável no mês</span>
+            <strong style="font-size:16px; color:var(--max-orange);">${formatarMoeda(totalGastosPessoais)}</strong>
+          </div>
+          ${categoriasOrdenadas.length ? `<div style="display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 10px;">${categoriasOrdenadas.map(([cat, valor]) => `<span style="font-size:11px; padding:5px 8px; border-radius:999px; background:var(--fundo-input); color:var(--texto-secundario);">${escaparHtmlGasto(cat)}: <b style="color:var(--texto-principal);">${formatarMoeda(valor)}</b></span>`).join('')}</div>` : ''}
+        `;
+      }
+
+      if (listaGastos) {
+        if (gastosPessoaisDoMes.length === 0) {
+          listaGastos.innerHTML = `<p style="font-size:13px; color:var(--texto-secundario); text-align:center; padding:12px 0;">Nenhum gasto pessoal do dia a dia lançado neste mês.</p>`;
+        } else {
+          listaGastos.innerHTML = gastosPessoaisDoMes.map(g => `
+            <div class="item-row">
+              <div style="min-width:0; padding-right:8px;">
+                <h4 style="font-size:14px; font-weight:700; color:var(--texto-principal); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escaparHtmlGasto(g.descricao || g.categoria || 'Gasto pessoal')}</h4>
+                <p style="font-size:12px; color:var(--texto-secundario);">${escaparHtmlGasto(g.categoria || 'Outros')} • ${formatarDataBR(g.data)}</p>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                <span style="font-size:14px; font-weight:800; color:var(--max-orange);">${formatarMoeda(Number(g.valor || 0))}</span>
+                <button class="btn-delete-row" onclick="excluirGastoPessoal('${g.id}')" title="Excluir gasto pessoal"><i data-lucide="trash-2" size="14"></i></button>
+              </div>
+            </div>
+          `).join('');
+        }
+      }
 
       const containerLista = document.getElementById('lista-contas-mes');
       if (contasDoMes.length === 0) {
@@ -4956,6 +5049,61 @@
         `).join('');
       }
       criarIconesSeguro();
+    }
+
+    function escaparHtmlGasto(valor) {
+      return String(valor ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    async function cadastrarGastoPessoal() {
+      const inputData = document.getElementById('input-gasto-pessoal-data');
+      const inputCategoria = document.getElementById('input-gasto-pessoal-categoria');
+      const inputDescricao = document.getElementById('input-gasto-pessoal-descricao');
+      const inputValor = document.getElementById('input-gasto-pessoal-valor');
+
+      const data = inputData.value || getDataHojeISO();
+      const categoria = inputCategoria.value || 'Outros';
+      const descricao = inputDescricao.value.trim();
+      const valor = moedaParaNumero(inputValor.value);
+
+      if (!data || !Number.isFinite(valor) || valor <= 0) {
+        alert('Informe a data e um valor válido para o gasto pessoal.');
+        return;
+      }
+
+      gastosPessoais.push({
+        id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        data,
+        categoria,
+        descricao: descricao || categoria,
+        valor
+      });
+
+      if (!(await storageSet('gastos-pessoais', gastosPessoais))) {
+        avisarFalhaDeSalvamento();
+        return;
+      }
+
+      mesDespesasSelecionado = mesAnoDeData(data);
+      document.getElementById('despesas-filtro-mes').value = mesDespesasSelecionado;
+      inputDescricao.value = '';
+      inputValor.value = '';
+      inputData.value = getDataHojeISO();
+      renderDespesas();
+    }
+
+    async function excluirGastoPessoal(id) {
+      gastosPessoais = gastosPessoais.filter(g => String(g.id) !== String(id));
+      if (!(await storageSet('gastos-pessoais', gastosPessoais))) {
+        avisarFalhaDeSalvamento();
+        return;
+      }
+      renderDespesas();
     }
 
     async function alternarStatusPago(id) {
@@ -5679,6 +5827,7 @@
       tentar('data-selecionada', () => { document.getElementById('input-data-selecionada').value = dataSelecionada; });
       tentar('data-servico', () => { document.getElementById('input-servico-data').value = getDataHojeISO(); });
       tentar('data-reserva', () => { document.getElementById('input-data-reserva').value = dataSelecionadaReserva; });
+      tentar('data-gasto-pessoal', () => { document.getElementById('input-gasto-pessoal-data').value = getDataHojeISO(); });
       criarIconesSeguro();
 
       // A partir daqui, espera o login pra saber se mostra a tela de entrar
@@ -5689,13 +5838,14 @@
     // Chamada depois que o Firebase confirma quem é o usuário logado —
     // carrega os dados DELE (separados por conta) e liga o app.
     async function carregarDadosDoUsuarioEIniciarApp() {
-      let lancamentosSalvos = [], contasSalvas = [], servicosSalvos = [], horasSalvas = {},
+      let lancamentosSalvos = [], contasSalvas = [], gastosPessoaisSalvos = [], servicosSalvos = [], horasSalvas = {},
           configVeiculoSalva = null, diasFinalizadosSalvos = {}, metasSalvas = { diaria: 0, liquidaDiaria: 0, semanal: 0 },
           reservaPorDiaSalva = {}, reservaTaxaSalva = 0, kmPorDiaSalvo = {}, rentabilidadeSnapshotsSalvos = [];
       try {
-        [lancamentosSalvos, contasSalvas, servicosSalvos, horasSalvas, configVeiculoSalva, diasFinalizadosSalvos, metasSalvas, reservaPorDiaSalva, reservaTaxaSalva, kmPorDiaSalvo, rentabilidadeSnapshotsSalvos] = await Promise.all([
+        [lancamentosSalvos, contasSalvas, gastosPessoaisSalvos, servicosSalvos, horasSalvas, configVeiculoSalva, diasFinalizadosSalvos, metasSalvas, reservaPorDiaSalva, reservaTaxaSalva, kmPorDiaSalvo, rentabilidadeSnapshotsSalvos] = await Promise.all([
           storageGet('lancamentos', []),
           storageGet('contas', []),
+          storageGet('gastos-pessoais', []),
           storageGet('servicos', []),
           storageGet('horas', {}),
           storageGet('config-veiculo', null),
@@ -5719,6 +5869,7 @@
 
       todosLancamentos = lancamentosSalvos || [];
       bancoContas = contasSalvas || [];
+      gastosPessoais = Array.isArray(gastosPessoaisSalvos) ? gastosPessoaisSalvos : [];
       servicos = servicosSalvos || [];
       horasPorDia = horasSalvas || {};
       kmPorDia = kmPorDiaSalvo || {};
