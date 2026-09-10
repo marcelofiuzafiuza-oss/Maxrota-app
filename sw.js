@@ -1,4 +1,4 @@
-const CACHE_NAME = 'maxrota-pwa-v8';
+const CACHE_NAME = 'maxrota-pwa-v9-diag';
 const APP_SHELL = [
   './',
   './index.html',
