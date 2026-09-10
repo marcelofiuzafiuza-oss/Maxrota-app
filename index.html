@@ -5695,6 +5695,13 @@
       renderDespesas();
     }
 
+    function contaEstaPaga(valor) {
+      if (valor === true || valor === 1) return true;
+      if (valor === false || valor === 0 || valor == null || valor === '') return false;
+      const normalizado = String(valor).trim().toLowerCase();
+      return normalizado === 'true' || normalizado === '1' || normalizado === 'pago' || normalizado === 'sim';
+    }
+
     function renderDespesas() {
       const mesSelecionado = mesDespesasSelecionado;
       if (!mesSelecionado) return;
@@ -5708,7 +5715,7 @@
         .map((conta, indiceBanco) => ({ conta, indiceBanco }))
         .filter(item => item.conta.mesAno === mesSelecionado);
       const totalDespesasMes = contasDoMes.reduce((acc, item) => acc + Number(item.conta.valor || 0), 0);
-      const jaPago = contasDoMes.filter(item => item.conta.pago).reduce((acc, item) => acc + Number(item.conta.valor || 0), 0);
+      const jaPago = contasDoMes.filter(item => contaEstaPaga(item.conta.pago)).reduce((acc, item) => acc + Number(item.conta.valor || 0), 0);
       const gastosPessoaisDoMes = gastosPessoais
         .filter(g => g.data && mesAnoDeData(g.data) === mesSelecionado)
         .sort((a, b) => (b.data || '').localeCompare(a.data || '') || Number(b.id || 0) - Number(a.id || 0));
@@ -5731,8 +5738,8 @@
       const alertasContainer = document.getElementById('alertas-despesas');
       if (hoje.getFullYear() === anoInt && (hoje.getMonth() + 1) === mesInt) {
         const diaHoje = hoje.getDate();
-        const vencendoHoje = contasDoMes.filter(item => !item.conta.pago && Number(item.conta.vencimento) === diaHoje);
-        const vencendoAmanha = contasDoMes.filter(item => !item.conta.pago && Number(item.conta.vencimento) === diaHoje + 1);
+        const vencendoHoje = contasDoMes.filter(item => !contaEstaPaga(item.conta.pago) && Number(item.conta.vencimento) === diaHoje);
+        const vencendoAmanha = contasDoMes.filter(item => !contaEstaPaga(item.conta.pago) && Number(item.conta.vencimento) === diaHoje + 1);
         let htmlAlertas = '';
         if (vencendoHoje.length > 0) {
           htmlAlertas += `<div class="alerta-despesa"><i data-lucide="alert-triangle" size="20" style="color:#D97706;"></i><div><h4 style="font-size:13px; font-weight:700; color:#92400E;">Vencendo hoje</h4><p style="font-size:12px; color:#B45309;">${vencendoHoje.map(item => item.conta.nome).join(', ')}</p></div></div>`;
@@ -5828,18 +5835,18 @@
               <span style="font-size: 14px; font-weight: 800; color: var(--texto-principal);">${formatarMoeda(conta.valor)}</span>
               <div style="display: flex; align-items: center; gap: 6px;">
                 <button type="button"
-                        class="btn-status-pago ${conta.pago ? 'pago' : 'pendente'}"
+                        class="btn-status-pago ${contaEstaPaga(conta.pago) ? 'pago' : 'pendente'}"
                         data-conta-action="status"
                         data-conta-index="${indiceBanco}">
-                  ${conta.pago ? '✓ PAGO' : '• PENDENTE'}
+                  ${contaEstaPaga(conta.pago) ? '✓ PAGO' : '• PENDENTE'}
                 </button>
                 <button type="button"
                         class="btn-delete-row"
                         data-conta-action="excluir"
                         data-conta-index="${indiceBanco}"
                         title="Excluir conta"
-                        style="${Number(indiceBanco) === Number(contaParaConfirmarExclusao) ? 'background: var(--max-red); color: white; width: auto; padding: 0 10px; font-size: 10px; font-weight: 800; border-radius: 8px;' : ''}">
-                  ${Number(indiceBanco) === Number(contaParaConfirmarExclusao) ? 'CONFIRMAR?' : '<i data-lucide="trash-2" size="14"></i>'}
+                        style="${contaParaConfirmarExclusao !== null && Number(indiceBanco) === Number(contaParaConfirmarExclusao) ? 'background: var(--max-red); color: white; width: auto; padding: 0 10px; font-size: 10px; font-weight: 800; border-radius: 8px;' : ''}">
+                  ${contaParaConfirmarExclusao !== null && Number(indiceBanco) === Number(contaParaConfirmarExclusao) ? 'CONFIRMAR?' : '<i data-lucide="trash-2" size="14"></i>'}
                 </button>
               </div>
             </div>
@@ -5904,6 +5911,45 @@
       renderDespesas();
     }
 
+    function normalizarContaPessoalParaSalvar(conta, indice = 0) {
+      const agora = Date.now();
+      const mesAno = /^\d{4}-\d{2}$/.test(String(conta && conta.mesAno || ''))
+        ? String(conta.mesAno)
+        : mesDespesasSelecionado || getMesAnoAtual();
+
+      const valorNumero = Number(conta && conta.valor);
+      const vencNumero = parseInt(conta && conta.vencimento);
+      const qtdNumero = Math.max(1, parseInt(conta && conta.totalParcelas) || 1);
+      const parcelaNumero = Math.max(1, parseInt(conta && conta.numParcela) || 1);
+
+      return {
+        id: String(conta && conta.id != null && conta.id !== ''
+          ? conta.id
+          : `${agora}_${indice}_${Math.random().toString(36).slice(2, 8)}`),
+        nome: String(conta && conta.nome != null ? conta.nome : 'Conta').trim() || 'Conta',
+        valor: Number.isFinite(valorNumero) ? valorNumero : 0,
+        vencimento: Number.isFinite(vencNumero) ? Math.min(31, Math.max(1, vencNumero)) : 1,
+        mesAno,
+        pago: contaEstaPaga(conta && conta.pago),
+        numParcela: parcelaNumero,
+        totalParcelas: qtdNumero
+      };
+    }
+
+    async function salvarContasPessoaisSeguro(lista) {
+      // Regrava somente o documento "contas", limpando formatos antigos
+      // que possam impedir qualquer nova gravação no Firestore.
+      const limpa = (Array.isArray(lista) ? lista : [])
+        .map((c, i) => normalizarContaPessoalParaSalvar(c, i));
+
+      const salvou = await storageSet('contas', limpa);
+      if (salvou) {
+        bancoContas = limpa;
+        return true;
+      }
+      return false;
+    }
+
     async function alternarStatusPago(id) {
       const idx = bancoContas.findIndex(c => String(c.id) === String(id));
       if (idx !== -1) {
@@ -5939,46 +5985,77 @@
 
     async function alternarStatusPagoPorIndice(indice) {
       if (!Number.isInteger(indice) || indice < 0 || indice >= bancoContas.length) return;
-      bancoContas[indice].pago = !Boolean(bancoContas[indice].pago);
-      if (!(await storageSet('contas', bancoContas))) {
-        // Reverte localmente se a gravação falhar.
-        bancoContas[indice].pago = !Boolean(bancoContas[indice].pago);
+
+      const anterior = bancoContas.map(c => ({ ...c }));
+      bancoContas[indice].pago = !contaEstaPaga(bancoContas[indice].pago);
+      renderDespesas();
+
+      const salvou = await salvarContasPessoaisSeguro(bancoContas);
+      if (!salvou) {
+        bancoContas = anterior;
+        renderDespesas();
         avisarFalhaDeSalvamento();
+        return;
       }
+
       renderDespesas();
     }
 
     let contaIndiceParaConfirmarExclusao = null;
+    let timerConfirmacaoExclusaoConta = null;
+
+    function limparConfirmacaoExclusaoConta() {
+      contaIndiceParaConfirmarExclusao = null;
+      contaParaConfirmarExclusao = null;
+      if (timerConfirmacaoExclusaoConta) {
+        clearTimeout(timerConfirmacaoExclusaoConta);
+        timerConfirmacaoExclusaoConta = null;
+      }
+    }
 
     function pedirConfirmacaoExclusaoContaPorIndice(indice) {
       if (!Number.isInteger(indice) || indice < 0 || indice >= bancoContas.length) return;
 
-      if (Number(contaIndiceParaConfirmarExclusao) === Number(indice)) {
-        contaIndiceParaConfirmarExclusao = null;
-        excluirContaPorIndice(indice);
-      } else {
-        contaIndiceParaConfirmarExclusao = indice;
-        contaParaConfirmarExclusao = indice; // reaproveita o estado visual existente
-        renderDespesas();
+      const mesmaConta = contaIndiceParaConfirmarExclusao !== null &&
+        Number(contaIndiceParaConfirmarExclusao) === Number(indice);
 
-        setTimeout(() => {
-          if (Number(contaIndiceParaConfirmarExclusao) === Number(indice)) {
-            contaIndiceParaConfirmarExclusao = null;
-            contaParaConfirmarExclusao = null;
-            renderDespesas();
-          }
-        }, 3000);
+      if (mesmaConta) {
+        limparConfirmacaoExclusaoConta();
+        excluirContaPorIndice(indice);
+        return;
       }
+
+      limparConfirmacaoExclusaoConta();
+      contaIndiceParaConfirmarExclusao = indice;
+      contaParaConfirmarExclusao = indice;
+      renderDespesas();
+
+      timerConfirmacaoExclusaoConta = setTimeout(() => {
+        const aindaMesma = contaIndiceParaConfirmarExclusao !== null &&
+          Number(contaIndiceParaConfirmarExclusao) === Number(indice);
+        if (aindaMesma) {
+          limparConfirmacaoExclusaoConta();
+          renderDespesas();
+        }
+      }, 3000);
     }
 
     async function excluirContaPorIndice(indice) {
       if (!Number.isInteger(indice) || indice < 0 || indice >= bancoContas.length) return;
-      const removida = bancoContas.splice(indice, 1)[0];
 
-      if (!(await storageSet('contas', bancoContas))) {
-        bancoContas.splice(indice, 0, removida);
+      const anterior = bancoContas.map(c => ({ ...c }));
+      bancoContas.splice(indice, 1);
+      limparConfirmacaoExclusaoConta();
+      renderDespesas();
+
+      const salvou = await salvarContasPessoaisSeguro(bancoContas);
+      if (!salvou) {
+        bancoContas = anterior;
+        renderDespesas();
         avisarFalhaDeSalvamento();
+        return;
       }
+
       renderDespesas();
     }
 
@@ -6009,37 +6086,40 @@
       const inputVencimento = document.getElementById('input-conta-vencimento');
       const inputQtdParcelas = document.getElementById('input-conta-qtd-parcelas');
 
-      const nome = inputNome.value.trim();
+      const nome = String(inputNome.value || '').trim();
       const valor = moedaParaNumero(inputValor.value);
-      const vencimento = parseInt(inputVencimento.value);
-      const qtdParcelas = parseInt(inputQtdParcelas.value) || 1;
+      const vencimento = parseInt(inputVencimento.value, 10);
+      const qtdParcelas = Math.max(1, parseInt(inputQtdParcelas.value, 10) || 1);
 
-      if (!nome || isNaN(valor) || valor <= 0 || isNaN(vencimento) || vencimento < 1 || vencimento > 31) {
-        alert("Preencha todos os campos da conta corretamente!");
+      if (!nome || !Number.isFinite(valor) || valor <= 0 ||
+          !Number.isFinite(vencimento) || vencimento < 1 || vencimento > 31) {
+        alert('Preencha todos os campos da conta corretamente!');
         return;
       }
 
-      const mesInicialStr = mesDespesasSelecionado;
+      const mesInicialStr = /^\d{4}-\d{2}$/.test(String(mesDespesasSelecionado || ''))
+        ? mesDespesasSelecionado
+        : getMesAnoAtual();
+
       const [anoStr, mesStr] = mesInicialStr.split('-');
-      let anoAtual = parseInt(anoStr);
-      let mesAtual = parseInt(mesStr);
+      let anoAtual = parseInt(anoStr, 10);
+      let mesAtual = parseInt(mesStr, 10);
+
+      const anterior = bancoContas.map(c => ({ ...c }));
+      const novas = [];
 
       for (let p = 1; p <= qtdParcelas; p++) {
         const mesFormatted = String(mesAtual).padStart(2, '0');
-        const mesAnoChave = `${anoAtual}-${mesFormatted}`;
-
-        const novaConta = {
-          id: Date.now().toString() + '_' + p,
-          nome: nome,
-          valor: valor,
-          vencimento: vencimento,
-          mesAno: mesAnoChave,
+        novas.push({
+          id: `${Date.now()}_${p}_${Math.random().toString(36).slice(2, 7)}`,
+          nome,
+          valor,
+          vencimento,
+          mesAno: `${anoAtual}-${mesFormatted}`,
           pago: false,
           numParcela: p,
           totalParcelas: qtdParcelas
-        };
-
-        bancoContas.push(novaConta);
+        });
 
         mesAtual++;
         if (mesAtual > 12) {
@@ -6048,15 +6128,26 @@
         }
       }
 
-      await storageSet('contas', bancoContas);
+      bancoContas = [...bancoContas, ...novas];
       renderDespesas();
+
+      const salvou = await salvarContasPessoaisSeguro(bancoContas);
+      if (!salvou) {
+        bancoContas = anterior;
+        renderDespesas();
+        avisarFalhaDeSalvamento();
+        return;
+      }
 
       inputNome.value = '';
       inputValor.value = '';
       inputVencimento.value = '';
       inputQtdParcelas.value = '1';
 
-      alert(`${qtdParcelas > 1 ? `${qtdParcelas} parcelas lançadas` : 'Conta lançada'} com sucesso!`);
+      renderDespesas();
+      alert(qtdParcelas > 1
+        ? `${qtdParcelas} parcelas lançadas com sucesso!`
+        : 'Conta lançada com sucesso!');
     }
 
     // ==========================================================================
