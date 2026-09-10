@@ -5906,24 +5906,24 @@
 
 
     // DIAGNÓSTICO TEMPORÁRIO V9 — CONTAS PESSOAIS
-    const DIAG_CONTAS_V9 = true;
+    const DIAG_CONTAS_V10 = true;
     let diagContasEventos = [];
     function diagContasResumo() {
       const set = bancoContas.filter(c => String(c.mesAno) === '2026-09');
       return { total:bancoContas.length, setembro:set.length, mes:mesDespesasSelecionado };
     }
     function diagContasRegistrar(etapa, detalhes={}) {
-      if (!DIAG_CONTAS_V9) return;
+      if (!DIAG_CONTAS_V10) return;
       const e={hora:new Date().toLocaleTimeString('pt-BR'), etapa, resumo:diagContasResumo(), detalhes};
       diagContasEventos.push(e); if(diagContasEventos.length>40) diagContasEventos.shift();
-      console.log('[DIAG CONTAS V9]',e); diagContasRenderPainel();
+      console.log('[DIAG CONTAS V10]',e); diagContasRenderPainel();
     }
     function diagContasRenderPainel() {
       let p=document.getElementById('diag-contas-v9');
       if(!p){
         p=document.createElement('div'); p.id='diag-contas-v9';
         p.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;z-index:99999;background:#111827;color:white;border-radius:14px;padding:10px;max-height:42vh;overflow:auto;font:11px/1.4 monospace;display:none';
-        p.innerHTML='<div style="display:flex;justify-content:space-between"><b>DIAGNÓSTICO CONTAS V9</b><button type="button" onclick="diagContasAlternarPainel()">Fechar</button></div><div id="diag-contas-v9-conteudo"></div>';
+        p.innerHTML='<div style="display:flex;justify-content:space-between"><b>DIAGNÓSTICO CONTAS V10</b><button type="button" onclick="diagContasAlternarPainel()">Fechar</button></div><div id="diag-contas-v9-conteudo"></div>';
         document.body.appendChild(p);
         const b=document.createElement('button'); b.type='button'; b.textContent='DIAG'; b.onclick=diagContasAlternarPainel;
         b.style.cssText='position:fixed;left:10px;bottom:10px;z-index:99998;border:0;border-radius:999px;padding:10px 13px;background:#111827;color:white;font-weight:800';
@@ -6726,10 +6726,14 @@
           storageGet('rentabilidade-snapshots', rentabilidadeSnapshots)
         ]);
         todosLancamentos = Array.isArray(lanc) ? lanc : todosLancamentos;
-        const _diagAntesContas=JSON.stringify(diagContasResumo());
-      bancoContas = Array.isArray(contas) ? contas : bancoContas;
-      const _diagDepoisContas=JSON.stringify(diagContasResumo());
-      if(_diagAntesContas!==_diagDepoisContas) diagContasRegistrar('SYNC RECARREGOU CONTAS');
+        // V10 TESTE: não sobrescrever Contas Pessoais durante o sync silencioso.
+      // As demais áreas continuam sincronizando normalmente.
+      if (Array.isArray(contas)) {
+        diagContasRegistrar('SYNC CONTAS IGNORADO NA V10', {
+          recebidas: contas.length,
+          locais: bancoContas.length
+        });
+      }
         // Atualiza contas pessoais imediatamente após a sincronização silenciosa.
         try {
           renderDespesas();
