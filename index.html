@@ -4771,8 +4771,13 @@
       document.getElementById('hist-comparativo').innerHTML = linhasComparativo.map(l => {
         const variacao = l.anterior !== 0 ? ((l.atual - l.anterior) / Math.abs(l.anterior)) * 100 : (l.atual > 0 ? 100 : 0);
         const corVariacao = variacao >= 0 ? 'var(--max-green)' : 'var(--max-red)';
-        const valorAtualFmt = l.moeda === false ? l.atual : formatarMoeda(l.atual);
-        const valorAnteriorFmt = l.moeda === false ? l.anterior : formatarMoeda(l.anterior);
+        const casasDecimais = l.label === 'Horas' ? 2 : 0;
+        const valorAtualFmt = l.moeda === false
+          ? Number(l.atual || 0).toLocaleString('pt-BR', { minimumFractionDigits: casasDecimais, maximumFractionDigits: casasDecimais })
+          : formatarMoeda(l.atual);
+        const valorAnteriorFmt = l.moeda === false
+          ? Number(l.anterior || 0).toLocaleString('pt-BR', { minimumFractionDigits: casasDecimais, maximumFractionDigits: casasDecimais })
+          : formatarMoeda(l.anterior);
         return `
           <div class="item-row">
             <div>
