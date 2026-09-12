@@ -4721,7 +4721,7 @@
       document.getElementById('hist-faturamento').innerText = formatarMoeda(fechamento.faturamento);
       document.getElementById('hist-lucro').innerText = formatarMoeda(fechamento.lucro);
       document.getElementById('hist-corridas').innerText = fechamento.corridas;
-      document.getElementById('hist-horas').innerText = `${fechamento.horas}h`;
+      document.getElementById('hist-horas').innerText = `${Number(fechamento.horas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} h`;
       document.getElementById('hist-rs-hora').innerText = fechamento.horas > 0 ? formatarMoeda(fechamento.faturamento / fechamento.horas) : 'R$ 0,00';
       document.getElementById('hist-rs-corrida').innerText = fechamento.corridas > 0 ? formatarMoeda(fechamento.faturamento / fechamento.corridas) : 'R$ 0,00';
       document.getElementById('hist-lucro-real').innerText = formatarMoeda(fechamento.lucroReal);
