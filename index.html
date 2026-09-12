@@ -4906,7 +4906,7 @@
       document.getElementById('fp-despesas').innerText = formatarMoeda(despesas);
       document.getElementById('fp-saldo').innerText = formatarMoeda(saldo);
       document.getElementById('fp-total-corridas').innerText = totalCorridas;
-      document.getElementById('fp-total-horas').innerText = `${horasFiltradas}h`;
+      document.getElementById('fp-total-horas').innerText = `${Number(horasFiltradas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} h`;
       document.getElementById('fp-total-km').innerText = `${kmFiltrado} km`;
       document.getElementById('fp-fat-corrida').innerText = totalCorridas > 0 ? formatarMoeda(faturamento / totalCorridas) : 'R$ 0,00';
       document.getElementById('fp-fat-hora').innerText = horasFiltradas > 0 ? formatarMoeda(faturamento / horasFiltradas) : 'R$ 0,00';
