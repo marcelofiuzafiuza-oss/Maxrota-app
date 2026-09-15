@@ -4370,8 +4370,6 @@
         const doc = new jsPDF({ unit: 'mm', format: 'a4' });
         const mesAno = mesHistoricoSelecionado;
         const fechamento = calcularFechamentoMes(mesAno);
-      renderAcumuladoAnual(Number(mesAno.slice(0, 4)));
-      renderAcumuladoAnual(Number(mesAno.slice(0, 4)));
         const [anoStr, mesStr] = mesAno.split('-');
         const ano = Number(anoStr), mes = Number(mesStr);
         const nomesMes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -4835,6 +4833,7 @@
       const mesAno = mesHistoricoSelecionado;
 
       const fechamento = calcularFechamentoMes(mesAno);
+      renderAcumuladoAnual(Number(mesAno.slice(0, 4)));
       document.getElementById('hist-faturamento').innerText = formatarMoeda(fechamento.faturamento);
       document.getElementById('hist-lucro').innerText = formatarMoeda(fechamento.lucro);
       document.getElementById('hist-corridas').innerText = fechamento.corridas;
