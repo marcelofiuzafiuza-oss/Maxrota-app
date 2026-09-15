@@ -1796,6 +1796,11 @@
             <span id="hist-comp-margem-real" style="font-size:9.5px;color:var(--texto-secundario);font-weight:700;">Sem comparação</span>
           </div>
           <div class="card-small">
+            <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">Média Combustível / Dia</span>
+            <span style="font-size: 17px; font-weight: 800; color: var(--max-orange);" id="hist-media-combustivel-dia">R$ 0,00</span>
+            <span id="hist-comp-media-combustivel-dia" style="font-size:9.5px;color:var(--texto-secundario);font-weight:700;">Sem comparação</span>
+          </div>
+          <div class="card-small">
             <span style="font-size: 11px; color: var(--texto-secundario); font-weight: 600;">Saúde da Operação</span>
             <span style="font-size: 17px; font-weight: 800; color: var(--max-blue);" id="hist-saude-indice">--/100</span>
             <span id="hist-saude-status" style="font-size:10px;font-weight:800;color:var(--texto-secundario);">Base em construção</span>
@@ -1849,6 +1854,34 @@
         <p class="section-sub">Categorias de despesa lançadas na aba Hoje, do maior pro menor — incluindo a soma diária dos passes (99, Uber, inDriver, Outros)</p>
         <div id="hist-maiores-gastos">
           <!-- Renderizado dinamicamente -->
+        </div>
+      </section>
+
+      <section class="card-standard">
+        <h2 class="section-title">Acumulado do Ano</h2>
+        <p class="section-sub" id="hist-anual-periodo">Visão consolidada da operação no ano</p>
+        <div class="stats-grid" style="margin-top:4px;">
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Faturamento acumulado</span><span id="hist-anual-faturamento" style="font-size:16px;font-weight:800;color:var(--max-green);">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Lucro operacional</span><span id="hist-anual-lucro" style="font-size:16px;font-weight:800;color:var(--max-blue);">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Lucro líquido real</span><span id="hist-anual-lucro-real" style="font-size:16px;font-weight:800;color:var(--max-purple);">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Margem líquida real</span><span id="hist-anual-margem" style="font-size:16px;font-weight:800;color:var(--max-blue);">0%</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Total de corridas</span><span id="hist-anual-corridas" style="font-size:16px;font-weight:800;">0</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Horas trabalhadas</span><span id="hist-anual-horas" style="font-size:16px;font-weight:800;">0,00 h</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">KM rodados</span><span id="hist-anual-km" style="font-size:16px;font-weight:800;">0 km</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Dias trabalhados</span><span id="hist-anual-dias" style="font-size:16px;font-weight:800;">0</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Combustível gasto</span><span id="hist-anual-combustivel" style="font-size:16px;font-weight:800;color:var(--max-red);">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Média combustível / dia</span><span id="hist-anual-media-combustivel" style="font-size:16px;font-weight:800;color:var(--max-orange);">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Passes pagos</span><span id="hist-anual-passes" style="font-size:16px;font-weight:800;color:var(--max-red);">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Outras despesas</span><span id="hist-anual-outras-despesas" style="font-size:16px;font-weight:800;color:var(--max-red);">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Custo estrutural veículo</span><span id="hist-anual-custo-veiculo" style="font-size:16px;font-weight:800;color:var(--max-red);">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">R$ / hora médio</span><span id="hist-anual-rs-hora" style="font-size:16px;font-weight:800;color:var(--max-purple);">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">R$ / KM bruto médio</span><span id="hist-anual-rs-km" style="font-size:16px;font-weight:800;color:var(--max-green);">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">R$ / corrida média</span><span id="hist-anual-rs-corrida" style="font-size:16px;font-weight:800;color:var(--max-orange);">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Lucro real / hora</span><span id="hist-anual-lucro-hora" style="font-size:16px;font-weight:800;color:var(--max-purple);">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Lucro real / KM</span><span id="hist-anual-lucro-km" style="font-size:16px;font-weight:800;color:var(--max-purple);">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Lucro real / corrida</span><span id="hist-anual-lucro-corrida" style="font-size:16px;font-weight:800;color:var(--max-purple);">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Média faturada / dia</span><span id="hist-anual-media-dia" style="font-size:16px;font-weight:800;color:var(--max-green);">R$ 0,00</span></div>
+          <div class="card-small"><span style="font-size:10px;color:var(--texto-secundario);font-weight:600;">Média lucro real / dia</span><span id="hist-anual-media-lucro-dia" style="font-size:16px;font-weight:800;color:var(--max-purple);">R$ 0,00</span></div>
         </div>
       </section>
 
@@ -4337,6 +4370,7 @@
         const doc = new jsPDF({ unit: 'mm', format: 'a4' });
         const mesAno = mesHistoricoSelecionado;
         const fechamento = calcularFechamentoMes(mesAno);
+      renderAcumuladoAnual(Number(mesAno.slice(0, 4)));
         const [anoStr, mesStr] = mesAno.split('-');
         const ano = Number(anoStr), mes = Number(mesStr);
         const nomesMes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -4733,6 +4767,65 @@
 
     let mesHistoricoSelecionado = getMesAnoAtual(); // fonte confiável — não depende só do <input type="month">
 
+
+    function renderAcumuladoAnual(anoReferencia) {
+      const ano = Number(anoReferencia);
+      if (!Number.isFinite(ano)) return;
+      const prefixo = `${ano}-`;
+      const entradas = todosLancamentos.filter(l => l.tipo === 'entrada' && String(l.data || '').startsWith(prefixo));
+      const saidas = todosLancamentos.filter(l => l.tipo === 'saida' && String(l.data || '').startsWith(prefixo));
+
+      const faturamento = entradas.reduce((a,l) => a + Number(l.valor || 0), 0);
+      const despesas = saidas.reduce((a,l) => a + Number(l.valor || 0), 0);
+      const corridas = entradas.reduce((a,l) => a + Number(l.corridas || 0), 0);
+      const horas = Object.keys(horasPorDia).filter(d => String(d).startsWith(prefixo)).reduce((a,d) => a + Number(horasPorDia[d] || 0), 0);
+      const km = Object.keys(kmPorDia).filter(d => String(d).startsWith(prefixo)).reduce((a,d) => a + Number(kmPorDia[d] || 0), 0);
+      const diasTrabalhados = new Set(entradas.map(l => l.data)).size;
+
+      let combustivel = 0, passes = 0;
+      saidas.forEach(l => {
+        const cat = diagnosticoNormalizarCategoria(l.categoria);
+        const valor = Number(l.valor || 0);
+        if (cat.includes('combustivel')) combustivel += valor;
+        else if (cat.startsWith('passe')) passes += valor;
+      });
+      const outrasDespesas = Math.max(0, despesas - combustivel - passes);
+      const custoEstruturalVeiculo = km * calcularCustoPorKmSemCombustivel();
+      const lucroOperacional = faturamento - despesas;
+      const lucroReal = lucroOperacional - custoEstruturalVeiculo;
+      const margem = faturamento > 0 ? (lucroReal / faturamento) * 100 : 0;
+
+      const setTxt = (id, valor) => { const el = document.getElementById(id); if (el) el.textContent = valor; };
+      setTxt('hist-anual-faturamento', formatarMoeda(faturamento));
+      setTxt('hist-anual-lucro', formatarMoeda(lucroOperacional));
+      setTxt('hist-anual-lucro-real', formatarMoeda(lucroReal));
+      setTxt('hist-anual-margem', `${margem.toFixed(1).replace('.', ',')}%`);
+      setTxt('hist-anual-corridas', Math.round(corridas).toLocaleString('pt-BR'));
+      setTxt('hist-anual-horas', `${horas.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})} h`);
+      setTxt('hist-anual-km', `${km.toLocaleString('pt-BR',{maximumFractionDigits:1})} km`);
+      setTxt('hist-anual-dias', diasTrabalhados.toLocaleString('pt-BR'));
+      setTxt('hist-anual-combustivel', formatarMoeda(combustivel));
+      setTxt('hist-anual-media-combustivel', formatarMoeda(diasTrabalhados > 0 ? combustivel / diasTrabalhados : 0));
+      setTxt('hist-anual-passes', formatarMoeda(passes));
+      setTxt('hist-anual-outras-despesas', formatarMoeda(outrasDespesas));
+      setTxt('hist-anual-custo-veiculo', formatarMoeda(custoEstruturalVeiculo));
+      setTxt('hist-anual-rs-hora', formatarMoeda(horas > 0 ? faturamento / horas : 0));
+      setTxt('hist-anual-rs-km', formatarMoeda(km > 0 ? faturamento / km : 0));
+      setTxt('hist-anual-rs-corrida', formatarMoeda(corridas > 0 ? faturamento / corridas : 0));
+      setTxt('hist-anual-lucro-hora', formatarMoeda(horas > 0 ? lucroReal / horas : 0));
+      setTxt('hist-anual-lucro-km', formatarMoeda(km > 0 ? lucroReal / km : 0));
+      setTxt('hist-anual-lucro-corrida', formatarMoeda(corridas > 0 ? lucroReal / corridas : 0));
+      setTxt('hist-anual-media-dia', formatarMoeda(diasTrabalhados > 0 ? faturamento / diasTrabalhados : 0));
+      setTxt('hist-anual-media-lucro-dia', formatarMoeda(diasTrabalhados > 0 ? lucroReal / diasTrabalhados : 0));
+
+      const datasAno = [...entradas.map(l=>l.data), ...saidas.map(l=>l.data)].filter(Boolean).sort();
+      const fim = datasAno.length ? new Date(datasAno[datasAno.length-1] + 'T00:00:00') : null;
+      const periodo = document.getElementById('hist-anual-periodo');
+      if (periodo) periodo.textContent = fim
+        ? `01/01/${ano} a ${fim.toLocaleDateString('pt-BR')} • atualizado pelos lançamentos registrados`
+        : `Ano de ${ano} • ainda sem lançamentos`;
+    }
+
     function renderHistorico() {
       const inputMes = document.getElementById('historico-filtro-mes');
       const valorInput = inputMes.value;
@@ -4811,6 +4904,12 @@
       preencherComparacaoCard('hist-comp-media-dia', atualMediaDia, antMediaDia);
       preencherComparacaoCard('hist-comp-media-lucro-dia', atualMediaLucroDia, antMediaLucroDia);
       preencherComparacaoCard('hist-comp-margem-real', periodoAtual.margemReal, periodoAnterior.margemReal);
+
+      const mediaCombustivelDiaAtual = periodoAtual.diasTrabalhados > 0 ? periodoAtual.combustivel / periodoAtual.diasTrabalhados : 0;
+      const mediaCombustivelDiaAnterior = periodoAnterior.diasTrabalhados > 0 ? periodoAnterior.combustivel / periodoAnterior.diasTrabalhados : 0;
+      const elMediaCombustivelDia = document.getElementById('hist-media-combustivel-dia');
+      if (elMediaCombustivelDia) elMediaCombustivelDia.textContent = formatarMoeda(mediaCombustivelDiaAtual);
+      preencherComparacaoCard('hist-comp-media-combustivel-dia', mediaCombustivelDiaAtual, mediaCombustivelDiaAnterior, true);
 
       // Saúde da Operação: espelha exatamente o índice já usado pelo Diagnóstico MAX ROTA.
       const indiceSaude = diagnosticoHistorico.indice;
