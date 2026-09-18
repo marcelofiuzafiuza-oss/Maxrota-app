@@ -1649,7 +1649,7 @@
             <h2 class="section-title" style="font-size: 15px;">Mês de Referência</h2>
             <p class="section-sub" style="margin-top: 0;">Navegue pelo fechamento de cada mês</p>
           </div>
-          <input type="month" id="historico-filtro-mes" class="input-field" style="width: 150px; height: 40px; font-size: 13px;" onchange="renderHistorico()">
+          <input type="month" id="historico-filtro-mes" class="input-field" style="width: 150px; height: 40px; font-size: 13px;" onchange="aoMudarMesHistorico()">
         </div>
         <button class="btn btn-primary" style="margin-top: 12px;" onclick="gerarRelatorioPDF()">
           <i data-lucide="file-down" size="16"></i> Gerar Relatório em PDF
@@ -4368,7 +4368,9 @@
       try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-        const mesAno = mesHistoricoSelecionado;
+        const inputMesHistorico = document.getElementById('historico-filtro-mes');
+        const mesAno = (inputMesHistorico && inputMesHistorico.value) || mesHistoricoSelecionado || getMesAnoAtual();
+        mesHistoricoSelecionado = mesAno;
         const fechamento = calcularFechamentoMes(mesAno);
         const [anoStr, mesStr] = mesAno.split('-');
         const ano = Number(anoStr), mes = Number(mesStr);
@@ -4825,6 +4827,13 @@
         : `Ano de ${ano} • ainda sem lançamentos`;
     }
 
+    function aoMudarMesHistorico() {
+      const inputMes = document.getElementById('historico-filtro-mes');
+      const valorInput = inputMes && inputMes.value;
+      if (valorInput) mesHistoricoSelecionado = valorInput;
+      renderHistorico();
+    }
+
     function renderHistorico() {
       const inputMes = document.getElementById('historico-filtro-mes');
       const valorInput = inputMes.value;
@@ -4855,6 +4864,7 @@
       // Comparação dos cards com o MESMO PERÍODO do mês anterior.
       // Ex.: 01/09–14/09 x 01/08–14/08; no fechamento do mês, mês inteiro x mês inteiro.
       const diagnosticoHistorico = calcularDiagnosticoMaxRota(mesAno);
+      renderDiagnosticoMaxRota(mesAno);
       const periodoAtual = diagnosticoHistorico.atual;
       const periodoAnterior = diagnosticoHistorico.anterior;
 
