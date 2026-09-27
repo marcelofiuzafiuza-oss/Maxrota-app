@@ -5436,7 +5436,16 @@
       const entradasMes = entradas.filter(l => mesAnoDeData(l.data) === mesAtual);
       const faturamentoMes = entradasMes.reduce((a, l) => a + l.valor, 0);
       const diasMesComLancamento = new Set(entradasMes.map(l => l.data)).size;
-      const diasMesRestantes = Math.max(1, (metas.diasMes || 0) - diasMesComLancamento);
+
+      // Dias restantes da meta mensal: respeita o planejamento do usuário,
+      // mas nunca ultrapassa os dias reais que ainda existem no calendário.
+      // O dia de hoje entra na conta. Ex.: em 27/09 => 27, 28, 29 e 30 = 4 dias.
+      const hojeISO = getDataHojeISO();
+      const [anoAtual, mesNumeroAtual, diaAtual] = hojeISO.split('-').map(Number);
+      const ultimoDiaCalendarioMes = new Date(anoAtual, mesNumeroAtual, 0).getDate();
+      const diasCalendarioRestantesIncluindoHoje = Math.max(1, ultimoDiaCalendarioMes - diaAtual + 1);
+      const diasPlanejadosRestantes = Math.max(1, (metas.diasMes || 0) - diasMesComLancamento);
+      const diasMesRestantes = Math.min(diasPlanejadosRestantes, diasCalendarioRestantesIncluindoHoje);
       renderBarraMeta({
         valorAtual: faturamentoMes, valorMeta: metas.mensal,
         idTexto: 'texto-progresso-mensal', idBarra: 'barra-progresso-mensal', idStatus: 'texto-status-mensal',
