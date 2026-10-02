@@ -1361,7 +1361,7 @@
               <span style="font-size: 15px; font-weight: 800; color: var(--max-orange);" id="resumo-custo-km-hoje">R$ 0,00</span>
             </div>
             <div style="font-size: 10.5px; color: var(--texto-secundario); margin-top: 2px;" id="resumo-custo-km-detalhe">
-              Baseado em 0 km — pneu, óleo, depreciação, parcela, seguro, documentação, internet e higienização (combustível não entra aqui, já é lançado separado como despesa)
+              Baseado em 0 km — pneu, óleo, depreciação quando aplicável, seguro, documentação, internet, higienização e aluguel quando aplicável (combustível não entra aqui, pois já é lançado separado como despesa)
             </div>
           </div>
 
@@ -2214,6 +2214,22 @@
           </div>
         </div>
 
+        <!-- SITUAÇÃO DO VEÍCULO — define como parcela/aluguel entra no Lucro Real -->
+        <div style="background: #F8FAFC; padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--linha);">
+          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 10px; color: var(--max-green);">🚘 Situação do Veículo</h4>
+          <div class="form-group">
+            <label class="form-label">Como você utiliza este veículo?</label>
+            <select id="input-situacao-veiculo" class="select-field" onchange="atualizarCamposSituacaoVeiculo(); calcularCustoPorKM()">
+              <option value="proprio_quitado">Próprio quitado</option>
+              <option value="proprio_financiado" selected>Próprio financiado</option>
+              <option value="alugado">Alugado</option>
+            </select>
+            <span style="font-size: 11px; color: var(--texto-secundario); margin-top: 3px;">
+              Financiado: a parcela aparece no custo completo/km, mas não reduz novamente o Lucro Real. Alugado: o aluguel é custo da operação e reduz o Lucro Real.
+            </span>
+          </div>
+        </div>
+
         <!-- 1. PNEUS -->
         <div style="background: #F8FAFC; padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--linha);">
           <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 10px; color: var(--max-blue);">🛞 Pneus</h4>
@@ -2268,10 +2284,17 @@
 
         <!-- 5. PARCELA OU ALUGUEL -->
         <div style="background: #F8FAFC; padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--linha);">
-          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 10px; color: var(--max-green);">🚗 Parcela do Carro ou Aluguel</h4>
+          <h4 id="titulo-parcela-aluguel" style="font-size: 14px; font-weight: 700; margin-bottom: 10px; color: var(--max-green);">🚗 Parcela do Veículo</h4>
           <div class="form-group">
-            <label class="form-label">Valor Mensal (R$)</label>
+            <label class="form-label" id="label-parcela-aluguel">Valor Mensal (R$)</label>
             <input type="text" inputmode="numeric" id="input-parcela-mensal" class="input-field" placeholder="0,00" oninput="aplicarMascaraMoeda(this); calcularCustoPorKM()">
+          </div>
+          <div id="opcoes-veiculo-alugado" style="display:none; margin-top:12px; padding-top:10px; border-top:1px solid var(--linha);">
+            <p style="font-size:11px; font-weight:700; color:var(--texto-principal); margin-bottom:8px;">Marque o que já está incluído no aluguel para não contar duas vezes:</p>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin:7px 0;"><input type="checkbox" id="input-aluguel-inclui-pneus" onchange="calcularCustoPorKM()"> Pneus / manutenção de pneus</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin:7px 0;"><input type="checkbox" id="input-aluguel-inclui-oleo" onchange="calcularCustoPorKM()"> Óleo, filtros e manutenção preventiva</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin:7px 0;"><input type="checkbox" id="input-aluguel-inclui-seguro" onchange="calcularCustoPorKM()"> Seguro</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin:7px 0;"><input type="checkbox" id="input-aluguel-inclui-documentacao" onchange="calcularCustoPorKM()"> Documentação / IPVA / licenciamento</label>
           </div>
         </div>
 
@@ -2321,6 +2344,12 @@
         <!-- RESUMO DETALHADO DO CUSTO POR KM -->
         <div style="margin-top: 10px;">
           <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 8px;">Divisão do Custo Por KM:</h4>
+          <div style="background:#EFF6FF;border:1px solid #DBEAFE;border-radius:14px;padding:11px 12px;margin-bottom:10px;">
+            <div style="font-size:11px;color:var(--texto-secundario);font-weight:700;">Custo operacional considerado no Lucro Real (sem combustível)</div>
+            <div id="display-custo-operacional-km" style="font-size:20px;font-weight:800;color:var(--max-blue);margin-top:2px;">R$ 0,00 /km</div>
+            <div style="font-size:10px;color:var(--texto-secundario);margin-top:3px;">No veículo financiado, a parcela não é descontada novamente do Lucro Real. No alugado, o aluguel entra como custo da operação.</div>
+          </div>
+
           <div class="item-row">
             <span style="font-size: 13px; color: var(--texto-secundario);">Combustível:</span>
             <strong id="detalhe-comb" style="font-size: 14px; color: var(--texto-principal);">R$ 0,00 /km</strong>
@@ -2338,7 +2367,7 @@
             <strong id="detalhe-depre" style="font-size: 14px; color: var(--texto-principal);">R$ 0,00 /km</strong>
           </div>
           <div class="item-row">
-            <span style="font-size: 13px; color: var(--texto-secundario);">Parcela / Aluguel:</span>
+            <span style="font-size: 13px; color: var(--texto-secundario);">Parcela / Aluguel (custo completo):</span>
             <strong id="detalhe-parcela" style="font-size: 14px; color: var(--texto-principal);">R$ 0,00 /km</strong>
           </div>
           <div class="item-row">
@@ -3876,13 +3905,45 @@
 
     // Custo por KM baseado na Config. Veículo, SEM o combustível — porque o
     // combustível já é lançado separadamente como despesa do dia.
-    function calcularCustoPorKmSemCombustivel() {
-      const pneuValor = moedaParaNumero(document.getElementById('input-pneu-valor').value);
-      const pneuKM = parseFloat(document.getElementById('input-pneu-km').value) || 1;
-      const oleoValor = moedaParaNumero(document.getElementById('input-oleo-valor').value);
-      const oleoKM = parseFloat(document.getElementById('input-oleo-km').value) || 1;
+    // REGRA FINANCEIRA DO VEÍCULO
+    // - Próprio financiado: parcela compõe o custo completo/km, mas NÃO o Lucro Real.
+    // - Próprio quitado: não há parcela/aluguel no custo operacional.
+    // - Alugado: aluguel entra no Lucro Real; depreciação não entra; itens incluídos no contrato são excluídos.
+    function obterSituacaoVeiculo() {
+      const el = document.getElementById('input-situacao-veiculo');
+      return el ? (el.value || 'proprio_financiado') : 'proprio_financiado';
+    }
+
+    function itemIncluidoNoAluguel(id) {
+      const el = document.getElementById(id);
+      return !!(el && el.checked);
+    }
+
+    function atualizarCamposSituacaoVeiculo() {
+      const situacao = obterSituacaoVeiculo();
+      const alugado = situacao === 'alugado';
+      const quitado = situacao === 'proprio_quitado';
+      const box = document.getElementById('opcoes-veiculo-alugado');
+      const titulo = document.getElementById('titulo-parcela-aluguel');
+      const label = document.getElementById('label-parcela-aluguel');
+      const input = document.getElementById('input-parcela-mensal');
+      if (box) box.style.display = alugado ? 'block' : 'none';
+      if (titulo) titulo.textContent = alugado ? '🚗 Aluguel do Veículo' : (quitado ? '🚗 Veículo Próprio Quitado' : '🚗 Parcela do Veículo');
+      if (label) label.textContent = alugado ? 'Valor Mensal do Aluguel (R$)' : (quitado ? 'Parcela mensal (não se aplica)' : 'Valor Mensal da Parcela (R$)');
+      if (input) input.disabled = quitado;
+    }
+
+    function obterComponentesCustoVeiculo() {
       const kmMes = parseFloat(document.getElementById('input-km-mes').value) || 1;
       const kmAno = kmMes * 12;
+      const situacao = obterSituacaoVeiculo();
+
+      const pneuValor = moedaParaNumero(document.getElementById('input-pneu-valor').value);
+      const pneuKM = parseFloat(document.getElementById('input-pneu-km').value) || 1;
+      const combPreco = moedaParaNumero(document.getElementById('input-comb-preco').value);
+      const combMedia = parseFloat(document.getElementById('input-comb-media').value) || 1;
+      const oleoValor = moedaParaNumero(document.getElementById('input-oleo-valor').value);
+      const oleoKM = parseFloat(document.getElementById('input-oleo-km').value) || 1;
       const depreValorCarro = moedaParaNumero(document.getElementById('input-depre-valor-carro').value);
       const deprePercentual = parseFloat(document.getElementById('input-depre-percentual').value) || 0;
       const parcelaMensal = moedaParaNumero(document.getElementById('input-parcela-mensal').value);
@@ -3891,16 +3952,39 @@
       const internetMensal = moedaParaNumero(document.getElementById('input-internet-mensal').value);
       const higienMensal = moedaParaNumero(document.getElementById('input-higien-mensal').value);
 
-      const custoPneuKM = pneuValor / pneuKM;
-      const custoOleoKM = oleoValor / oleoKM;
-      const custoDepreKM = (depreValorCarro * (deprePercentual / 100)) / kmAno;
-      const custoParcelaKM = (parcelaMensal * 12) / kmAno;
-      const custoSeguroKM = seguroAnual / kmAno;
-      const custoDocKM = documentacaoAnual / kmAno;
-      const custoInternetKM = (internetMensal * 12) / kmAno;
-      const custoHigienKM = (higienMensal * 12) / kmAno;
+      let pneu = pneuValor / pneuKM;
+      let combustivel = combPreco / combMedia;
+      let oleo = oleoValor / oleoKM;
+      let depreciacao = (depreValorCarro * (deprePercentual / 100)) / kmAno;
+      let parcelaAluguel = (parcelaMensal * 12) / kmAno;
+      let seguro = seguroAnual / kmAno;
+      let documentacao = documentacaoAnual / kmAno;
+      let internet = (internetMensal * 12) / kmAno;
+      let higienizacao = (higienMensal * 12) / kmAno;
 
-      return custoPneuKM + custoOleoKM + custoDepreKM + custoParcelaKM + custoSeguroKM + custoDocKM + custoInternetKM + custoHigienKM;
+      if (situacao === 'proprio_quitado') parcelaAluguel = 0;
+
+      if (situacao === 'alugado') {
+        depreciacao = 0; // depreciação pertence ao proprietário/locadora
+        if (itemIncluidoNoAluguel('input-aluguel-inclui-pneus')) pneu = 0;
+        if (itemIncluidoNoAluguel('input-aluguel-inclui-oleo')) oleo = 0;
+        if (itemIncluidoNoAluguel('input-aluguel-inclui-seguro')) seguro = 0;
+        if (itemIncluidoNoAluguel('input-aluguel-inclui-documentacao')) documentacao = 0;
+      }
+
+      return { situacao, kmMes, kmAno, pneu, combustivel, oleo, depreciacao, parcelaAluguel, seguro, documentacao, internet, higienizacao };
+    }
+
+    function calcularCustoPorKmSemCombustivel() {
+      const c = obterComponentesCustoVeiculo();
+
+      // Combustível fica fora porque já é lançado como saída.
+      // Financiamento próprio também fica fora do Lucro Real: é aquisição de patrimônio
+      // e pode continuar aparecendo nas contas pessoais.
+      const parcelaOperacional = c.situacao === 'alugado' ? c.parcelaAluguel : 0;
+
+      return c.pneu + c.oleo + c.depreciacao + parcelaOperacional +
+        c.seguro + c.documentacao + c.internet + c.higienizacao;
     }
 
     function renderFechamentoInteligente(data) {
@@ -4049,7 +4133,7 @@
       const custoKmHoje = kmHoje * custoPorKmSemComb;
       document.getElementById('resumo-custo-km-hoje').innerText = formatarMoeda(custoKmHoje);
       document.getElementById('resumo-custo-km-detalhe').innerText =
-        `Baseado em ${kmHoje} km × ${formatarMoeda(custoPorKmSemComb)}/km — pneu, óleo, depreciação, parcela, seguro, documentação, internet e higienização (combustível não entra aqui, já é lançado separado como despesa)`;
+        `Baseado em ${kmHoje} km × ${formatarMoeda(custoPorKmSemComb)}/km — pneu, óleo, depreciação quando aplicável, seguro, documentação, internet, higienização e aluguel quando aplicável (combustível não entra aqui, pois já é lançado separado como despesa)`;
 
       const saldoReal = saldoLiquido - custoKmHoje;
       const elSaldoReal = document.getElementById('resumo-saldo-real');
@@ -4623,7 +4707,7 @@
         });
         y += 5;
         tituloSecao('Custos estruturais do veículo');
-        tabelaLinha(['Custo estrutural por KM (sem combustível)', '', formatarMoeda(fechamento.custoEstruturalPorKm)], [120, 10, 50], { negrito: true });
+        tabelaLinha(['Custo operacional do veículo por KM (sem combustível)', '', formatarMoeda(fechamento.custoEstruturalPorKm)], [120, 10, 50], { negrito: true });
         tabelaLinha(['Custo estrutural apropriado no mês', '', formatarMoeda(fechamento.custoEstruturalVeiculo)], [120, 10, 50], { negrito: true });
 
         // PÁGINA 3 — SEMANAS
@@ -6736,76 +6820,52 @@
     // Custo por KM completo (COM combustível) — usado na Cotação de Corrida Particular,
     // onde a viagem ainda não aconteceu e o combustível precisa entrar na conta.
     function calcularCustoPorKmCompleto() {
-      const kmMes = parseFloat(document.getElementById('input-km-mes').value) || 1;
-      const kmAno = kmMes * 12;
-      const pneuValor = moedaParaNumero(document.getElementById('input-pneu-valor').value);
-      const pneuKM = parseFloat(document.getElementById('input-pneu-km').value) || 1;
-      const combPreco = moedaParaNumero(document.getElementById('input-comb-preco').value);
-      const combMedia = parseFloat(document.getElementById('input-comb-media').value) || 1;
-      const oleoValor = moedaParaNumero(document.getElementById('input-oleo-valor').value);
-      const oleoKM = parseFloat(document.getElementById('input-oleo-km').value) || 1;
-      const depreValorCarro = moedaParaNumero(document.getElementById('input-depre-valor-carro').value);
-      const deprePercentual = parseFloat(document.getElementById('input-depre-percentual').value) || 0;
-      const parcelaMensal = moedaParaNumero(document.getElementById('input-parcela-mensal').value);
-      const seguroAnual = moedaParaNumero(document.getElementById('input-seguro-anual').value);
-      const documentacaoAnual = moedaParaNumero(document.getElementById('input-documentacao-anual').value);
-      const internetMensal = moedaParaNumero(document.getElementById('input-internet-mensal').value);
-      const higienMensal = moedaParaNumero(document.getElementById('input-higien-mensal').value);
-
-      return (pneuValor / pneuKM) + (combPreco / combMedia) + (oleoValor / oleoKM) +
-        ((depreValorCarro * (deprePercentual / 100)) / kmAno) + ((parcelaMensal * 12) / kmAno) +
-        (seguroAnual / kmAno) + (documentacaoAnual / kmAno) + ((internetMensal * 12) / kmAno) +
-        ((higienMensal * 12) / kmAno);
+      const c = obterComponentesCustoVeiculo();
+      return c.pneu + c.combustivel + c.oleo + c.depreciacao + c.parcelaAluguel +
+        c.seguro + c.documentacao + c.internet + c.higienizacao;
     }
 
     async function calcularCustoPorKM(salvar = true) {
-      const kmMes = parseFloat(document.getElementById('input-km-mes').value) || 1;
-      const kmAno = kmMes * 12;
-
-      const pneuValor = moedaParaNumero(document.getElementById('input-pneu-valor').value);
-      const pneuKM = parseFloat(document.getElementById('input-pneu-km').value) || 1;
-      const combPreco = moedaParaNumero(document.getElementById('input-comb-preco').value);
-      const combMedia = parseFloat(document.getElementById('input-comb-media').value) || 1;
-      const oleoValor = moedaParaNumero(document.getElementById('input-oleo-valor').value);
-      const oleoKM = parseFloat(document.getElementById('input-oleo-km').value) || 1;
-
-      const depreValorCarro = moedaParaNumero(document.getElementById('input-depre-valor-carro').value);
-      const deprePercentual = parseFloat(document.getElementById('input-depre-percentual').value) || 0;
-      const parcelaMensal = moedaParaNumero(document.getElementById('input-parcela-mensal').value);
-      const seguroAnual = moedaParaNumero(document.getElementById('input-seguro-anual').value);
-      const documentacaoAnual = moedaParaNumero(document.getElementById('input-documentacao-anual').value);
-      const internetMensal = moedaParaNumero(document.getElementById('input-internet-mensal').value);
-      const higienMensal = moedaParaNumero(document.getElementById('input-higien-mensal').value);
-
-      const custoPneuKM = pneuValor / pneuKM;
-      const custoCombKM = combPreco / combMedia;
-      const custoOleoKM = oleoValor / oleoKM;
-      const custoDepreKM = (depreValorCarro * (deprePercentual / 100)) / kmAno;
-      const custoParcelaKM = (parcelaMensal * 12) / kmAno;
-      const custoSeguroKM = seguroAnual / kmAno;
-      const custoDocKM = documentacaoAnual / kmAno;
-      const custoInternetKM = (internetMensal * 12) / kmAno;
-      const custoHigienKM = (higienMensal * 12) / kmAno;
-
-      const custoTotalKM = custoPneuKM + custoCombKM + custoOleoKM + custoDepreKM +
-        custoParcelaKM + custoSeguroKM + custoDocKM + custoInternetKM + custoHigienKM;
+      const c = obterComponentesCustoVeiculo();
+      const custoTotalKM = c.pneu + c.combustivel + c.oleo + c.depreciacao + c.parcelaAluguel +
+        c.seguro + c.documentacao + c.internet + c.higienizacao;
+      const custoOperacionalSemComb = calcularCustoPorKmSemCombustivel();
 
       document.getElementById('display-custo-total-km').innerText = `R$ ${custoTotalKM.toFixed(2).replace('.', ',')} /km`;
-      document.getElementById('detalhe-comb').innerText = `R$ ${custoCombKM.toFixed(2).replace('.', ',')} /km`;
-      document.getElementById('detalhe-pneu').innerText = `R$ ${custoPneuKM.toFixed(2).replace('.', ',')} /km`;
-      document.getElementById('detalhe-oleo').innerText = `R$ ${custoOleoKM.toFixed(2).replace('.', ',')} /km`;
-      document.getElementById('detalhe-depre').innerText = `R$ ${custoDepreKM.toFixed(2).replace('.', ',')} /km`;
-      document.getElementById('detalhe-parcela').innerText = `R$ ${custoParcelaKM.toFixed(2).replace('.', ',')} /km`;
-      document.getElementById('detalhe-seguro').innerText = `R$ ${custoSeguroKM.toFixed(2).replace('.', ',')} /km`;
-      document.getElementById('detalhe-doc').innerText = `R$ ${custoDocKM.toFixed(2).replace('.', ',')} /km`;
-      document.getElementById('detalhe-internet').innerText = `R$ ${custoInternetKM.toFixed(2).replace('.', ',')} /km`;
-      document.getElementById('detalhe-higien').innerText = `R$ ${custoHigienKM.toFixed(2).replace('.', ',')} /km`;
+      document.getElementById('detalhe-comb').innerText = `R$ ${c.combustivel.toFixed(2).replace('.', ',')} /km`;
+      document.getElementById('detalhe-pneu').innerText = `R$ ${c.pneu.toFixed(2).replace('.', ',')} /km`;
+      document.getElementById('detalhe-oleo').innerText = `R$ ${c.oleo.toFixed(2).replace('.', ',')} /km`;
+      document.getElementById('detalhe-depre').innerText = `R$ ${c.depreciacao.toFixed(2).replace('.', ',')} /km`;
+      document.getElementById('detalhe-parcela').innerText = `R$ ${c.parcelaAluguel.toFixed(2).replace('.', ',')} /km`;
+      document.getElementById('detalhe-seguro').innerText = `R$ ${c.seguro.toFixed(2).replace('.', ',')} /km`;
+      document.getElementById('detalhe-doc').innerText = `R$ ${c.documentacao.toFixed(2).replace('.', ',')} /km`;
+      document.getElementById('detalhe-internet').innerText = `R$ ${c.internet.toFixed(2).replace('.', ',')} /km`;
+      document.getElementById('detalhe-higien').innerText = `R$ ${c.higienizacao.toFixed(2).replace('.', ',')} /km`;
+
+      const operacionalEl = document.getElementById('display-custo-operacional-km');
+      if (operacionalEl) operacionalEl.innerText = `R$ ${custoOperacionalSemComb.toFixed(2).replace('.', ',')} /km`;
 
       if (salvar) {
         const config = {
-          kmMes, pneuValor, pneuKM, combPreco, combMedia, oleoValor, oleoKM,
-          depreValorCarro, deprePercentual, parcelaMensal, seguroAnual,
-          documentacaoAnual, internetMensal, higienMensal
+          kmMes: c.kmMes,
+          pneuValor: moedaParaNumero(document.getElementById('input-pneu-valor').value),
+          pneuKM: parseFloat(document.getElementById('input-pneu-km').value) || 1,
+          combPreco: moedaParaNumero(document.getElementById('input-comb-preco').value),
+          combMedia: parseFloat(document.getElementById('input-comb-media').value) || 1,
+          oleoValor: moedaParaNumero(document.getElementById('input-oleo-valor').value),
+          oleoKM: parseFloat(document.getElementById('input-oleo-km').value) || 1,
+          depreValorCarro: moedaParaNumero(document.getElementById('input-depre-valor-carro').value),
+          deprePercentual: parseFloat(document.getElementById('input-depre-percentual').value) || 0,
+          parcelaMensal: moedaParaNumero(document.getElementById('input-parcela-mensal').value),
+          seguroAnual: moedaParaNumero(document.getElementById('input-seguro-anual').value),
+          documentacaoAnual: moedaParaNumero(document.getElementById('input-documentacao-anual').value),
+          internetMensal: moedaParaNumero(document.getElementById('input-internet-mensal').value),
+          higienMensal: moedaParaNumero(document.getElementById('input-higien-mensal').value),
+          situacaoVeiculo: c.situacao,
+          aluguelIncluiPneus: itemIncluidoNoAluguel('input-aluguel-inclui-pneus'),
+          aluguelIncluiOleo: itemIncluidoNoAluguel('input-aluguel-inclui-oleo'),
+          aluguelIncluiSeguro: itemIncluidoNoAluguel('input-aluguel-inclui-seguro'),
+          aluguelIncluiDocumentacao: itemIncluidoNoAluguel('input-aluguel-inclui-documentacao')
         };
         await storageSet('config-veiculo', config);
       }
@@ -6818,6 +6878,21 @@
 
     function aplicarConfigVeiculoNaTela(config) {
       if (!config) return;
+      const situacaoEl = document.getElementById('input-situacao-veiculo');
+      // Compatibilidade com configurações antigas: assume "próprio financiado",
+      // preservando todos os valores já salvos e aplicando a nova regra ao Lucro Real.
+      if (situacaoEl) situacaoEl.value = config.situacaoVeiculo || 'proprio_financiado';
+
+      const checks = {
+        'input-aluguel-inclui-pneus': !!config.aluguelIncluiPneus,
+        'input-aluguel-inclui-oleo': !!config.aluguelIncluiOleo,
+        'input-aluguel-inclui-seguro': !!config.aluguelIncluiSeguro,
+        'input-aluguel-inclui-documentacao': !!config.aluguelIncluiDocumentacao
+      };
+      Object.entries(checks).forEach(([id, valor]) => {
+        const el = document.getElementById(id);
+        if (el) el.checked = valor;
+      });
       const camposMoeda = ['input-pneu-valor', 'input-comb-preco', 'input-oleo-valor', 'input-depre-valor-carro',
         'input-parcela-mensal', 'input-seguro-anual', 'input-documentacao-anual', 'input-internet-mensal', 'input-higien-mensal'];
       const mapa = {
@@ -6841,6 +6916,8 @@
           document.getElementById(id).value = camposMoeda.includes(id) ? formatarParaCampoMoeda(mapa[id]) : mapa[id];
         }
       });
+      atualizarCamposSituacaoVeiculo();
+      calcularCustoPorKM(false);
     }
 
     // ==========================================================================
